@@ -18,7 +18,7 @@
 
 ## ZSH Plugins
 
-BY default, the '.zshrc' file will source any file within '.dotfiles/zsh' ehat have the '.zsh' extension.
+BY default, the '.zshrc' file will source any file within '.dotfiles/zsh' what have the '.zsh' extension.
 
 ## Vim Plugins
 
