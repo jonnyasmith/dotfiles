@@ -12,7 +12,7 @@
 
 ## Install
 
-1. 'git clone https://github.com/jonnyasmith/dotfiles.get ~/.dotfiles'
+1. 'git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles'
 2. 'cd ~/.dotfiles'
 3. './install.sh'
 
