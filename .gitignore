@@ -1,4 +1,5 @@
 npm-debug.log
 vim/vim.symlink/plugged/
 nvim/nvim.symlink/plugged/
-ply.vim.old
+plug.vim.old
+.DS_Store
