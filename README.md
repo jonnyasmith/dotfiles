@@ -12,9 +12,9 @@
 
 ## Install
 
-1. 'git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles'
-2. 'cd ~/.dotfiles'
-3. 'sh install.sh'
+1. git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles
+2. cd ~/.dotfiles
+3. sh install.sh
 
 ## ZSH Plugins
 
