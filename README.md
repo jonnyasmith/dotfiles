@@ -14,7 +14,7 @@
 
 1. 'git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles'
 2. 'cd ~/.dotfiles'
-3. './install.sh'
+3. 'sh install.sh'
 
 ## ZSH Plugins
 
