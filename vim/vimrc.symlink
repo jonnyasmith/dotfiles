@@ -132,7 +132,7 @@ execute "set background=".$BACKGROUND
 execute "colorscheme ".$THEME
 
 " set number " show line numbers
-" set relativenumber " show relative line numbers
+set relativenumber " show relative line numbers
 set number " show the current line number"
 
 set wrap "turn on line wrapping
