@@ -8,15 +8,29 @@
     templatedir = ~/.dotfiles/git/templates
 [alias]
     # list all aliases
+    a = add -A
+    b = branch
+    c = commit -m
+    ca = commit --amend
+    caan = commit --amend -a --no-edit
+    cam = commit --amend -a -m
+    d = diff
+    f = fetch
     la = "!git config -l | grep alias | cut -c 7-"
     delete-merged-branches = "!f() { git checkout --quiet master && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
     diff = diff --ignore-space-at-eol -b -w --ignore-blank-lines
     cnv = commit --no-verify
     co = checkout
     cob = checkout -b
+    m = merge --no-ff
+    mff = merge --ff-only
+    p = pull
+    r = rebase
+    rl = reflog
     s = status --short
     ss  = status
-    br = branch -v
+    bv = branch -v
+    bvv = branch -vv
 
     l = log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
     # show a pretty log graph
