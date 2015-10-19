@@ -19,8 +19,17 @@ alias .....="cd ../../../.."
 alias l="ls -lah ${colorflag}"
 alias la="ls -AF ${colorflag}"
 alias ll="ls -lFh ${colorflag}"
+alias lla="ls -lFha ${colorflag}"
 alias lld="ls -l | grep ^d"
 alias rmf="rm -rf"
+
+# Git
+alias g='git'
+alias ga='git a'
+alias gb='git b'
+alias gbv='git bv'
+alias gbvv='git bvv'
+alias gc='git c'
 
 # Helpers
 alias grep='grep --color=auto'
