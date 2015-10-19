@@ -13,6 +13,7 @@ abbr fitler filter
 
 set nocompatible " not compatible with vi
 set autoread " detect when a file is changed
+set autochdir " auto change current working directory to current file
 
 " make backspace behave in a sane manner
 set backspace=indent,eol,start
@@ -149,7 +150,7 @@ set smartindent
 
 "set nobackup
 "set nowritebackup
-"set noswapfile
+set noswapfile
 set backupdir=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
 set directory=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
 
