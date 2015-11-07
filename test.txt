@@ -1,7 +1,0 @@
-this
-is a
-test
-from the test branch
-this is a test
-file
-from the tester branch
