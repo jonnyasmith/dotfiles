@@ -32,6 +32,7 @@
     bv = branch -v
     bvv = branch -vv
     f = fetch
+    changes = show --pretty="format:" --name-status
 
     l = log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative
     # show a pretty log graph
