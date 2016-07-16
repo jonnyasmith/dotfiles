@@ -19,8 +19,8 @@ set autoread " detect when a file is changed
 set backspace=indent,eol,start
 
 " set a map leader for more key combos
-let mapleader = ','
-let g:mapleader = ','
+let mapleader = ' '
+let g:mapleader = ' '
 
 set history=1000 " change history to 1000
 set textwidth=120
