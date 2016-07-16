@@ -10,7 +10,7 @@ call plug#begin('~/.vim/plugged')
 Plug 'chriskempson/base16-vim'
 
 
-Plug 'kien/ctrlp.vim'
+Plug 'ctrlpvim/ctrlp.vim'
 Plug 'scrooloose/nerdtree', { 'on': ['NERDTreeToggle', 'NERDTreeFind'] } | Plug 'Xuyuanp/nerdtree-git-plugin' | Plug 'ryanoasis/vim-devicons'
 Plug 'mileszs/ack.vim'
 Plug 'Raimondi/delimitMate'
@@ -20,7 +20,8 @@ Plug 'tpope/vim-endwise'
 Plug 'tpope/vim-ragtag'
 Plug 'tpope/vim-surround'
 Plug 'benmills/vimux'
-Plug 'bling/vim-airline'
+" Plug 'bling/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 Plug 'scrooloose/syntastic'
 " Plug 'benekastah/neomake'
 Plug 'tpope/vim-fugitive'
