@@ -5,7 +5,7 @@
 " load plugins from vundle
 source ~/.vim/plugins.vim
 
-autocmd vimenter * NERDTree
+" autocmd vimenter * NERDTree
 
 " Abbreviations/
 abbr funciton function
@@ -405,7 +405,7 @@ nmap <silent> <leader>y :NERDTreeFind<cr>
 " map fuzzyfinder (CtrlP) plugin
 " nmap <silent> <leader>t :CtrlP<cr>
 nmap <silent> <leader>r :CtrlPBuffer<cr>
-let g:ctrlp_map='<leader>t'
+let g:ctrlp_map='<leader>p'
 let g:ctrlp_dotfiles=1
 let g:ctrlp_working_path_mode = 'ra'
 
@@ -462,4 +462,4 @@ endif
 
 call ApplyLocalSettings(expand('.'))
 
-nnoremap <c-p> :CtrlP<CR>
+" nnoremap <c-p> :CtrlP<CR>
