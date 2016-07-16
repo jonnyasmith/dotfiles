@@ -205,7 +205,7 @@ map <leader>evf :e! ~/.vim/functions.vim<cr>
 map <leader>eg :e! ~/.gitconfig<cr>
 
 " clear highlighted search
-" noremap <space> :set hlsearch! hlsearch?<cr>
+noremap <space> :set hlsearch! hlsearch?<cr>
 
 " activate spell-checking alternatives
 nmap ;s :set invspell spelllang=en<cr>
