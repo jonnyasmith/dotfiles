@@ -4,30 +4,32 @@
     email = jonny.asmith@gmail.com
 [alias]
     # list all aliases
-    a = add -A
-    b = branch
-    br = branch -v
-    c = commit -m
+    a = add -A    
+    b = branch    
+    c = commit
     ca = commit --amend
-    caan = commit --amend -a --no-edit
-    cam = commit --amend -a -m
-    can = commit --amend --no-edit
-    cnv = commit --no-verify
+    caam = commit --amend -a -m    
+    caan = commit --amend -a --no-edit        
+    cam = commit -a -m            
+    ccp = !sh -c 'git commit -a -m \"$(git rev-parse --abbrev-ref HEAD): ${1}\"' --
+    cm = commit -m
     co = checkout
     cob = checkout -b
-    d = diff
-    delete-merged-branches = "!f() { git checkout --quiet master && git branch --merged | grep --invert-match '\\*' | xargs -n 1 git branch --delete; git checkout --quiet @{-1}; }; f"
-    diff = diff --ignore-space-at-eol -b -w --ignore-blank-lines
-    f = fetch
-    la = "!git config -l | grep alias | cut -c 7-"
-    m = merge --no-ff
-    mff = merge --ff-only
+    d = diff -w
+    date=relative --committer='Jonny Smith' --all --since='yesterday'
+    f = fetch --prune    
+    ld = diff head^..head --name-status    
+    m = merge
+    mt = mergetool
     p = pull
     r = rebase
     rl = reflog
-    s = status --short
+    s = status -s -b
     sb = show-branch
-    ss  = status
+    sbu = show-branch head @{u}
+    sh = show
+    standup = log --graph --pretty=format:'%Cred%h%Creset -%s %C(yellow)%d%Creset %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --
+    su = !"git log --reverse --branches --since=$(if [[ "Mon" == "$(date +%a)" ]]; then echo "last friday"; else echo "yesterday"; fi) --author=$(git config --get user.email) --format=format:'%C(cyan) %ad %C(yellow)%h %Creset %s %Cgreen%d' --date=local"
     t = tag
 
     l = log --pretty=format:'%C(bold blue)%h%C(reset) %C(white)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative
@@ -122,10 +124,9 @@
     # set up 'git pull' to rebase instead of merge
     autosetuprebase = always
 [diff]
-    renames = copies
-    mnemonicprefix = true
-[difftool]
-    prompt = false
+    guitool = p4merge
+[merge]
+    tool = p4merge
 [apply]
     # do not warn about missing whitespace at EOF
     whitespace = nowarn
@@ -141,8 +142,12 @@
 [grep]
     extendRegexp = true
     lineNumber = true
-[difftool "Kaleidoscope"]
-    cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
-[mergetool "Kaleidoscope"]
-    cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+[difftool "p4merge"]
+    path = C:/Program Files/Perforce/p4merge.exe
+    cmd = \"C:/Program Files/Perforce/p4merge.exe\" \"$LOCAL\" \"$REMOTE\"
+[mergetool "p4merge"]
+    path = C:/Program Files/Perforce/p4merge.exe
     trustexitcode = true
+    cmd = \"C:/Program Files/Perforce/p4merge.exe\" \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"    
+[credential]
+    helper = wincred
