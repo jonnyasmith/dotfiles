@@ -128,8 +128,8 @@ syntax on
 set encoding=utf8
 let base16colorspace=256  " Access colors present in 256 colorspace"
 set t_Co=256 " Explicitly tell vim that the terminal supports 256 colors"
-execute "set background=".$BACKGROUND
-execute "colorscheme ".$THEME
+" execute "set background=".$BACKGROUND
+colorscheme peachpuff
 
 " set number " show line numbers
 set relativenumber " show relative line numbers
@@ -206,6 +206,9 @@ map <leader>eg :e! ~/.gitconfig<cr>
 " clear highlighted search
 noremap <space> :set hlsearch! hlsearch?<cr>
 
+" Steve Losh
+noremap H ^
+noremap L g_
 " activate spell-checking alternatives
 nmap ;s :set invspell spelllang=en<cr>
 
