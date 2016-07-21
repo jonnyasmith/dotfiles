@@ -6,7 +6,7 @@
     # list all aliases
     a = add -A    
     b = branch    
-    c = commit
+    c = commit -m
     ca = commit --amend
     caam = commit --amend -a -m    
     caan = commit --amend -a --no-edit        

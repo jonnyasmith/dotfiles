@@ -13,6 +13,12 @@ alias rmf="rm -rf"
 source ~/git-complete.bash
 
 SSH_ENV=$HOME/.ssh/environment
+DOTFILES=$HOME/.dotfiles
+VIM=$HOME/.vim
+THEME="peachpuff"
+BACKGROUND="dark"
+BASE16_SHELL="$DOTFILES/.config/base16-shell/scripts/base16-$THEME-$BACKGROUND.sh"
+# source $BASE16_SHELL
 
 # start the ssh-agent
 function start_agent {
