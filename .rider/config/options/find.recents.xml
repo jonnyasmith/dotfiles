@@ -1,0 +1,9 @@
+<application>
+  <component name="FindRecents">
+    <findStrings>
+      <find>CheckpointNot</find>
+      <find>nlog</find>
+      <find>/api/windipsvc/getcategories</find>
+    </findStrings>
+  </component>
+</application>
