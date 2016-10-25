@@ -1,0 +1,39 @@
+// Place your key bindings in this file to overwrite the defaults
+[
+    {
+        "key": "ctrl+d",
+        "command": "editor.action.copyLinesDownAction"
+    },
+    {
+        "key": "ctrl+alt+n",
+        "command": "workbench.action.files.newFile"
+    },
+    {
+        "key": "ctrl+w",
+        "command": "workbench.action.closeActiveEditor"
+    },
+    {
+        "key": "alt+4",
+        "command": "workbench.view.debug"
+    },
+    {
+        "key": "alt+1",
+        "command": "workbench.view.explorer"
+    },
+    {
+        "key": "alt+5",
+        "command": "workbench.view.extensions"
+    },
+    {
+        "key": "alt+3",
+        "command": "workbench.view.git"
+    },
+    {
+        "key": "alt+2",
+        "command": "workbench.view.search"
+    },
+    {
+        "key": "shift+escape",
+        "command": "workbench.action.toggleSidebarVisibility"
+    }
+]
