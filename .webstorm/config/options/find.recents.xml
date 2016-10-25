@@ -1,0 +1,8 @@
+<application>
+  <component name="FindRecents">
+    <findStrings>
+      <find>debugger</find>
+      <find>console.log</find>
+    </findStrings>
+  </component>
+</application>
