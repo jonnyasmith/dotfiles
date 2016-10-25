@@ -1,0 +1,43 @@
+<application>
+  <component name="RecentDirectoryProjectsManager">
+    <option name="recentPaths">
+      <list>
+        <option value="E:\Dev\bitbucket\pluralsight-react-redux" />
+        <option value="C:\Users\JonnySmith\WebstormProjects\untitled" />
+      </list>
+    </option>
+    <option name="openPaths">
+      <list>
+        <option value="E:\Dev\bitbucket\pluralsight-react-redux" />
+      </list>
+    </option>
+    <option name="lastPath" value="E:\Dev\bitbucket\pluralsight-react-redux" />
+    <option name="additionalInfo">
+      <map>
+        <entry key="C:\Users\JonnySmith\WebstormProjects\untitled">
+          <value>
+            <RecentProjectMetaInfo>
+              <option name="build" value="WS-162.2228.20" />
+              <option name="productionCode" value="WS" />
+              <option name="binFolder" value="D:\Program Files (x86)\JetBrains\WebStorm 2016.2.4\bin" />
+              <option name="projectOpenTimestamp" value="1477129660436" />
+              <option name="buildTimestamp" value="1476745200000" />
+            </RecentProjectMetaInfo>
+          </value>
+        </entry>
+        <entry key="E:\Dev\bitbucket\pluralsight-react-redux">
+          <value>
+            <RecentProjectMetaInfo>
+              <option name="build" value="WS-162.2228.20" />
+              <option name="productionCode" value="WS" />
+              <option name="binFolder" value="D:\Program Files (x86)\JetBrains\WebStorm 2016.2.4\bin" />
+              <option name="projectOpenTimestamp" value="1477374127104" />
+              <option name="buildTimestamp" value="1476745200000" />
+            </RecentProjectMetaInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="lastProjectLocation" value="C:\Users\JonnySmith\WebstormProjects" />
+  </component>
+</application>
