@@ -16,7 +16,8 @@
     cm = commit -m
     co = checkout
     cob = checkout -b
-    d = diff -w
+	d = diff
+	dw = diff -w
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     f = fetch --prune    
     ld = diff head^..head --name-status    
