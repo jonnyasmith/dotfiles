@@ -8,6 +8,7 @@
     b = branch    
     c = commit -m
     ca = commit --amend
+    caa = commit --amend -a    
     caam = commit --amend -a -m    
     caan = commit --amend -a --no-edit        
     cam = commit -a -m            
