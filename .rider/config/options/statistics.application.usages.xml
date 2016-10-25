@@ -1,0 +1,48 @@
+<application>
+  <component name="StatisticsApplicationUsages">
+    <group name="Git">
+      <project id="ClassLibrary" values="config.force.push.enabled,config.push.update.all.roots.enabled,config.warn.about.detached.enabled,config.cherry-pick.autocommit.disabled,config.repo.sync.NOT_DECIDED,config.push.autoupdate.disabled,config.ssh.enabled,config.save.policy.STASH,config.update.type.BRANCH_DEFAULT,config.warn.about.crlf.enabled" collectionTime="1476259036023" />
+      <project id="PPM" values="config.repo.sync.NOT_DECIDED,config.ssh.enabled,config.warn.about.detached.enabled,data.remote.branches.count.15+,config.save.policy.STASH,data.remotes.in.project.1,data.local.branches.count.8+,config.push.autoupdate.disabled,config.push.update.all.roots.enabled,config.warn.about.crlf.enabled,config.update.type.BRANCH_DEFAULT,config.force.push.enabled,config.cherry-pick.autocommit.disabled" collectionTime="1477063655427" />
+      <project id="LTH" values="config.force.push.enabled,config.save.policy.STASH,config.warn.about.detached.enabled,config.ssh.enabled,config.push.autoupdate.disabled,config.cherry-pick.autocommit.disabled,config.repo.sync.NOT_DECIDED,config.warn.about.crlf.enabled,config.push.update.all.roots.enabled,config.update.type.BRANCH_DEFAULT" collectionTime="1477056627615" />
+    </group>
+    <group name="vcs">
+      <project id="PPM" values="Git" collectionTime="1477063655419" />
+    </group>
+    <group name="run-configuration-type">
+      <project id="ClassLibrary" values="DotNetProject" collectionTime="1476259036010" />
+      <project id="PPM" values="DotNetProject" collectionTime="1477063655419" />
+      <project id="LTH" values="DotNetProject" collectionTime="1477056627607" />
+    </group>
+    <group name="images.ide.background">
+      <project id="ClassLibrary" values="editor 0,frame 0" collectionTime="1476259036022" />
+      <project id="PPM" values="frame 0,editor 0" collectionTime="1477063655427" />
+      <project id="LTH" values="editor 0,frame 0" collectionTime="1477056627615" />
+    </group>
+    <group name="VCS Log 2">
+      <project id="PPM" values="data.commit.count.10K+,data.git.root.count.1" collectionTime="1477063655427" />
+    </group>
+    <group name="file-type">
+      <project id="ClassLibrary" values="Solution File,C#,Csproj" collectionTime="1476259036022" />
+      <project id="PPM" values="ARCHIVE,Config,UNKNOWN,SQL,Executable,Razor,HTML,Asp,Json,Images,XHTML,NuGet spec,JavaScript,Library,CSS,XML,C#,Solution File,Native,Csproj,PLAIN_TEXT,MsBuild targets file,Resources" collectionTime="1477063655422" />
+      <project id="LTH" values="Config,XML,Solution File,Images,Cache file,HTML,CSS,JavaScript,C#,UNKNOWN,Asp,PLAIN_TEXT,Native,Json,Csproj,Resources,Razor" collectionTime="1477056627615" />
+    </group>
+    <group name="module type">
+      <project id="ClassLibrary" values="EMPTY_MODULE" collectionTime="1476259036010" />
+      <project id="PPM" values="EMPTY_MODULE" collectionTime="1477063655419" />
+      <project id="LTH" values="EMPTY_MODULE" collectionTime="1477056627607" />
+    </group>
+  </component>
+  <component name="UsageTrigger">
+    <counts>
+      <entry feature="diff.TextDiffSettings.HighlightPolicy.BY_WORD_SPLIT" count="1" />
+      <entry feature="ide.settings.Colors_&amp;_Fonts" count="1" />
+      <entry feature="ide.settings.Editor_Tabs" count="1" />
+      <entry feature="ide.settings.Font" count="2" />
+      <entry feature="ide.settings.Keymap" count="8" />
+      <entry feature="ide.settings.Vim_Emulation" count="2" />
+      <entry feature="ideaapp.started" count="7" />
+      <entry feature="welcome.screen.WelcomeScreen.NewSolution" count="1" />
+      <entry feature="welcome.screen.WelcomeScreen.OpenSolution" count="1" />
+    </counts>
+  </component>
+</application>
