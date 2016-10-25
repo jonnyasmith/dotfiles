@@ -1,6 +1,7 @@
-For /R %HOME%\.dotfiles\ %%G IN (*.bash) do mklink "%HOME%\.%%~nG" "%%G"
+mklink C:\Users\JonnySmith\.bash_profile C:\Users\JonnySmith\.dotfiles\bash_current\bash_profile.bash
+mklink C:\Users\JonnySmith\.bashrc C:\Users\JonnySmith\.dotfiles\bash_current\.bashrc
+mklink C:\Users\JonnySmith\.gitconfig C:\Users\JonnySmith\.dotfiles\bash_current\gitconfig.bash
+mklink C:\Users\JonnySmith\.vimrc C:\Users\JonnySmith\.dotfiles\vim\.vimrc
+mklink /D C:\Users\JonnySmith\.vim C:\Users\JonnySmith\.dotfiles\vim\.vim
 
-mklink /D %HOME%\.dotfiles\vim\.vim %HOME%\.dotfiles\vim\vim.symlink
-mklink /D %HOME%\.dotfiles\vim\.vimrc %HOME%\.dotfiles\vim\vimrc.symlink
-
-mkdir ~/.vim-tmp
+mkdir C:\Users\JonnySmith\.vim-tmp
