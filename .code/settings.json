@@ -1,5 +1,6 @@
 // Place your settings in this file to overwrite the default settings
 {
+
     "typescript.tsdk": "./node_modules/typescript/lib",
     "typescript.check.tscVersion": false,
     "editor.fontSize": 14,
@@ -9,6 +10,7 @@
     "files.autoSave": "off",
     "editor.renderWhitespace": "boundary",
     "workbench.editor.showTabs": false,
+
     "editor.formatOnSave": false,
     "window.zoomLevel": 0,
     "editor.cursorStyle": "block"
