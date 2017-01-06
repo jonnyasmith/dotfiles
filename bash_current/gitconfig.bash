@@ -16,12 +16,13 @@
     cm = commit -m
     co = checkout
     cob = checkout -b
-	d = diff
-	dw = diff -w
+    d = diff
+    dw = diff -w
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     f = fetch --prune    
     ld = diff head^..head --name-status    
-    m = merge
+    m = merge --no-ff
+    mff = merger --ff-only
     mt = mergetool
     p = pull
     r = rebase
