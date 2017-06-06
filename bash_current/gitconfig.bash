@@ -17,14 +17,14 @@
     co = checkout
     cob = checkout -b
     d = diff
-    dw = diff -w
     date=relative --committer='Jonny Smith' --all --since='yesterday'
-    f = fetch --prune    
+    dw = diff -w
+    f = !git fetch --prune && git s
     ld = diff head^..head --name-status    
     m = merge --no-ff
-    mff = merger --ff-only
+    mff = merge --ff-only
     mt = mergetool
-    p = pull
+    p = !git pull && git s
     r = rebase
     rl = reflog
     s = status -s -b
