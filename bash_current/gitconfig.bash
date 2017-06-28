@@ -6,7 +6,7 @@
     # list all aliases
     a = add -A    
     b = branch    
-    c = commit -m
+    c = commit
     ca = commit --amend
     caa = commit --amend -a    
     caam = commit --amend -a -m    
@@ -29,7 +29,7 @@
     rl = reflog
     s = status -s -b
     sb = show-branch
-    sbu = show-branch head @{u}
+    sb-up = show-branch head @{u}
     sh = show
     standup = log --graph --pretty=format:'%Cred%h%Creset -%s %C(yellow)%d%Creset %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --
     su = !"git log --reverse --branches --since=$(if [[ "Mon" == "$(date +%a)" ]]; then echo "last friday"; else echo "yesterday"; fi) --author=$(git config --get user.email) --format=format:'%C(cyan) %ad %C(yellow)%h %Creset %s %Cgreen%d' --date=local"
@@ -52,15 +52,18 @@
     cbr = rev-parse --abbrev-ref HEAD
 
     # submodule shortcuts
-    si = submodule init
+	si = submodule init
     su = submodule update
     sub = "!git submodule sync && git submodule update"
 
+	# reset commits
+	delete = !git reset --hard HEAD~1 && git s
+	delete-up = !git reset --hard @{u} && git s
+	undo = !git reset --soft HEAD~1 && git s
+	undo-up = !git reset --soft @{u} && git s
+
     # show number of commits per contributer, sorted
     count = shortlog -sn
-
-    undo = reset --soft HEAD~1
-    amend = commit -a --amend
 
     cleanup = "!git remote prune origin && git gc && git clean -df && git stash clear"
 
