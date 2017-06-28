@@ -2,6 +2,9 @@
 " => General
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+"
+"
+autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool 2>/dev/null || echo <buffer>:q
 " load plugins from vundle
 source ~/.vim/plugins.vim
 

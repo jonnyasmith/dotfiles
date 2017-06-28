@@ -10,7 +10,7 @@ alias lla="ls -lFha"
 alias lld="ls -l | grep ^d"
 alias rmf="rm -rf"
 
-source ~/git-complete.bash
+# source ~/git-complete.bash
 
 SSH_ENV=$HOME/.ssh/environment
 DOTFILES=$HOME/.dotfiles
