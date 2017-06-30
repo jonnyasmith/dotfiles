@@ -3,12 +3,33 @@ alias ...='cd ../..'
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 
-alias l="ls -lah"
-alias la="ls -AF"
-alias ll="ls -lFh"
-alias lla="ls -lFha"
+alias l="ls -lah --color=auto"
+alias la="ls -AF --color=auto"
+alias ll="ls -lFh --color=auto"
+alias lla="ls -lFha --color=auto"
 alias lld="ls -l | grep ^d"
-alias rmf="rm -rf"
+alias rmf="rm -rf --color=auto"
+
+alias desktop="cd /c/users/smithjon/desktop"
+alias ppm="cd /d/dev/bitbucket/lth-ppm"
+alias epr="cd /d/dev/bitbucket/lth-epr"
+alias database="cd /d/dev/bitbucket/lth-database"
+
+alias gitconfig="vim ~/.gitconfig"
+alias vimrc="vim ~/.vimrc"
+alias bash_profile="vim ~/.bash_profile"
+alias bashrc="vim ~/.bashrc"
+alias dotfiles="cd ~/.dotfiles"
+
+alias h="history"
+
+alias vi=vim
+alias edit='vim'
+
+alias reboot='shutdown -r -t 0'
+alias shutdown='shutdown -t 0'
+
+alias grep='grep --color=auto'
 
 # source ~/git-complete.bash
 

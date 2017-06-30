@@ -4,9 +4,9 @@
 
 "
 "
-autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool 2>/dev/null || echo <buffer>:q
+" autocmd FileType json autocmd BufWritePre <buffer> %!python -m json.tool 2>/dev/null || echo <buffer>:q
 " load plugins from vundle
-source ~/.vim/plugins.vim
+" source ~/.vim/plugins.vim
 
 " Abbreviations
 abbr funciton function
@@ -23,7 +23,6 @@ set backspace=indent,eol,start
 
 " set a map leader for more key combos
 let mapleader = ' '
-let g:mapleader = ' '
 
 set history=1000 " change history to 1000
 set textwidth=120
@@ -135,8 +134,8 @@ set t_Co=256 " Explicitly tell vim that the terminal supports 256 colors"
 execute "set background=".$BACKGROUND
 execute "colorscheme ".$THEME
 
-" set number " show line numbers
-set relativenumber " show relative line numbers
+set number " show line numbers
+" set relativenumber " show relative line numbers
 " set number \" show the current line number"
 
 set wrap "turn on line wrapping
@@ -181,7 +180,7 @@ inoremap jk <esc>
 nmap <leader>md :%!markdown --html4tags <cr>
 
 " remove extra whitespace
-nmap <leader><space> :%s/\s\+$<cr>
+" nmap <leader><space> :%s/\s\+$<cr>
 
 " wipout buffer
 nmap <silent> <leader>b :bw<cr>
@@ -208,7 +207,7 @@ map <leader>evf :e! ~/.vim/functions.vim<cr>
 map <leader>eg :e! ~/.gitconfig<cr>
 
 " clear highlighted search
-noremap <space> :set hlsearch! hlsearch?<cr>
+noremap <leader><space> :set hlsearch! hlsearch?<cr>
 
 " activate spell-checking alternatives
 nmap ;s :set invspell spelllang=en<cr>

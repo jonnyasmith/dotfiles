@@ -21,11 +21,11 @@
     dw = diff -w
     f = !git fetch --prune && git s
     ld = diff head^..head --name-status    
-    m = merge --no-ff
+	m = merge --no-ff
     mff = merge --ff-only
     mt = mergetool
     p = !git pull && git s
-    r = rebase
+    r = git rebase
     rl = reflog
     s = status -s -b
     sb = show-branch
