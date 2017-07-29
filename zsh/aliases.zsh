@@ -45,9 +45,6 @@ alias localip="ipconfig getifaddr en1"
 alias ips="ifconfig -a | perl -nle'/(\d+\.\d+\.\d+\.\d+)/ && print $1'"
 
 # Flush Directory Service cache
-
-
-
 alias flush="dscacheutil -flushcache"
 
 # View HTTP traffic
