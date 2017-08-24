@@ -16,6 +16,7 @@
     cm = commit -m
     co = checkout
     cob = checkout -b
+    cp = cherry-pick
     d = diff
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     dw = diff -w
@@ -25,7 +26,7 @@
     mff = merge --ff-only
     mt = mergetool
     p = !git pull && git s
-    r = git rebase
+    r = rebase
     rl = reflog
     s = status -s -b
     sb = show-branch
@@ -41,7 +42,6 @@
 
     # show what I did today
     day = "!sh -c 'git log --no-merges --format=format:\"%C(bold blue)%h%C(reset) %C(bold red)%an%C(reset) %C(white)%s%C(reset) %C(bold green)(%cd)%C(reset)\" --branches=* --date=relative --after=\"yesterday 11:59PM\" --author=\"`git config --get user.name`\"'"
-
     # order files by number of commits, ascending
     churn = "!f() { git log --all -M -C --name-only --format='format:' \"$@\" | sort | grep -v '^$' | uniq -c | sort | awk 'BEGIN {print \"count\tfile\"} {print $1 \"\t\" $2}' | sort -g; }; f"
 
@@ -55,6 +55,9 @@
 	si = submodule init
     su = submodule update
     sub = "!git submodule sync && git submodule update"
+
+	push-up = !sh -c 'git push -u origin \"$(git rev-parse --abbrev-ref HEAD): ${1}\"' --
+	push-remote = git push -u origin
 
 	# reset commits
 	delete = !git reset --hard HEAD~1 && git s
