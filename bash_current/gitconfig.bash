@@ -22,8 +22,7 @@
     dw = diff -w
     f = !git fetch --prune && git s
     ld = diff head^..head --name-status    
-	m = merge --no-ff
-    mff = merge --ff-only
+    m = merge
     mt = mergetool
     p = !git pull && git s
     r = rebase
@@ -136,6 +135,7 @@
     guitool = p4merge
 [merge]
     tool = p4merge
+    ff = only
 [apply]
     # do not warn about missing whitespace at EOF
     whitespace = nowarn
