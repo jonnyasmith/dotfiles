@@ -25,7 +25,7 @@
     m = merge
     mt = mergetool
     n = notes
-    p = !git pull && git s
+    p = !git pull --rebase && git s
     r = rebase
     rl = reflog
     s = status -s -b
