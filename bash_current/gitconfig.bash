@@ -16,7 +16,7 @@
     cm = commit -m
     co = checkout
     cob = checkout -b
-    cp = cherry-pick
+    cp = cherry-pick -x 
     d = diff
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     dw = diff -w
@@ -24,6 +24,7 @@
     ld = diff head^..head --name-status    
     m = merge
     mt = mergetool
+    n = notes
     p = !git pull && git s
     r = rebase
     rl = reflog
