@@ -20,6 +20,7 @@ alias vimrc="vim ~/.vimrc"
 alias bash_profile="vim ~/.bash_profile"
 alias bashrc="vim ~/.bashrc"
 alias dotfiles="cd ~/.dotfiles"
+alias login="cd /d/shared/login && dotnet run"
 
 alias h="history"
 
@@ -60,3 +61,14 @@ if [ -f "${SSH_ENV}" ]; then
 else
     start_agent;
 fi
+
+GIT_PROMPT_ONLY_IN_REPO=1  
+GIT_PROMPT_FETCH_REMOTE_STATUS=0   #avoid fetching remote status  
+GIT_PROMPT_THEME=Single_line_Ubuntu #better theme  
+# GIT_PROMPT_IGNORE_STASH=1 #ignore any stashes.  
+
+source ~/.dotfiles/.bash-git-prompt/gitprompt.sh  
+
+todo() {
+    git commit --allow-empty -m "TODO: $*"
+}
