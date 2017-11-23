@@ -17,16 +17,18 @@
     co = checkout
     cob = checkout -b
     cp = cherry-pick -x 
-    d = diff
+    d = diff --ignore-space-at-eol -b -w --ignore-blank-lines
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     dw = diff -w
-    f = !git fetch --prune && git s
+    f = !git fetch --prune # && git s
     ld = diff head^..head --name-status    
     m = merge
     mt = mergetool
     n = notes
-    p = !git pull --rebase && git s
+    p = !git pull # && git s
     r = rebase
+    i = init
+    ri = rebase -i @{u}
     rl = reflog
     s = status -s -b
     sb = show-branch
@@ -141,7 +143,7 @@
     # do not warn about missing whitespace at EOF
     whitespace = nowarn
 [core]
-    excludesfile = ~/.gitignore_global
+	excludesfile = 
     pager = less -FXRS -x2
     editor = vim
     autocrlf = input
@@ -161,3 +163,8 @@
     cmd = \"C:/Program Files/Perforce/p4merge.exe\" \"$BASE\" \"$LOCAL\" \"$REMOTE\" \"$MERGED\"    
 [credential]
     helper = wincred
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
