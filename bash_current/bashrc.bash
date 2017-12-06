@@ -21,6 +21,7 @@ alias bash_profile="vim ~/.bash_profile"
 alias bashrc="vim ~/.bashrc"
 alias dotfiles="cd ~/.dotfiles"
 alias login="cd /d/shared/login && dotnet run"
+alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && git fetch)' ';'"
 
 alias h="history"
 
@@ -53,14 +54,14 @@ function start_agent {
     /usr/bin/ssh-add
 }
 
-if [ -f "${SSH_ENV}" ]; then
-     . "${SSH_ENV}" > /dev/null
-     ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
-        start_agent;
-    }
-else
-    start_agent;
-fi
+# if [ -f "${SSH_ENV}" ]; then
+#      . "${SSH_ENV}" > /dev/null
+#      ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+#         start_agent;
+#     }
+# else
+#     start_agent;
+# fi
 
 GIT_PROMPT_ONLY_IN_REPO=1  
 GIT_PROMPT_FETCH_REMOTE_STATUS=0   #avoid fetching remote status  
