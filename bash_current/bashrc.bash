@@ -21,7 +21,7 @@ alias bash_profile="vim ~/.bash_profile"
 alias bashrc="vim ~/.bashrc"
 alias dotfiles="cd ~/.dotfiles"
 alias login="cd /d/shared/login && dotnet run"
-alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && git fetch)' ';'"
+alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && echo {} && git fetch)' ';'"
 
 alias h="history"
 
