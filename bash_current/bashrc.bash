@@ -21,7 +21,8 @@ alias bash_profile="vim ~/.bash_profile"
 alias bashrc="vim ~/.bashrc"
 alias dotfiles="cd ~/.dotfiles"
 alias login="cd /d/shared/login && dotnet run"
-alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && echo {} && git fetch)' ';'"
+alias repos=( "/d/dev/bitbucket/forms-framework" "/d/dev/bitbucket/lth-database" "/d/dev/bitbucket/lth-elastic-maintenance" "/d/dev/bitbucket/" "/d/dev/bitbucket/lth-epr" "/d/dev/bitbucket/lth-form-definitions" "/d/dev/bitbucket/lth-ppm" "/d/dev/bitbucket/lth-ppm-libraries" "/d/dev/bitbucket/xformdefinitions" )
+alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && echo {} && git fetch --prune)' ';'"
 
 alias h="history"
 

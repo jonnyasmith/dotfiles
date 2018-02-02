@@ -3,6 +3,7 @@
     name = Jonny Smith
     email = jonny.asmith@gmail.com
 [alias]
+    quick-stats = ! /d/dev/github/git-quick-stats/git-quick-stats
     # list all aliases
     a = add -A    
     b = branch    
