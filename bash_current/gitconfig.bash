@@ -1,7 +1,7 @@
 # gitconfig
 [user]
     name = Jonny Smith
-    email = jonny.asmith@gmail.com
+    email = jonny.asmith@digitaljs.com
 [alias]
     quick-stats = ! /d/dev/github/git-quick-stats/git-quick-stats
     # list all aliases
@@ -19,6 +19,7 @@
     cob = checkout -b
     cp = cherry-pick -x 
     d = diff --ignore-space-at-eol -b -w --ignore-blank-lines
+    ds = diff --staged --ignore-space-at-eol -b -w --ignore-black-lines
     date=relative --committer='Jonny Smith' --all --since='yesterday'
     dw = diff -w
     f = !git fetch --prune # && git s

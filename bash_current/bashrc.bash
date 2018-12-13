@@ -11,27 +11,24 @@ alias lld="ls -l | grep ^d"
 alias rmf="rm -rf --color=auto"
 
 alias desktop="cd /c/users/smithjon/desktop"
-alias ppm="cd /d/dev/bitbucket/lth-ppm"
-alias epr="cd /d/dev/bitbucket/lth-epr"
-alias database="cd /d/dev/bitbucket/lth-database"
+alias ppm="cd /c/dev/bitbucket/lth-ppm"
+alias epr="cd /c/dev/bitbucket/lth-epr"
+alias database="cd /c/dev/bitbucket/lth-ppm-database"
 
-alias gitconfig="vim ~/.gitconfig"
-alias vimrc="vim ~/.vimrc"
-alias bash_profile="vim ~/.bash_profile"
-alias bashrc="vim ~/.bashrc"
+alias reload=". ~/.bashrc"
+alias tree="tree.com"
+alias gitconfig="code ~/.gitconfig"
+alias vimrc="code ~/.vimrc"
+alias bash_profile="code ~/.bash_profile"
+alias bashrc="code ~/.bashrc"
 alias dotfiles="cd ~/.dotfiles"
 alias login="cd /d/shared/login && dotnet run"
-alias repos=( "/d/dev/bitbucket/forms-framework" "/d/dev/bitbucket/lth-database" "/d/dev/bitbucket/lth-elastic-maintenance" "/d/dev/bitbucket/" "/d/dev/bitbucket/lth-epr" "/d/dev/bitbucket/lth-form-definitions" "/d/dev/bitbucket/lth-ppm" "/d/dev/bitbucket/lth-ppm-libraries" "/d/dev/bitbucket/xformdefinitions" )
-alias fetch-all="cd /d/dev/bitbucket && find . -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && echo {} && git fetch --prune)' ';'"
-
+alias fetch-all="pushd /c/dev/bitbucket && find . -mindepth 1 -maxdepth 1 -type d -exec sh -c '(cd {} && echo {} && git fetch --prune)' ';' && popd"
 alias h="history"
-
 alias vi=vim
 alias edit='vim'
-
 alias reboot='shutdown -r -t 0'
 alias shutdown='shutdown -t 0'
-
 alias grep='grep --color=auto'
 
 # source ~/git-complete.bash
@@ -64,12 +61,12 @@ function start_agent {
 #     start_agent;
 # fi
 
-GIT_PROMPT_ONLY_IN_REPO=1  
-GIT_PROMPT_FETCH_REMOTE_STATUS=0   #avoid fetching remote status  
-GIT_PROMPT_THEME=Single_line_Ubuntu #better theme  
-# GIT_PROMPT_IGNORE_STASH=1 #ignore any stashes.  
+GIT_PROMPT_ONLY_IN_REPO=1
+GIT_PROMPT_FETCH_REMOTE_STATUS=0   #avoid fetching remote status
+GIT_PROMPT_THEME=Single_line_Ubuntu #better theme
+# GIT_PROMPT_IGNORE_STASH=1 #ignore any stashes.
 
-source ~/.dotfiles/.bash-git-prompt/gitprompt.sh  
+source ~/.dotfiles/.bash-git-prompt/gitprompt.sh
 
 todo() {
     git commit --allow-empty -m "TODO: $*"
