@@ -1,0 +1,24 @@
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....="cd ../../.."
+alias .....="cd ../../../.."
+
+alias l="ls -lah --color=auto"
+alias la="ls -AF --color=auto"
+alias ll="ls -lFh --color=auto"
+alias lla="ls -lFha --color=auto"
+alias lld="ls -l | grep ^d"
+alias rmf="rm -rf --color=auto"
+
+alias reload=". ~/.bashrc"
+alias gitconfig="code ~/.gitconfig"
+alias vimrc="code ~/.vimrc"
+alias bashrc="code ~/.bashrc"
+alias dotfiles="cd ~/.dotfiles"
+
+alias h="history"
+alias grep='grep --color=auto'
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
