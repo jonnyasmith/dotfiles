@@ -91,3 +91,6 @@ check_macos_updated;
 install_brew;
 set_defaults;
 dotfiles;
+
+cd ~/.dotfiles
+install.sh
