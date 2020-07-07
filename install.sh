@@ -1,19 +1,19 @@
 #!/bin/bash
 
-echo "Configure Mac..."
-source install/macosx.sh
-
-echo ""
-echo "Installing dotfiles"
-source install/dotfiles.sh
+# echo "Configure Mac..."
+# source install/macosx.sh
 
 # echo ""
 # echo "Installing dotfiles"
 # source install/dotfiles.sh
 
 # echo ""
-# echo "Installing homebrew packages..."
-# source install/brew.sh
+# echo "Installing dotfiles"
+# source install/dotfiles.sh
+
+echo ""
+echo "Installing homebrew packages..."
+source install/brew.sh
 
 # echo ""
 # echo "Installing node from nvm..."
