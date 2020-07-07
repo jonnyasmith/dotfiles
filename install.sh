@@ -1,30 +1,27 @@
 #!/bin/bash
 
+echo "Configure Mac..."
+source install/macosx.sh
+
+echo ""
 echo "Installing dotfiles"
+source install/dotfiles.sh
 
-echo "Initializing submodule(s)"
-git submodule update --init --recursive
+# echo ""
+# echo "Installing dotfiles"
+# source install/dotfiles.sh
 
-source install/link.sh
+# echo ""
+# echo "Installing homebrew packages..."
+# source install/brew.sh
 
-if [ "$(uname)" == "Darwin" ]; then
-    echo "Running on OSX"
+# echo ""
+# echo "Installing node from nvm..."
+# source install/nvm.sh
 
-    echo "Brewing all the things"
-    source install/brew.sh
+# echo ""
+# echo "Configuring zsh as default shell"
+# chsh -s $(which zsh)
 
-    echo "Updating OSX settings"
-    source installosx.sh
-
-    echo "Installing node (from nvm)"
-    source install/nvm.sh
-fi
-
-echo "creating vim directories"
-mkdir -p ~/.vim-tmp
-
-
-echo "Configuring zsh as default shell"
-chsh -s $(which zsh)
-
-echo "Done."
+# echo ""
+# echo "Done."
