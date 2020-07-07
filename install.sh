@@ -1,23 +1,27 @@
 #!/bin/bash
 
 echo "Configure Mac..."
-source Mac/installosx.sh
+source install/macosx.sh
 
 echo ""
 echo "Installing dotfiles"
-source install/link.sh
+source install/dotfiles.sh
 
-echo ""
-echo "Installing homebrew packages..."
-source install/brew.sh
+# echo ""
+# echo "Installing dotfiles"
+# source install/dotfiles.sh
 
-echo ""
-echo "Installing node from nvm..."
-source install/nvm.sh
+# echo ""
+# echo "Installing homebrew packages..."
+# source install/brew.sh
 
-echo ""
-echo "Configuring zsh as default shell"
-chsh -s $(which zsh)
+# echo ""
+# echo "Installing node from nvm..."
+# source install/nvm.sh
 
-echo ""
-echo "Done."
+# echo ""
+# echo "Configuring zsh as default shell"
+# chsh -s $(which zsh)
+
+# echo ""
+# echo "Done."

@@ -10,6 +10,21 @@ fi
 
 # alias vim="nvim"
 
+alias g="git"
+alias y="yarn"
+alias h="history"
+alias clean-orig="find . -name '*.orig' -delete"
+
+alias ga='git a .'
+alias gcm='git cm'
+alias gf='git f'
+alias gl='git l -20'
+alias gm='git m'
+alias gp='git p'
+alias gr='git r'
+alias gs='git s'
+alias push='git push'
+
 # Filesystem aliases
 alias ..='cd ..'
 alias ...='cd ../..'

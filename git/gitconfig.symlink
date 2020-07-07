@@ -28,9 +28,9 @@
     s = status -s -b
     sb = show-branch
     t = tag
-    l = log --pretty=format:'%C(bold blue)%h%C(reset) %C(white)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative
+    l = log --pretty=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative
     # show a pretty log graph
-    lg = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(white)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)'    
+    lg = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)'    
 
 [color]
     diff = auto
@@ -83,7 +83,12 @@
     helper = osxkeychain
 [merge]
     keepBackup = false
-    tool = p4merge
+    tool = smerge
+[mergetool "smerge"]
+    cmd = /Applications/Sublime Merge.app/Contents/SharedSupport/bin/smerge "\"$BASE\"" "\"$LOCAL\"" "\"$REMOTE\"" -o "\"$MERGED\""
+    keepTemporaries = false
+    trustExitCode = false
+    keepBackup = false
 [mergetool "p4merge"]
     cmd = /Applications/p4merge.app/Contents/Resources/launchp4merge "\"$PWD/$BASE\"" "\"$PWD/$REMOTE\"" "\"$PWD/$LOCAL\"" "\"$PWD/$MERGED\""
     keepTemporaries = false
