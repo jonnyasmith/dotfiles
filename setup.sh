@@ -64,7 +64,7 @@ function set_defaults() {
     echo "Disable the warning before emptying the Trash"
     defaults write com.apple.finder WarnOnEmptyTrash -bool false
 
-    Empty Trash securely by default
+    echo "Empty Trash securely by default"
     defaults write com.apple.finder EmptyTrashSecurely -bool true
 
     echo "Enable tap to click (Trackpad)"
@@ -79,11 +79,9 @@ function set_defaults() {
 }
 
 function dotfiles() {
-    mkdir -p ~/.dotfiles
-    cd ~/.ditfiles
     if [ ! -d ~/.dotfiles ]; then
         echo "Cloning dotfiles repo"
-        git clone https://github.com/StefanScherer/dotfiles
+        git clone https://github.com/jonnyasmith/dotfiles ~/.dotfiles
     else
         echo "Updating dotfiles repo"
     fi
