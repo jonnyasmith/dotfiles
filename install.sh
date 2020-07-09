@@ -19,9 +19,9 @@ source install/brew.sh
 # echo "Installing node from nvm..."
 # source install/nvm.sh
 
-# echo ""
-# echo "Configuring zsh as default shell"
-# chsh -s $(which zsh)
+echo ""
+echo "Configuring zsh as default shell"
+chsh -s $(which zsh)
 
-# echo ""
-# echo "Done."
+echo ""
+echo "Done."
