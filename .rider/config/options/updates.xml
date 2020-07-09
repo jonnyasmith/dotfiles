@@ -1,5 +1,0 @@
-<application>
-  <component name="UpdatesConfigurable">
-    <option name="UPDATE_CHANNEL_TYPE" value="eap" />
-  </component>
-</application>
