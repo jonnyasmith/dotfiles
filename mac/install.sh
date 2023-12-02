@@ -1,15 +1,10 @@
 #!/bin/bash
 
-# echo "Configure Mac..."
-# source install/macosx.sh
+echo "Configure Mac..."
+source install/macosx.sh
 
-# echo ""
-# echo "Installing dotfiles"
-# source install/dotfiles.sh
-
-# echo ""
-# echo "Installing dotfiles"
-# source install/dotfiles.sh
+echo "Installing dotfiles"
+source install/dotfiles.sh
 
 echo ""
 echo "Installing homebrew packages..."
