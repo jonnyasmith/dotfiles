@@ -19,22 +19,6 @@ function check_macos_updated() {
     fi
 }
 
-# Install brew and XCode Command Line Tools
-function install_brew() {
-    if [[ -n $(command -v brew) ]]; then
-        echo "Brew already installed."
-    else
-        if [[ -n $(command -v ruby) ]] && [[ -n $(command -v curl) ]]; then
-            echo "Installing Brew..."
-            ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" || { echo "Brew installation failed"; exit 1; }
-            brew analytics off
-        else
-            echo "ruby or curl command not found"
-            exit 1
-        fi
-    fi
-}
-
 function set_defaults() {
 	echo "Setting user defaults"
 
@@ -94,6 +78,5 @@ function dotfiles() {
 }
 
 check_macos_updated;
-install_brew;
 set_defaults;
 dotfiles;
