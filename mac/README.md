@@ -61,6 +61,3 @@ To install the dotfiles, open your terminal and run the following command:
 ```shell
 cd ~/.dotfiles/mac && ./install.sh
 ```
-
-
-
