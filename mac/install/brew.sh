@@ -30,10 +30,17 @@ for tap in "${taps[@]}"; do
     fi
 done
 
+if ! brew tap | grep -q "homebrew/cask-fonts"; then
+  brew tap homebrew/cask-fonts
+else
+  echo "homebrew/cask-fonts tap is already installed"
+fi
+
 apps=(
     1password
     alfred
     docker
+    font-fira-code-nerd-font
     google-chrome
     grammarly
     iterm2
