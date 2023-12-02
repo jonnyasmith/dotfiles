@@ -58,25 +58,13 @@ function set_defaults() {
     echo "Enable tap to click (Trackpad)"
     defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 
-    echo "Enable Safari’s debug menu"
-    defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+    # echo "Enable Safari’s debug menu"
+    # defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
 
     echo "Restarting system apps"
     killall Finder
     Killall Dock
 }
 
-function dotfiles() {
-    mkdir -p ~/.dotfiles
-    cd ~/.ditfiles
-    if [ ! -d ~/.dotfiles ]; then
-        echo "Cloning dotfiles repo"
-        git clone https://github.com/jonnyasmith/dotfiles
-    else
-        echo "Updating dotfiles repo"
-    fi
-}
-
 check_macos_updated;
 set_defaults;
-dotfiles;
