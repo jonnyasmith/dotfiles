@@ -15,7 +15,6 @@ taps=(
     nvm
     starship
     terraform
-    tmux
     tree
     tree-sitter
     zoxide
