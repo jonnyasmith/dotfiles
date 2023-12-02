@@ -46,10 +46,21 @@ pbcopy < ~/.ssh/id_ed25519.pub
 
 Log in to your GitHub account and navigate to the SSH and GPG keys section of your account settings.
 
-## Clone dotfiles repository
+## Clone dotfiles repository and install
 
 To download the dotfiles repository, open your terminal and run the following command:
 
 ```shell
 git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
 ```
+
+Grant full disk access to Terminal in System Preferences > Security & Privacy > Privacy > Full Disk Access.
+
+To install the dotfiles, open your terminal and run the following command:
+
+```shell
+cd ~/.dotfiles/mac && ./install.sh
+```
+
+
+
