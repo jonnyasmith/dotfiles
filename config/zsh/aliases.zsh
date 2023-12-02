@@ -20,12 +20,18 @@ alias buu="brew update && brew upgrade"
 alias ga='git a .'
 alias gcm='git cm'
 alias gf='git f'
-# alias gl='git l -20'
+alias gll='git l -20'
 alias gm='git m'
 alias gp='git p'
 alias gr='git r'
 alias gs='git s'
 alias push='git push'
+
+gac() {
+    git add -A
+    git commit -m "$*"
+}
+alias gac='noglob gac'
 
 alias d='docker'
 alias dc='docker-compose'
