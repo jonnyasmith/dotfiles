@@ -16,3 +16,6 @@ Thumbs.db
 # General
 log/
 *.log
+
+.config/karabiner/automatic_backups
+.config/iterm2/AppSupport
