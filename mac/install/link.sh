@@ -13,3 +13,5 @@ for file in $linkables ; do
         ln -s $file $target
     fi
 done
+
+ln -s $DOTFILES/config $HOME/.config
