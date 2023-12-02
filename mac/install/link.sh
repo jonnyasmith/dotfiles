@@ -14,4 +14,15 @@ for file in $linkables ; do
     fi
 done
 
-ln -s $DOTFILES/config $HOME/.config
+# loop through the list in $DOTFILES/config and create the symlinks in $HOME/.config
+printf "\nCreating symlinks for .config\n"
+config_files=$( find $DOTFILES/config -maxdepth 1 2>/dev/null )
+for config in $config_files; do
+    target="$HOME/.config/$( basename $config )"
+    if [ -e "$target" ]; then
+        printf "Symlink $target already exists, skipping\n"
+    else
+        printf "Creating symlink for $config\n"
+        ln -s $config $target
+    fi
+done
