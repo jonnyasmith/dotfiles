@@ -9,7 +9,6 @@ fi
 taps=(
     azure-cli
     fzf
-    git
     jq
     lazygit
     neovim
@@ -21,7 +20,7 @@ taps=(
     tree-sitter
     zoxide
     zsh
-    zsh-abbr
+    olets/tap/zsh-abbr
 )
 
 for tap in "${taps[@]}"; do
