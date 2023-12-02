@@ -2,6 +2,10 @@
 
 This guide will walk you through the process of installing Homebrew and downloading the git dotfiles repository.
 
+## Grant full disk access to Terminal
+
+Grant full disk access to Terminal in System Preferences > Security & Privacy > Privacy > Full Disk Access. Search for Terminal in the utilities folder and check the box.
+
 ## Install Homebrew
 
 Homebrew is a package manager for macOS that simplifies the installation of software.
@@ -12,7 +16,7 @@ To install Homebrew, open your terminal and run the following command:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Add brew to your PATH in ~/.zshrc:
+Add brew to your PATH in ~/.zprofile:
 
 ```shell
 (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
@@ -60,8 +64,6 @@ To download the dotfiles repository, open your terminal and run the following co
 ```shell
 git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
 ```
-
-Grant full disk access to Terminal in System Preferences > Security & Privacy > Privacy > Full Disk Access.
 
 To install the dotfiles, open your terminal and run the following command:
 
