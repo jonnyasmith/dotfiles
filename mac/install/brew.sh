@@ -19,7 +19,6 @@ taps=(
     tree
     tree-sitter
     zoxide
-    zsh
     olets/tap/zsh-abbr
 )
 

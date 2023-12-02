@@ -12,6 +12,13 @@ To install Homebrew, open your terminal and run the following command:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
+Add brew to your PATH in ~/.zshrc:
+
+```shell
+(echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> ~/.zprofile
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
 ## Create new SSH Key
 
 To create a GitHub SSH key, open your terminal and run the following command:
@@ -59,5 +66,5 @@ Grant full disk access to Terminal in System Preferences > Security & Privacy > 
 To install the dotfiles, open your terminal and run the following command:
 
 ```shell
-cd ~/.dotfiles/mac && ./install.sh
+cd ~/.dotfiles/mac && sh install.sh
 ```
