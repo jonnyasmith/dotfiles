@@ -54,7 +54,6 @@ apps=(
     postman
     powershell
     rectangle
-    spectacle
     todoist
     transmission
     visual-studio-code
