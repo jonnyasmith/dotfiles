@@ -27,11 +27,12 @@ alias gr='git r'
 alias gs='git s'
 alias push='git push'
 
-gac() {
+
+gac_fn() {
     git add -A
     git commit -m "$*"
 }
-alias gac='noglob gac'
+alias gac='noglob gac_fn'
 
 alias d='docker'
 alias dc='docker-compose'
