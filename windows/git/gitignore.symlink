@@ -1,0 +1,21 @@
+# Node
+npm-debug.log
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# jet brains
+.idea/
+
+# vi
+*~
+
+# General
+log/
+*.log
+
+.config/karabiner/automatic_backups
+.config/iterm2/AppSupport
