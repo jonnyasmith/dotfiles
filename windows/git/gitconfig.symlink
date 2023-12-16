@@ -70,7 +70,8 @@
 [core]
 	excludesfile = /Users/jonny/.gitignore
     pager = less -FXRS -x2
-    editor = vim
+    editor = nvim
+    sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
 [rerere]
     enabled = true
 [gitsh]
