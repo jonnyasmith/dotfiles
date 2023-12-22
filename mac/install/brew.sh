@@ -41,6 +41,7 @@ apps=(
     alfred
     docker
     font-fira-code-nerd-font
+    font-fira-mono-nerd-font
     google-chrome
     grammarly
     iterm2
