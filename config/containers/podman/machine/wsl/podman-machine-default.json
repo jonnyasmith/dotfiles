@@ -3,7 +3,7 @@
  "Created": "2023-12-23T12:44:20.9510174Z",
  "ImageStream": "testing",
  "ImagePath": "C:\\Users\\jonny\\.local\\share\\containers\\podman\\machine\\wsl\\podman-machine-default_fedora-podman-amd64-v39.0.10.tar",
- "LastUp": "2023-12-23T15:13:43.9027548Z",
+ "LastUp": "2023-12-23T15:20:41.921771Z",
  "Name": "podman-machine-default",
  "Rootful": true,
  "IdentityPath": "C:\\Users\\jonny\\.ssh\\podman-machine-default",
