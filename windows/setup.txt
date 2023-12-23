@@ -1,0 +1,42 @@
+install windows updates
+set correct time zone
+install winget
+install git - don't install when terminal is running as administrator
+	winget install --id Git.Git
+
+add powershell to winget - winget install --id Microsoft.PowerShell
+
+add podman desktop to winget - winget install -e --id RedHat.Podman-Desktop
+
+remove docker desktop
+
+add terminal config to repo
+
+edit power plan
+shut laptop lid options - powercfg.cpl
+
+move wsl to seperate step
+
+open wsl terminal and setup user
+
+setup power toys for keyboard remaps
+
+add fonts to repo and remove chocolateley
+
+might need to download fzf.exe and copy to system32 folder
+
+Install-Module -Name PSFzf -RequiredVersion 2.5.16
+Install-Module -Name Terminal-Icons -Repository PSGallery
+Install-Module z -AllowClobber
+
+install latest npm - nvm install lts
+
+install git copilot cli - npm i @githubnext/github-copilot-cli -g
+
+authorise copilot cli - github-copilot-cli auth
+
+install packer nvim
+
+npm i prettier -g
+
+:PackerInstall
