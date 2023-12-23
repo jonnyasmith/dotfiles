@@ -53,7 +53,7 @@ Set-Alias -Name gs -Value git_status
 function git_fetch { git fetch }
 Set-Alias -Name gf -Value git_fetch
 
-function git_add { git add }
+function git_add { git add . }
 Set-Alias -Name ga -Value git_add
 
 Remove-Alias gl -Force
@@ -156,3 +156,5 @@ function gh? {
         }
     }
 }
+
+$env:STARSHIP_DISTRO = " "
