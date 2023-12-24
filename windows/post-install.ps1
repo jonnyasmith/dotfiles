@@ -7,8 +7,8 @@ Write-Host "Install wsl" -ForegroundColor Blue
 wsl --install
 
 Write-Host "Install npm lts" -ForegroundColor Blue
-nvm install --lts
-nvm use --lts
+nvm install lts
+nvm use lts
 
 write-host "Install npm packages" -ForegroundColor Blue
 npm i @githubnext/github-copilot-cli -g
