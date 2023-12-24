@@ -90,6 +90,21 @@ Run post-installation steps:
 cd "$env:USERPROFILE\.dotfiles\windows" ; .\post-install.ps1
 ```
 
+## Install debian wsl
+
+To install debian wsl, open your terminal and run the following command:
+
+```powershell
+# run with elevated privileges
+wsl --install --distribution Debian
+```
+
+update debian packages:
+
+```bash
+sudo apt-get update && apt-get upgrade -y
+```
+
 ## Setup nvim
 
 To setup nvim, open your terminal and run the following command:
