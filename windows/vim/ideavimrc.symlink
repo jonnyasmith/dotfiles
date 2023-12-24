@@ -133,6 +133,7 @@ nnoremap <leader>w :action SaveDocument<CR>
 let g:WhichKeyDesc_ShowFile                         = "<Space>e Show file"
 nnoremap <leader>e :action SelectInProjectView<CR>
 
+
 " nnoremap <leader>c :action CheckinProject<CR>
 
 nnoremap <leader>to :tabonly<CR>
