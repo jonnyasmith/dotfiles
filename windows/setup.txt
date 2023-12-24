@@ -1,12 +1,4 @@
-install windows updates
-set correct time zone
-install winget
-install git - don't install when terminal is running as administrator
-	winget install --id Git.Git
 
-add powershell to winget - winget install --id Microsoft.PowerShell
-
-add podman desktop to winget - winget install -e --id RedHat.Podman-Desktop
 
 remove docker desktop
 
@@ -29,7 +21,7 @@ Install-Module -Name PSFzf -RequiredVersion 2.5.16 -Force
 Install-Module -Name Terminal-Icons -Repository PSGallery -Force
 Install-Module z -AllowClobber -Force
 
-install latest npm - nvm install lts
+install laostest npm - nvm install lts
 
 install git copilot cli - npm i @githubnext/github-copilot-cli -g
 
