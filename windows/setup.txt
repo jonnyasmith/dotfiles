@@ -15,13 +15,13 @@ add terminal config to repo
 edit power plan
 shut laptop lid options - powercfg.cpl
 
-move wsl to seperate step
+move wsl to separate step
 
 open wsl terminal and setup user
 
 setup power toys for keyboard remaps
 
-add fonts to repo and remove chocolateley
+add fonts to repo and remove chocolatey
 
 might need to download fzf.exe and copy to system32 folder
 
@@ -33,7 +33,7 @@ install latest npm - nvm install lts
 
 install git copilot cli - npm i @githubnext/github-copilot-cli -g
 
-authorise copilot cli - github-copilot-cli auth
+authorize copilot cli - github-copilot-cli auth
 
 install packer nvim
 

@@ -1,6 +1,7 @@
 Write-Host "Running winget script" -ForegroundColor Green
 
 $packagesToInstall = @(
+    "AgileBits.1Password",
     "CoreyButler.NVMforWindows",
     "Docker.DockerDesktop",
     "Git.Git",
@@ -8,11 +9,10 @@ $packagesToInstall = @(
     "Microsoft.DotNet.SDK.6",
     "Microsoft.DotNet.SDK.7",
     "Microsoft.DotNet.SDK.8",
+    "Microsoft.PowerShell",
     "Microsoft.PowerToys",
     "Microsoft.VisualStudioCode",
     "Neovim.Neovim",
-    "Microsoft.PowerShell",
-    "AgileBits.1Password",
     "Starship.Starship"
 )
 
