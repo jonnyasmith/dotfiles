@@ -68,10 +68,11 @@
     # do not warn about missing whitespace at EOF
     whitespace = nowarn
 [core]
-	excludesfile = /Users/jonny/.gitignore
+    excludesfile = /Users/jonny/.gitignore
     pager = less -FXRS -x2
     editor = nvim
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
+	autocrlf = input
 [rerere]
     enabled = true
 [gitsh]
