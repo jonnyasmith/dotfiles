@@ -11,6 +11,7 @@ $packagesToInstall = @(
     "Microsoft.PowerToys",
     "Microsoft.VisualStudioCode",
     "Neovim.Neovim",
+    "Microsoft.PowerShell",
     "AgileBits.1Password",
     "Starship.Starship"
 )

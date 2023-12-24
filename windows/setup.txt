@@ -25,9 +25,9 @@ add fonts to repo and remove chocolateley
 
 might need to download fzf.exe and copy to system32 folder
 
-Install-Module -Name PSFzf -RequiredVersion 2.5.16
-Install-Module -Name Terminal-Icons -Repository PSGallery
-Install-Module z -AllowClobber
+Install-Module -Name PSFzf -RequiredVersion 2.5.16 -Force
+Install-Module -Name Terminal-Icons -Repository PSGallery -Force
+Install-Module z -AllowClobber -Force
 
 install latest npm - nvm install lts
 

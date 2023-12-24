@@ -1,0 +1,179 @@
+let mapleader = " "
+
+set clipboard+=unnamed
+set commentary
+set exchange
+set history=1000
+set hlsearch
+set ignorecase smartcase
+set incsearch
+set noerrorbells
+set nohlsearch
+set number
+set relativenumber
+set scrolloff=8
+set showmode
+set smartcase
+set sneak
+set surround
+set visualbell
+" set which-key
+set incsearch
+" disable the timeout option
+" set notimeout
+" increase the timeoutlen (default: 1000), don't add space around the equal sign =
+" set timeoutlen=5000
+
+" lear t he search buffer when hitting return
+nnoremap <C-n> :nohlsearch<cr>
+
+" To copy text to the end-of-line, press Y.
+" This mapping sets up Y to be consistent with
+" the C and D operators, which act from the cursor
+" to the end of the line. The default behavior of Y
+" is to yank the whole line.
+nnoremap Y y$
+
+nnoremap <Leader>ai  :action IntentionsActionGroupCSharp<CR>
+vnoremap <Leader>ai  :action IntentionsActionGroupCSharp<CR>
+
+" let g:WhichKey_DefaultDelay = 0
+
+let g:WhichKeyDesc_Harpoon = "<Space>h Harpoon"
+nnoremap <Leader>he  :action ShowHarpoon<CR>
+let g:WhichKeyDesc_Harpoon_Editor = "<Space>he Harpoon"
+nnoremap <Leader>ha  :action AddToHarpoon<CR>
+let g:WhichKeyDesc_Harpoon_AddToHarpoon = "<Space>ha Add file"
+nnoremap <Leader>hj  :action SetHarpoon1<CR>
+let g:WhichKeyDesc_Harpoon_SetHarpoon1 = "<Space>hj Set 1"
+nnoremap <Leader>hk  :action SetHarpoon2<CR>
+let g:WhichKeyDesc_Harpoon_SetHarpoon2 = "<Space>hk Set 2"
+nnoremap <Leader>hl  :action SetHarpoon3<CR>
+let g:WhichKeyDesc_Harpoon_SetHarpoon3 = "<Space>hl Set 3"
+nnoremap <Leader>h;  :action SetHarpoon4<CR>
+let g:WhichKeyDesc_Harpoon_SetHarpoon4 = "<Space>h; Set 4"
+
+nnoremap <C-j> :action GotoHarpoon1<CR>
+nnoremap <C-k> :action GotoHarpoon2<CR>
+nnoremap <C-l> :action GotoHarpoon3<CR>
+nnoremap <C-;> :action GotoHarpoon4<CR>
+
+let g:WhichKeyDesc_UnitTesting                         = "<Space>u Unit Testing"
+nnoremap <Leader>ua  :action RiderUnitTestRunSolutionAction<CR>
+let g:WhichKeyDesc_UnitTesting_RiderUnitTestRunTreeSplitAction = "<Space>ua Run all"
+nnoremap <Leader>ud  :action RiderUnitTestDebugContextAction<CR>
+let g:WhichKeyDesc_UnitTesting_DebugContextMenu        = "<Space>ud Debug Test"
+nnoremap <Leader>ur  :action RiderUnitTestRunContextAction<CR>
+let g:WhichKeyDesc_UnitTesting_RunContextAction        = "<Space>ur Run Test"
+nnoremap <Leader>uu  :action RiderUnitTestRepeatPreviousRunAction<CR>
+let g:WhichKeyDesc_UnitTesting_RepeatPreviousRunAction = "<Space>uu Repeat Previous Run"
+
+
+let g:WhichKeyDesc_Search                           = "<Space>s Search"
+nnoremap <Leader>sf  :action GotoFile<CR>
+vnoremap <Leader>sf  :action GotoFile<CR>
+let g:WhichKeyDesc_Search_GotoFile                  = "<Space>sf File"
+nnoremap <Leader>sc  :action GotoClass<CR>
+vnoremap <Leader>sc  :action GotoClass<CR>
+let g:WhichKeyDesc_Search_GotoClass                 = "<Space>sc Class"
+nnoremap <Leader>sb  :action Switcher<CR>
+vnoremap <Leader>sb  :action Switcher<CR>
+let g:WhichKeyDesc_Search_Switcher                  = "<Space>sb Tabs"
+nnoremap <Leader>ss  :action GotoSymbol<CR>
+vnoremap <Leader>ss  :action GotoSymbol<CR>
+let g:WhichKeyDesc_Search_GotoSymbol                = "<Space>ss Symbols"
+nnoremap <Leader>sa  :action GotoAction<CR>
+vnoremap <Leader>sa  :action GotoAction<CR>
+let g:WhichKeyDesc_Search_GotoAction                = "<Space>sa Action"
+nnoremap <Leader>sm  :action FileStructurePopup<CR>
+vnoremap <Leader>sm  :action FileStructurePopup<CR>
+let g:WhichKeyDesc_Search_FileStructurePopup        = "<Space>sm Members"
+
+let g:WhichKeyDesc_Buffers                          = "<Space>b Buffers"
+nnoremap <Leader>bl  :action MoveTabRight<CR>
+let g:WhichKeyDesc_Search_MoveTabRight              = "<Space>bl Move right"
+nnoremap <Leader>bj  :action MoveTabDown<CR>
+let g:WhichKeyDesc_Search_MoveTabDown               = "<Space>bj Move down"
+nnoremap <Leader>bu  :action ReopenClosedTab<CR>
+let g:WhichKeyDesc_Search_ReopenClosedTab           = "<Space>bu Reopen"
+
+let g:WhichKeyDesc_Git                          = "<Space>g Git"
+nnoremap <Leader>gf  :action Git.Fetch<CR>
+let g:WhichKeyDesc_Search_GitFetch              = "<Space>gf Fetch"
+nnoremap <Leader>gm  :action VcsGroups<CR>
+let g:WhichKeyDesc_Search_VcsGroups             = "<Space>gm Menu"
+nnoremap <Leader>gh  :action Vcs.ShowTabbedFileHistory<CR>
+let g:WhichKeyDesc_Git_ShowTabbedFileHistory    = "<Space>gh History"
+vnoremap <Leader>gh  :action Vcs.ShowHistoryForBlock<CR>
+let g:WhichKeyDesc_Git_ShowHistoryForBlock      = "<Space>gh History"
+
+nnoremap <Leader>rr  :action Refactorings.QuickListPopupAction<CR>
+nnoremap <Leader>lm  :action ShowIntentionActions<CR>
+nnoremap <Leader>lr  :action RebuildSolutionAction<CR>
+nnoremap <Leader>lb  :action BuildSolutionAction<CR>
+nnoremap <Leader>lc  :action CleanSolutionAction<CR>
+nnoremap <Leader>lf  :action ShowReformatFileDialog<CR>
+vnoremap <Leader>lf  :action ShowReformatFileDialog<CR>
+
+nnoremap <Leader>Uu  :action ActivateUnitTestsToolWindow<CR>
+nnoremap <Leader>Ue  :action ActivateProjectToolWindow<CR>
+nnoremap <Leader>Ug  :action ActivateVersionControlToolWindow<CR>
+nnoremap <Leader>Uc  :action ActivateCommitToolWindow<CR>
+
+imap <C-CR> <Esc> <Action>(EditorCompleteStatement)
+nmap <C-CR> <Action>(EditorCompleteStatement)
+nmap <C-h> <Action>(QuickJavaDoc)
+nnoremap <C-A> GVgg
+inoremap <C-A> GVgg
+
+let g:WhichKeyDesc_CloseFile                         = "<Space>q Quit file"
+nnoremap <leader>q :q!<CR>
+let g:WhichKeyDesc_WriteFile                         = "<Space>w Write file"
+nnoremap <leader>w :action SaveDocument<CR>
+let g:WhichKeyDesc_ShowFile                         = "<Space>e Show file"
+nnoremap <leader>e :action SelectInProjectView<CR>
+
+" nnoremap <leader>c :action CheckinProject<CR>
+
+nnoremap <leader>to :tabonly<CR>
+nnoremap <C-S-E> :action Console.Jdbc.Execute<CR>
+inoremap <C-S-E> <ESC>:action Console.Jdbc.Execute<CR>a
+vnoremap <C-S-E> :action Console.Jdbc.Execute<CR>
+
+nnoremap <leader>gi :action ReSharperGotoImplementation<CR>
+nnoremap <leader>gr :action ShowUsages<CR>
+
+nnoremap <C-[> :action GotoPreviousError<CR>
+nnoremap <C-]> :action GotoNextError<CR>
+nnoremap <C-S-[> :action ReSharperGotoPrevErrorInSolution<CR>
+nnoremap <C-S-]> :action ReSharperGotoNextErrorInSolution<CR>
+
+nnoremap <C-/> :action CommentByLineComment<CR>
+vnoremap <C-/> :action CommentByLineComment<CR>
+
+nnoremap <A-l> :action NextTab<CR>
+nnoremap <A-h> :action PreviousTab<CR>
+
+nnoremap <leader>ag :action AIAssistant.Editor.GenerateCodeInplace<CR>
+
+" Quick window navigation
+map <A-J> <C-W>j
+map <A-K> <C-W>k
+map <A-L> <C-W>l
+map <A-H> <C-W>h
+
+vnoremap > >gv
+vnoremap < <gv
+
+" Move visual block
+vnoremap K :m '<-2<CR>gv=gv
+vnoremap J :m '>+1<CR>gv=gv
+
+" Put search results in the middle of the screen
+nnoremap n nzz
+nnoremap N Nzz
+
+nmap <C-o> <Action>(Back)
+nmap <C-i> <Action>(Forward)
+
+sethandler <C-A> n:vim i-x:ide
