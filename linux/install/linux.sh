@@ -15,3 +15,5 @@ apt upgrade -y
 # Enable firewall
 echo "Enabling firewall..."
 ufw enable
+
+git clone https://github.com/wbthomason/packer.nvim /home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim
