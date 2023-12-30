@@ -13,7 +13,7 @@ echo "Symlinking dotfiles..."
 
 echo ""
 echo "Installing packages..."
-source install/brew.sh
+source install/linux.sh
 
 echo ""
 echo "Install OH-MY-ZSH..."
