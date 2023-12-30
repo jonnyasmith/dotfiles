@@ -40,7 +40,7 @@ ssh-add ~/.ssh/id_ed25519
 Run the following command to copy the SSH key to your clipboard:
 
 ```shell
-pbcopy < ~/.ssh/id_ed25519.pub
+cat  ~/.ssh/id_ed25519.pub
 ```
 
 Log in to your GitHub account and navigate to the SSH and GPG keys section of your account settings.
