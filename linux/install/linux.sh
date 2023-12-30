@@ -10,10 +10,12 @@ fi
 # Update the package list and upgrade installed packages
 echo "Updating packages..."
 apt update
-apt upgrade -y
+sudo apt upgrade -y
 
 # Enable firewall
 echo "Enabling firewall..."
 ufw enable
 
-git clone https://github.com/wbthomason/packer.nvim /home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim
+if [ ! -d "/home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim" ] ; then
+    git clone https://github.com/wbthomason/packer.nvim /home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim
+fi
