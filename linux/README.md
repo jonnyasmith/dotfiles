@@ -2,6 +2,15 @@
 
 This guide will walk you through the process of downloading the git dotfiles repository.
 
+
+## Update system and install git
+
+To update your system and install git, open your terminal and run the following command:
+
+```shell
+sudo apt update && sudo apt upgrade -y && sudo apt install git -y
+```
+
 ## Create new SSH Key
 
 To create a GitHub SSH key, open your terminal and run the following command:
