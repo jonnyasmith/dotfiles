@@ -8,14 +8,17 @@ packages_to_install=(
   ubuntu-restricted-extras
   tree
   vlc
+  curl
+  fzf
+  zsh
 )
 
 # Install packages
 for package in "${packages_to_install[@]}"; do
-  if dpkg -l | grep -q $package; then
+  if sudo dpkg -l | grep -q $package; then
     echo "$package is already installed."
   else
-    apt install -y $package
+    sudo apt install -y $package
   fi
 done
 
@@ -32,6 +35,6 @@ for package in "${snap_packages_to_install[@]}"; do
   if snap list | grep -q $package; then
     echo "$package is already installed."
   else
-    snap install --classic $package
+    sudo snap install --classic $package
   fi
 done

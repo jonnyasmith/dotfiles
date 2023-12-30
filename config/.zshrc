@@ -72,19 +72,14 @@ export TERM='xterm-256color'
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(
-    brew
+plugins=(    
     colored-man-pages
-    colorize
-    docker
-    docker-compose
-    git
-    kubectl
-    macos
-    node
-    yarn
     zsh-autosuggestions
     zsh-syntax-highlighting
+    fast-syntax-highlighting
+    zsh-autocomplete
+    zsh-abbr
+    nvm
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -117,19 +112,14 @@ source $ZSH/oh-my-zsh.sh
 
 for config (~/.config/zsh/*.zsh) source $config
 
-export NVM_DIR="$HOME/.nvm"
-  [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
-
-compdef g='git'
-compdef d='docker'
-compdef dc='docker-compose'
-compdef k='kubectl'
+# compdef g='git'
+# compdef d='docker'
+# compdef dc='docker-compose'
+# compdef k='kubectl'
 
 export STARSHIP_DISTRO=" "
 
-export PATH="$PATH:/Users/jonny/.dotnet/tools"
-export PATH="$PATH:/Users/jonnysmith/Library/Application Support/JetBrains/Toolbox/scripts"
+export PATH="$PATH:/home/jonny/.local/bin"
 
 _dotnet_zsh_complete()
 {
@@ -142,12 +132,10 @@ compctl -K _dotnet_zsh_complete dotnet
 autoload -U +X bashcompinit && bashcompinit
 
 source ~/.config/zsh/az.completion
-source /opt/homebrew/share/zsh-abbr/zsh-abbr.zsh
 
 bindkey '^ ' autosuggest-accept  # ctrl + space | autosuggest-accept
 bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
 
-eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -164,5 +152,4 @@ fd() {
   cd "$dir"
 }
 
-# Load Angular CLI autocompletion.
-source <(ng completion script)
+eval "$(starship init zsh)"
