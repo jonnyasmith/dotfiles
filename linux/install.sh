@@ -7,13 +7,14 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 echo "Configure Linux..."
+source install/linux.sh
 
 echo ""
 echo "Symlinking dotfiles..."
 
 echo ""
 echo "Installing packages..."
-source install/linux.sh
+source install/packages.sh
 
 echo ""
 echo "Install OH-MY-ZSH..."
