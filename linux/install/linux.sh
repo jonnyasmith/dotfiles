@@ -11,3 +11,20 @@ fi
 echo "Updating packages..."
 apt update
 apt upgrade -y
+
+
+# List of packages to install (add or remove packages as needed)
+packages_to_install=(
+  dbus-x11
+  ubuntu-restricted-extras
+  gnome-tweaks
+)
+
+# Install packages
+for package in "${packages_to_install[@]}"; do
+  if dpkg -l | grep -q $package; then
+    echo "$package is already installed."
+  else
+    apt install -y $package
+  fi
+done
