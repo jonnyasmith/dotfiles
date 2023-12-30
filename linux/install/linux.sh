@@ -11,3 +11,7 @@ fi
 echo "Updating packages..."
 apt update
 apt upgrade -y
+
+# Enable firewall
+echo "Enabling firewall..."
+ufw enable
