@@ -24,6 +24,7 @@ snap refresh
 # List of Snap packages to install (add or remove packages as needed)
 snap_packages_to_install=(
   code
+  nvim
 )
 
 # Install Snap packages
