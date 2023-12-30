@@ -6,6 +6,7 @@ packages_to_install=(
   gnome-tweaks
   htop
   ubuntu-restricted-extras
+  tree
   vlc
 )
 

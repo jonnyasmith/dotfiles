@@ -61,14 +61,12 @@
 [diff]
     renames = copies
     mnemonicprefix = true
-    tool = p4merge
 [difftool]
     prompt = false
 [apply]
     # do not warn about missing whitespace at EOF
     whitespace = nowarn
 [core]
-	excludesfile = /Users/jonny/.gitignore
   pager = less -FXRS -x2
   editor = vim
 [rerere]
@@ -78,8 +76,6 @@
 [grep]
     extendRegexp = true
     lineNumber = true
-[credential]
-    helper = osxkeychain
 [merge]
     keepBackup = false
     tool = smerge
