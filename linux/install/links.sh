@@ -8,3 +8,6 @@ ln -sf /home/jonny/.dotfiles/config/nvim /home/jonny/.config/nvim
 
 echo "Symlinking zsh..."
 ln -sf /home/jonny/.dotfiles/config/zsh /home/jonny/.config/zsh
+
+echo "Symlinking gitconfig..."
+ln -sf /home/jonny/.dotfiles/linux/git/gitconfig.symlink /home/jonny/.gitconfig
