@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Check if apt is installed
-if ! command -v app &> /dev/null
+if ! which apt &> /dev/null
 then
     printf "apt could not be found\n"
     exit
