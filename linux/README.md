@@ -56,5 +56,5 @@ git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
 To install the dotfiles, open your terminal and run the following command:
 
 ```shell
-cd ~/.dotfiles/mac && sh install.sh
+cd ~/.dotfiles/linux && sh install.sh
 ```
