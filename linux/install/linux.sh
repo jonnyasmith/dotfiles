@@ -15,9 +15,13 @@ apt upgrade -y
 
 # List of packages to install (add or remove packages as needed)
 packages_to_install=(
+  code
   dbus-x11
-  ubuntu-restricted-extras
+  gnome-shell-extensions
   gnome-tweaks
+  htop
+  ubuntu-restricted-extras
+  vlc
 )
 
 # Install packages
