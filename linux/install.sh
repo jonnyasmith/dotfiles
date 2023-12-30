@@ -11,6 +11,7 @@ source install/linux.sh
 
 echo ""
 echo "Symlinking dotfiles..."
+source install/links.sh
 
 echo ""
 echo "Installing packages..."
