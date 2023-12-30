@@ -34,7 +34,7 @@ touch ~/.ssh/config
 Run the following command to add your SSH key to the ssh-agent:
 
 ```shell
-ssh-add -K ~/.ssh/id_ed25519
+ssh-add ~/.ssh/id_ed25519
 ```
 
 Run the following command to copy the SSH key to your clipboard:
