@@ -120,6 +120,7 @@ for config (~/.config/zsh/*.zsh) source $config
 export STARSHIP_DISTRO=" "
 
 export PATH="$PATH:/home/jonny/.local/bin"
+export PATH="$PATH:/home/jonny/.dotnet"
 
 _dotnet_zsh_complete()
 {
