@@ -108,3 +108,26 @@ To install starship, open a terminal and run the following command:
 ```shell
 curl -sS https://starship.rs/install.sh | sh
 ```
+
+## Install dotnet 
+
+To install dotnet, open a terminal and run the following commands:
+
+```bash
+wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+```
+
+Before running this script, make sure you grant permission for this script to run as an executable:
+
+```bash
+chmod +x ./dotnet-install.sh
+```
+
+Install the skd versions needed:
+
+```bash
+./dotnet-install.sh --channel 8.0
+./dotnet-install.sh --channel 7.0
+./dotnet-install.sh --channel 6.0
+```
+
