@@ -38,3 +38,16 @@ for package in "${snap_packages_to_install[@]}"; do
     sudo snap install --classic $package
   fi
 done
+
+snap_packages_to_install=(
+  1password
+)
+
+# Install Snap packages
+for package in "${snap_packages_to_install[@]}"; do
+  if snap list | grep -q $package; then
+    echo "$package is already installed."
+  else
+    sudo snap install $package
+  fi
+done
