@@ -2,7 +2,6 @@
 [user]
     name = Jonny Smith
     email = jonny.smith@digitaljs.com
-	signingkey = ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDKCaXgW//Rm/7JX7W3k7RQzMI0G73AmqGINgj8PaK5RdC1ig/Tj78GbduOYi/r5kzA2XgzN54kiYcM75pRbVzcilcGk7dgN/L/sB/PCILNaq+3YsLkY/KFQBi2zqUi9PPymqAavuxiUokQh7olCnqJ4Jl2Hp30YuzHGNTsKrWsEmLWICV3Rk9bGCuLuZIT7VzeGfZ5va69ZJqVWxMlZldp7BzUdE3TI5U//eClkWZApTOkKmQ+LEIR/O14icO5rhQ3rAx/iZUTVZOJ4g27GCdhV/5DNmZwMQvYrKkNl7HwiNxfQbLCuV2HDTtH5O8VNG9K1YH/T8K+K+ShhBY0EV65kQbEFyoBXlmPDbqFeqbdXMTCwcoefqdqoSKiWozBqn0P4KWr9cwLJtpp4sE1XsLr0O1XF4bTHv+LsOzBunAfxhKR1zVqx4MLQ7eeCht6zr+b3bYLig/3ylhwShgqayhGNubC0REmaNW9O0xN5RJwUOBym3zQydMvvX70Rf9wwJwRPj/oBn3I0+HkTkujjPlhWZk41V3NPo7sr5N9S/yhToEXZVyCTuoDrOe7MxyRDhzfmWxffDoE/8fYgP8nZOFN4KRPSlSst+OJW3k3imZvCl87eEyki7rKQXnYYyeM8goCyGUHxGqzRBlTNPYfk4eJ6yxtstVXrp7v6NA8boig3Q==
 [github]
     user = jonnyasmith
 [alias]
@@ -96,9 +95,3 @@
     keepBackup = false
 [difftool "p4merge"]
     cmd = /Applications/p4merge.app/Contents/Resources/launchp4merge "\"$REMOTE\"" "\"$LOCAL\""
-[gpg]
-	format = ssh
-[gpg "ssh"]
-	program = /Applications/1Password.app/Contents/MacOS/op-ssh-sign
-[commit]
-	gpgsign = true
