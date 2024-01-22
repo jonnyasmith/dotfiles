@@ -28,10 +28,25 @@ alias gs='git s'
 alias push='git push'
 
 
+git_fetch_all() {
+    original_dir=$(pwd)
+    cd ~/dev && for dir in */; do
+        if [ -d "$dir/.git" ]; then
+            echo ""
+            echo "\e[33mfetching $dir\e[0m"
+            (cd "$dir" && git fetch --all)
+        fi
+    done
+    cd "$original_dir"
+}
+
+alias fa='git_fetch_all'
+
 gac_fn() {
     git add -A
     git commit -m "$*"
 }
+
 alias gac='noglob gac_fn'
 
 alias d='docker'
