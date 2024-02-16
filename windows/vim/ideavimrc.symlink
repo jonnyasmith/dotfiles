@@ -107,6 +107,10 @@ let g:WhichKeyDesc_Git_ShowTabbedFileHistory    = "<Space>gh History"
 vnoremap <Leader>gh  :action Vcs.ShowHistoryForBlock<CR>
 let g:WhichKeyDesc_Git_ShowHistoryForBlock      = "<Space>gh History"
 
+nnoremap <Leader>gg  :action Vcs.QuickListPopupAction<CR>
+nnoremap <Leader>gp  :action Vcs.Push<CR>
+nnoremap <Leader>gc  :action CheckinProject<CR>
+
 nnoremap <Leader>rr  :action Refactorings.QuickListPopupAction<CR>
 nnoremap <Leader>lm  :action ShowIntentionActions<CR>
 nnoremap <Leader>lr  :action RebuildSolutionAction<CR>
@@ -176,5 +180,3 @@ nnoremap N Nzz
 
 nmap <C-o> <Action>(Back)
 nmap <C-i> <Action>(Forward)
-
-sethandler <C-A> n:vim i-x:ide

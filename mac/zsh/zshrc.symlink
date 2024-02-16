@@ -75,14 +75,13 @@ export TERM='xterm-256color'
 plugins=(
     brew
     colored-man-pages
-    colorize
     docker
     docker-compose
-    git
-    kubectl
     macos
-    node
-    yarn
+    npm
+    nvm
+    sudo
+    zsh-autocomplete
     zsh-autosuggestions
     zsh-syntax-highlighting
 )
@@ -147,7 +146,6 @@ source /opt/homebrew/share/zsh-abbr/zsh-abbr.zsh
 bindkey '^ ' autosuggest-accept  # ctrl + space | autosuggest-accept
 bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
 
-eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -164,5 +162,6 @@ fd() {
   cd "$dir"
 }
 
-# Load Angular CLI autocompletion.
-source <(ng completion script)
+eval "$(starship init zsh)"
+
+complete -o nospace -C /opt/homebrew/bin/terraform terraform

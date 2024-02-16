@@ -1,7 +1,7 @@
 # gitconfig
 [user]
     name = Jonny Smith
-    email = jonny.smith@digitaljs.com
+    email = jonny.smith@dywidga.com
 [github]
     user = jonnyasmith
 [alias]
@@ -16,7 +16,8 @@
     co   = checkout                                                 # Checkout a branch
     cob  = checkout -b                                              # Checkout a new branch
     cp   = cherry-pick -x                                           # Cherry pick a commit
-    d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines    # Show diff ignoring whitespace and blank lines
+#    d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines    # Show diff ignoring whitespace and blank lines
+    d    = diff
     f    = !git fetch --prune                                       # Fetch and prune branches
     m    = merge                                                    # Merge a branch
     mt   = mergetool                                                # Open merge tool
