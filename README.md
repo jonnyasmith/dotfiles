@@ -4,4 +4,6 @@
 
 [Windows Installation Guide](windows/README.md)
 
-[Linux Installation Guide](linux/README.md)
+[Fedora Installation Guide](fedora/README.md)
+
+[Ubuntu Installation Guide](ubuntu/README.md)
