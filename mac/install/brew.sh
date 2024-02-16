@@ -10,11 +10,9 @@ taps=(
     azure-cli
     fzf
     jq
-    lazygit
     neovim
     nvm
     starship
-    terraform
     tree
     tree-sitter
     zoxide
@@ -37,28 +35,23 @@ else
 fi
 
 apps=(
-    1password
     alfred
     docker
-    font-fira-code-nerd-font
     font-fira-mono-nerd-font
     google-chrome
     grammarly
     iterm2
     jetbrains-toolbox
     karabiner-elements
-    microsoft-office
+    microsoft-edge
     microsoft-teams
     miro
     nordvpn
     parallels
     postman
-    powershell
     rectangle
     todoist
-    transmission
     visual-studio-code
-    whatsapp
 )
 
 for app in "${apps[@]}"; do

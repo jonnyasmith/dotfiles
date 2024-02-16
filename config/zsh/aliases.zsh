@@ -20,13 +20,13 @@ alias buu="brew update && brew upgrade"
 alias ga='git a .'
 alias gcm='git cm'
 alias gf='git f'
+alias gd='git d'
 alias gll='git l -20'
 alias gm='git m'
 alias gp='git p'
 alias gr='git r'
 alias gs='git s'
 alias push='git push'
-
 
 git_fetch_all() {
     original_dir=$(pwd)

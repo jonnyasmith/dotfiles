@@ -15,6 +15,3 @@ fi
 if [ ! -d ~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting ]; then
   git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 fi
-
-mv ~/.zshrc ~/.zshrc.oh-my-zsh
-mv ~/.zshrc.pre-oh-my-zsh ~/.zshrc
