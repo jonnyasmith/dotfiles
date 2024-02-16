@@ -18,7 +18,20 @@ packages_to_install=(
   zsh
 )
 
-# Install packages
 for package in "${packages_to_install[@]}"; do
-    sudo dnf install -y $package
+    if ! dnf list installed "$package" > /dev/null 2>&1; then
+        echo "Installing $package..."
+        sudo dnf install -y $package
+    else
+        echo "$package is already installed."
+    fi
 done
+
+if ! dnf list installed terraform > /dev/null 2>&1; then
+    echo "Installing terraform..."
+    sudo dnf install -y dnf-plugins-core
+    sudo dnf config-manager --add-repo https://rpm.releases.hashicorp.com/fedora/hashicorp.repo
+    sudo dnf -y install terraform
+else
+    echo "terraform is already installed."
+fi
