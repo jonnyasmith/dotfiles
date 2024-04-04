@@ -4,7 +4,7 @@ if [ ! -d "/home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim" ] ;
     git clone https://github.com/wbthomason/packer.nvim /home/jonny/.local/share/nvim/site/pack/packer/start/packer.nvim
 fi
 
-if ! command -v starship &> /dev/null
+if ! which starship &> /dev/null
 then
     curl -sS https://starship.rs/install.sh | sh
 else
