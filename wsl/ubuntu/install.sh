@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo ""
+echo "Installing packages..."
+source install/packages.sh
+
 echo "Configure Linux..."
 source install/linux.sh
 
@@ -7,9 +11,6 @@ source install/linux.sh
 # echo "Symlinking dotfiles..."
 # source install/links.sh
 
-echo ""
-echo "Installing packages..."
-source install/packages.sh
 
 echo ""
 echo "Done."
