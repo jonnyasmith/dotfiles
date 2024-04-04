@@ -23,7 +23,7 @@ packages_to_install=(
 
 # Install packages
 for package in "${packages_to_install[@]}"; do
-  if sudo dpkg -l | grep -q $package; then
+  if dpkg-query -W -f='${Status}' $package 2>/dev/null | grep -q "install ok installed"; then
     echo "$package is already installed."
   else
     sudo apt install -y $package
