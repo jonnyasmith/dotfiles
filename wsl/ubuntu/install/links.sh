@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -d "/home/jonny/.config" ] ; then
+    mkdir -p /home/jonny/.config
+fi
+
 echo "Symlinking starship.toml..."
 ln -sf /home/jonny/.dotfiles/config/starship.toml /home/jonny/.config/starship.toml
 
