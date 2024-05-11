@@ -1,0 +1,3 @@
+export SNYK_TOKEN=0b8eadd9-9d26-4f36-a278-ff3e4b52d75a
+export SNYK_CFG_ORG=4b677ca6-fb87-477c-8043-7dab605ce5b2
+
