@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt intstall -y \
+sudo apt install -y \
   htop \
   tree \
   curl \
