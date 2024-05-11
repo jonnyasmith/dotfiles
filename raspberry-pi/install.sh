@@ -9,7 +9,7 @@ source scripts/linux.sh
 
 echo ""
 echo "Installing packages..."
-source install/packages.sh
+source scripts/packages.sh
 
 # echo ""
 # echo "Install OH-MY-ZSH..."
