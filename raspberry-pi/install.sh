@@ -11,8 +11,9 @@ echo ""
 echo "Installing packages..."
 source scripts/packages.sh
 
-# echo ""
-# echo "Install OH-MY-ZSH..."
+echo ""
+echo "Install OH-MY-ZSH..."
+source scripts/zsh.sh
 
 echo ""
 echo "Done."
