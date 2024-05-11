@@ -10,7 +10,9 @@ sudo apt install -y \
 
 curl -sS https://starship.rs/install.sh | sh
 
-if [ ! -f /usr/local/bin/starship ]; then
-    echo "Installing Starship..."
+if ! which starship >/dev/null 2>&1; then
+    echo "Installing starship..."
     curl -sS https://starship.rs/install.sh | sh
+else
+    echo "Starship already installed."
 fi
