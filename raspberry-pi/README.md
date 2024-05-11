@@ -59,6 +59,14 @@ To download the dotfiles repository, open your terminal and run the following co
 git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
 ```
 
+To install the dotfiles, open your terminal and run the following command:
+
+```shell
+# run without elevated privileges
+cd ~/.dotfiles/raspberry-pi && sudo bash ./install.sh
+```
+
+
 ## grant permissions to the /opt directory
 
 ```shell
