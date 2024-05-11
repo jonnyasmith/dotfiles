@@ -7,9 +7,9 @@ source scripts/linux.sh
 # echo "Symlinking dotfiles..."
 # source install/links.sh
 
-# echo ""
-# echo "Installing packages..."
-# source install/packages.sh
+echo ""
+echo "Installing packages..."
+source install/packages.sh
 
 # echo ""
 # echo "Install OH-MY-ZSH..."
