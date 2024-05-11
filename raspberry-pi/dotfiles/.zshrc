@@ -109,7 +109,7 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-for config (~/.config/zsh/*.zsh) source $config
+for config (~/.dotfiles/raspberry-pi/zsh/*.zsh) source $config
 
 bindkey '^ ' autosuggest-accept  # ctrl + space | autosuggest-accept
 bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
