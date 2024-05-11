@@ -13,7 +13,7 @@ source scripts/zsh.sh
 
 echo ""
 echo "Symlinking dotfiles..."
-source install/links.sh
+source scripts/links.sh
 
 echo ""
 echo "Done."
