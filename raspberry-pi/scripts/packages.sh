@@ -7,3 +7,11 @@ sudo apt install -y \
   wget \
   fzf \
   zsh
+
+curl -sS https://starship.rs/install.sh | sh
+
+if ! which starship &> /dev/null
+then
+    echo "Installing starship..."
+    curl -sS https://starship.rs/install.sh | sh
+fi
