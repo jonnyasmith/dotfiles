@@ -22,8 +22,10 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 ```
 
 ```bash
+sh scripts/zsh.sh
 mkdir ~/.config
 rm ~/.zshrc ~/.gitconfig
 stow .
+source ~/.zshrc
 ```
 
