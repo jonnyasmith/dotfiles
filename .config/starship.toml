@@ -87,13 +87,15 @@ format = '[ $user ]($style)'
 [directory]
 style = "fg:mantle bg:blue"
 format = "[  $path ]($style)"
-truncation_length = 3
+truncation_length = 1
 truncation_symbol = "…/"
 
 [hostname]
-ssh_only = false
+ssh_only = true
 style = "bg:surface0 fg:text"
 format = '[ $hostname ]($style)'
+trim_at = '.companyname.com'
+disabled = false
 
 [directory.substitutions]
 "Documents" = "󰈙 "
