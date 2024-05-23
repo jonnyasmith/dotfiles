@@ -26,8 +26,9 @@ sudo tar -C /opt -xzf nvim-linux64.tar.gz
 rm nvim-linux64.tar.gz
 curl -LO https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
 sudo rm -rf /opt/zig
-tar -xf ./zig-linux-x86_64-0.12.0.tar.xz;
-sudo mv zig-linux-x86_64-0.12.0 /opt/zig;
+tar -xf ./zig-linux-x86_64-0.12.0.tar.xz
+sudo mv zig-linux-x86_64-0.12.0 /opt/zig
+rm zig-linux-x86_64-0.12.0.tar.xz
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
