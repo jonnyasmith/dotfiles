@@ -39,7 +39,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 Run the following commands to complete the setup:
 
 ```bash
-sh scripts/zsh.sh
+sh ~/dotfiles/scripts/zsh.sh
 mkdir ~/.config
 rm ~/.zshrc ~/.gitconfig
 stow .
@@ -51,7 +51,7 @@ source ~/.zshrc
 To install Docker and set up Portainer, run the following command:
 
 ```bash
-curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/docker.sh | bash
+sh ~/dotfiles/scripts/docker.sh
 ```
 
 ## Additional Information
