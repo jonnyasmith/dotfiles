@@ -106,12 +106,12 @@ disabled = false
 
 [git_branch]
 symbol = ""
-style = "bg:teal"
-format = '[[ $symbol $branch ](fg:base bg:purple)]($style)'
+style = "bg:peach"
+format = '[[ $symbol $branch ](fg:base bg:peach)]($style)'
 
 [git_status]
-style = "bg:teal"
-format = '[[($all_status$ahead_behind )](fg:base bg:purple)]($style)'
+style = "bg:peach"
+format = '[[($all_status$ahead_behind )](fg:base bg:peach)]($style)'
 
 [nodejs]
 symbol = ""
