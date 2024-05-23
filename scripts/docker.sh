@@ -15,3 +15,6 @@ sudo nala update
 sudo nala install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 sudo usermod -aG docker $USER
+
+sudo mkdir /opt/portainer
+sudo touch /opt/portainer/docker-compose.yml
