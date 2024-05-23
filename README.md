@@ -11,7 +11,7 @@ update and upgrade the system
 ```bash
 sudo apt update && sudo apt install -y git nala
 sudo nala upgrade -y
-sudo nala install -y curl fzf git unzip wget zsh stow tmux
+sudo nala install -y curl fzf git unzip wget zsh stow tmux xz-utils
 git config --global core.sshCommand ssh.exe
 git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
@@ -22,6 +22,10 @@ curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.
 sudo rm -rf /opt/nvim
 sudo tar -C /opt -xzf nvim-linux64.tar.gz
 rm nvim-linux64.tar.gz
+curl -LO https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
+sudo rm -rf /opt/zig
+tar -xf ./zig-linux-x86_64-0.12.0.tar.xz;
+sudo mv zig-linux-x86_64-0.12.0 /opt/zig;
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
