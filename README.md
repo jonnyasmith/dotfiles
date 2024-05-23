@@ -1,12 +1,6 @@
 # WSL dotfiles
 
-to setup wsl, run the following commands:
-
-```bash
-wsl --install -d Debian
-```
-
-update and upgrade the system
+Setup script
 
 ```bash
 sudo apt update && sudo apt install -y git nala
@@ -32,6 +26,8 @@ rm zig-linux-x86_64-0.12.0.tar.xz
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 ```
 
+Post setup script
+
 ```bash
 sh scripts/zsh.sh
 mkdir ~/.config
@@ -41,3 +37,8 @@ source ~/.zshrc
 sh scripts/docker.sh
 ```
 
+Docker setup
+
+```bash
+sh ~/.dotfiles/scripts/docker.sh
+```
