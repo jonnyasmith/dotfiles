@@ -34,7 +34,6 @@ mkdir ~/.config
 rm ~/.zshrc ~/.gitconfig
 stow .
 source ~/.zshrc
-sh scripts/docker.sh
 ```
 
 Docker setup
