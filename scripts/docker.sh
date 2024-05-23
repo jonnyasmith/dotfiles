@@ -17,4 +17,17 @@ sudo nala install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 sudo usermod -aG docker $USER
 
 sudo mkdir /opt/portainer
-sudo touch /opt/portainer/docker-compose.yml
+
+sudo tee /opt/portainer/docker-compose.yml > /dev/null <<EOF
+services:
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/opt/portainer/data:/data"
+EOF
