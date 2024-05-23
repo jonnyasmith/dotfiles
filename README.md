@@ -11,6 +11,7 @@ Make sure you have WSL installed and set up on your Windows machine.
 Run the following commands to set up your environment:
 
 ```bash
+sudo apt install curl -y
 curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/setup.sh | bash
 ```
 
