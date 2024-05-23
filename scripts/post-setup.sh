@@ -1,6 +1,12 @@
 # Run the zsh.sh script from the scripts directory to set up Zsh environment
 sh ~/.dotfiles/scripts/zsh.sh
 
+# Install the latest LTS version of Node.js
+nvm install --lts
+
+# Install Prettier globally using npm
+npm install prettier -g
+
 # Create a .config directory in the user's home directory
 mkdir ~/.config
 
