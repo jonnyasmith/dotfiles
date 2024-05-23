@@ -31,3 +31,8 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/opt/portainer/data:/data"
 EOF
+
+sudo service docker start
+cd /opt/portainer
+sudo docker compose up -d
+cd
