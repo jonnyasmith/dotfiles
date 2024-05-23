@@ -25,12 +25,6 @@ curl -sS https://starship.rs/install.sh | sh
 # Install NVM (Node Version Manager)
 curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 
-# Install the latest LTS version of Node.js
-nvm install --lts
-
-# Install Prettier globally using npm
-npm install prettier -g
-
 # Download and install the latest version of Neovim
 curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
 sudo rm -rf /opt/nvim
