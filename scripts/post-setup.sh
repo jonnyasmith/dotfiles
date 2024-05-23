@@ -1,5 +1,5 @@
 # Run the zsh.sh script from the scripts directory to set up Zsh environment
-sh scripts/zsh.sh
+sh ~/.dotfiles/scripts/zsh.sh
 
 # Create a .config directory in the user's home directory
 mkdir ~/.config
