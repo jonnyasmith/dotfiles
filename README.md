@@ -60,14 +60,17 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 Run the following commands to complete the setup:
 
 ```bash
-# Run the zsh.sh script from the scripts directory to set up Zsh environment
-sh ~/.dotfiles/scripts/zsh.sh
+git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
+git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
 # Create a .config directory in the user's home directory
 mkdir ~/.config
 
 # Remove existing .zshrc and .gitconfig files from the home directory
-rm ~/.zshrc ~/.gitconfig
+mv ~/.zshrc ~/.zshrc.orig
+mv ~/.gitconfig ~/.gitconfig.orig
 
 # Use stow to symlink the dotfiles from the repository to the appropriate locations
 stow .
