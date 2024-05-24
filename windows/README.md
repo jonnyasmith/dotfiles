@@ -36,40 +36,6 @@ git clone https://github.com/wbthomason/packer.nvim $env:LOCALAPPDATA\nvim-data\
 iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/amnweb/nf-installer/main/install.ps1'))
 ```
 
-## Install WSL
-
-```shell
-wsl --install
-```
-
-Run the following command to start the ssh-agent in the background:
-
-```powershell
-# run without elevated privileges
-Get-Service ssh-agent | Set-Service -StartupType Automatic -PassThru | Start-Service
-```
-
-Create a config file in the ~/.ssh directory:
-
-```powershell
-# run without elevated privileges
-New-Item -Path "$env:USERPROFILE\.ssh" -Name "config" -ItemType File
-```
-
-Run the following command to add your SSH key to the ssh-agent:
-
-```powershell
-# run without elevated privileges
-ssh-add "$env:USERPROFILE\.ssh\id_ed25519"
-```
-
-Run the following command to copy the SSH key to your clipboard:
-
-```powershell
-# run without elevated privileges
-cat $HOME\.ssh\id_ed25519.pub | clip
-```
-
 ## Clone dotfiles
 
 ```sh
