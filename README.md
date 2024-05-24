@@ -81,7 +81,62 @@ source ~/.zshrc
 To install Docker and set up Portainer, run the following command:
 
 ```bash
-sh ~/.dotfiles/scripts/docker.sh
+# Update the package lists and install necessary packages
+sudo nala update
+sudo nala install ca-certificates curl
+
+# Create the directory for the Docker GPG key
+sudo install -m 0755 -d /etc/apt/keyrings
+
+# Download Docker's official GPG key and save it to the created directory
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+
+# Set permissions for the Docker GPG key
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the Docker repository to the Apt sources list
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Update the package lists again to include the new Docker repository
+sudo nala update
+
+# Install Docker packages
+sudo nala install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Add the current user to the Docker group to allow running Docker commands without sudo
+sudo usermod -aG docker $USER
+
+# Create a directory for Portainer
+sudo mkdir /opt/portainer
+
+# Create a Docker Compose file for Portainer
+sudo tee /opt/portainer/docker-compose.yml > /dev/null <<EOF
+services:
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/opt/portainer/data:/data"
+EOF
+
+# Start the Docker service
+sudo service docker start
+
+# Navigate to the Portainer directory
+cd /opt/portainer
+
+# Use Docker Compose to start Portainer in detached mode
+sudo docker compose up -d
+
+# Return to the previous directory
+cd
 ```
 
 ## Additional Information
