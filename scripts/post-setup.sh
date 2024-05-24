@@ -12,9 +12,3 @@ stow .
 
 # Source the new .zshrc file to apply the Zsh configuration immediately
 source ~/.zshrc
-
-# Install the latest LTS version of Node.js
-nvm install --lts
-
-# Install Prettier globally using npm
-npm install prettier -g
