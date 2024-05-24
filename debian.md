@@ -1,6 +1,6 @@
 # WSL Debian Setup
 
-[README](README.md)
+[Back to README](README.md)
 
 This repository contains setup scripts to configure your WSL environment with essential tools and configurations.
 
