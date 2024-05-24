@@ -20,11 +20,7 @@ curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/setup.sh
 Run the following commands to complete the setup:
 
 ```bash
-sh ~/.dotfiles/scripts/zsh.sh
-mkdir ~/.config
-rm ~/.zshrc ~/.gitconfig
-stow .
-source ~/.zshrc
+curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/post-setup.sh | bash
 ```
 
 ## Docker Setup
