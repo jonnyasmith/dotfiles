@@ -4,7 +4,7 @@ This repository contains setup scripts to configure your WSL environment with es
 
 ## Prerequisites
 
-Make sure you have WSL installed and set up on your Windows machine.
+Ensure you have WSL installed and set up on your Windows machine. You can install WSL by following the [Microsoft WSL Installation Guide.] (https://learn.microsoft.com/en-us/windows/wsl/install)
 
 ## Setup Script
 
@@ -57,7 +57,7 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 
 ## Post-Setup Script
 
-Run the following commands to complete the setup:
+After running the setup script, execute the following commands to complete the configuration:
 
 ```bash
 git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
@@ -81,7 +81,7 @@ source ~/.zshrc
 
 ## Docker Setup
 
-To install Docker and set up Portainer, run the following command:
+To install Docker, run the following command:
 
 ```bash
 # Update the package lists and install necessary packages
@@ -115,6 +115,8 @@ sudo usermod -aG docker $USER
 # Start the Docker service
 sudo service docker start
 ```
+
+### Portainer Setup
 
 To set up Portainer, run the following command:
 
@@ -154,3 +156,5 @@ cd
 - The Starship prompt, NVM, Node.js (LTS), and Prettier are installed.
 - Neovim and Zig are downloaded and installed in /opt.
 - Oh My Zsh is installed for a better Zsh experience.
+
+Ensure to follow the steps sequentially for a smooth setup process. If you encounter any issues, check the documentation of each tool for troubleshooting tips.
