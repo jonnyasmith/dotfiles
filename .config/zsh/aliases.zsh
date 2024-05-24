@@ -8,6 +8,9 @@ else # OS X `ls`
     colorflag="-G"
 fi
 
+alias auu="sudo apt update && sudo apt upgrade -y"
+alias nuu="sudo nala update && sudo nala upgrade -y"
+
 alias vim="nvim"
 
 alias g="git"
