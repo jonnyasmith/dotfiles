@@ -112,6 +112,13 @@ sudo nala install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 # Add the current user to the Docker group to allow running Docker commands without sudo
 sudo usermod -aG docker $USER
 
+# Start the Docker service
+sudo service docker start
+```
+
+To set up Portainer, run the following command:
+
+```bash
 # Create a directory for Portainer
 sudo mkdir /opt/portainer
 
@@ -128,9 +135,6 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "/opt/portainer/data:/data"
 EOF
-
-# Start the Docker service
-sudo service docker start
 
 # Navigate to the Portainer directory
 cd /opt/portainer
