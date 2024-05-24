@@ -42,3 +42,5 @@ rm zig-linux-x86_64-0.12.0.tar.xz
 sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 chsh -s $(which zsh)
+
+zsh
