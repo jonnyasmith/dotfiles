@@ -20,6 +20,7 @@ curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/setup.sh
 Run the following commands to complete the setup:
 
 ```bash
+cd ~/.dotfiles
 curl https://raw.githubusercontent.com/jonnyasmith/dotfiles/wsl/scripts/post-setup.sh | bash
 ```
 
