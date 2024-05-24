@@ -6,35 +6,40 @@ This guide will walk you through the process of installing winget and downloadin
 
 To install all Windows updates, open the Windows Settings app and navigate to Update & Security > Windows Update > Check for updates.
 
-## Set powershell execution policy
-
-Grant full disk access to Terminal in System Preferences > Security & Privacy > Privacy > Full Disk Access. Search for Terminal in the utilities folder and check the box.
+## Install packages
 
 ```powershell
-# run with elevated privileges
-Set-ExecutionPolicy -ExecutionPolicy Unrestricted
-```
-
-## Install winget and git
-
-To install winget, go to the following website and select install link.
-
-[Winget installl guile](https://learn.microsoft.com/en-us/windows/package-manager/winget/)
-
-Restart you terminal and run the following command to install git:
-
-```powershell
-# run with elevated privileges
+winget install --id AgileBits.1Password
+winget install --id CoreyButler.NVMforWindows
 winget install --id Git.Git
+winget install --id JetBrains.Toolbox
+winget install --id Microsoft.AzureCLI
+winget install --id Microsoft.DotNet.SDK.8
+winget install --id Microsoft.PowerShell
+winget install --id Microsoft.VisualStudioCode
+winget install --id Neovim.Neovim
+winget install --id Starship.Starship
+winget install --id junegunn.fzf
+winget install --id zig.zig
+winget install JanDeDobbeleer.OhMyPosh -s winget
 ```
 
-## Create new SSH Key
+## Install Packer
 
-To create a GitHub SSH key, open your terminal and run the following command:
+```powershell
+git clone https://github.com/wbthomason/packer.nvim $env:LOCALAPPDATA\nvim-data\site\pack\packer\start\packer.nvim
+```
+
+## Install Nerd Font
+
+```powershell
+iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/amnweb/nf-installer/main/install.ps1'))
+```
+
+## Install WSL
 
 ```shell
-# run without elevated privileges
-ssh-keygen -t ed25519 -C "jonny.smith@digitaljs.com"
+wsl --install
 ```
 
 Run the following command to start the ssh-agent in the background:
@@ -65,52 +70,14 @@ Run the following command to copy the SSH key to your clipboard:
 cat $HOME\.ssh\id_ed25519.pub | clip
 ```
 
-Log in to your GitHub account and navigate to the SSH and GPG keys section of your account settings.
-
-## Clone dotfiles repository and install
-
-To download the dotfiles repository, open your terminal and run the following command:
+## Clone dotfiles
 
 ```sh
 # run without elevated privileges
 git clone git@github.com:jonnyasmith/dotfiles.git "$env:USERPROFILE\.dotfiles"
 ```
 
-To install the dotfiles, open your terminal with elevated privileges and run the following command:
-
-```powershell
-# run with elevated privileges
-cd "$env:USERPROFILE\.dotfiles\windows" ; .\install.ps1
-```
-
-Run post-installation steps:
-
-```powershell
-# run with elevated privileges
-cd "$env:USERPROFILE\.dotfiles\windows" ; .\post-install.ps1
-```
-
-## Install debian wsl
-
-To install debian wsl, open your terminal and run the following command:
-
 ```powershell
 # run with elevated privileges
 wsl --install --distribution Debian
-```
-
-update debian packages:
-
-```bash
-sudo apt-get update && apt-get upgrade -y
-```
-
-## Setup nvim
-
-To setup nvim, open your terminal and run the following command:
-
-```powershell
-# run without elevated privileges
-nvim
-:PackerInstall
 ```
