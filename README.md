@@ -18,7 +18,7 @@ sudo apt update && sudo apt install -y git nala
 sudo nala upgrade -y
 
 # Install essential packages using nala
-sudo nala install -y curl fzf git unzip wget zsh stow tmux xz-utils
+sudo nala install -y curl fzf git unzip wget zsh stow tmux tree xz-utils
 
 # Configure git to use ssh.exe for SSH commands
 git config --global core.sshCommand ssh.exe
