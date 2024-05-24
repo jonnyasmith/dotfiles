@@ -1,4 +1,6 @@
-# WSL Dotfiles
+# WSL Setup
+
+[Ubuntu Installation Guide](ubuntu.md)
 
 This repository contains setup scripts to configure your WSL environment with essential tools and configurations.
 
