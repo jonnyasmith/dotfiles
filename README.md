@@ -60,19 +60,31 @@ sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/too
 After running the setup script, execute the following commands to complete the configuration:
 
 ```bash
+# Clone the zsh-autosuggestions plugin into the Oh My Zsh custom plugins directory
 git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# Clone the zsh-syntax-highlighting plugin into the Oh My Zsh custom plugins directory
 git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+
+# Clone the fast-syntax-highlighting plugin into the Oh My Zsh custom plugins directory
 git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/fast-syntax-highlighting
+
+# Clone the zsh-autocomplete plugin into the Oh My Zsh custom plugins directory with a shallow clone
 git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
-# Create a .config directory in the user's home directory
+# Clone the tmux plugin manager (tpm) into the .tmux/plugins directory
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
+# Create a .config directory in the user's home directory if it doesn't exist
 mkdir ~/.config
 
-# Remove existing .zshrc and .gitconfig files from the home directory
+# Backup existing .zshrc file by renaming it to .zshrc.orig
 mv ~/.zshrc ~/.zshrc.orig
+
+# Backup existing .gitconfig file by renaming it to .gitconfig.orig
 mv ~/.gitconfig ~/.gitconfig.orig
 
-# Use stow to symlink the dotfiles from the repository to the appropriate locations
+# Use stow to symlink the dotfiles from the repository to the appropriate locations in the home directory
 stow .
 
 # Source the new .zshrc file to apply the Zsh configuration immediately
