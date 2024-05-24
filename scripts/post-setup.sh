@@ -1,3 +1,5 @@
+cd ~/.dotfiles
+
 # Run the zsh.sh script from the scripts directory to set up Zsh environment
 sh ~/.dotfiles/scripts/zsh.sh
 
