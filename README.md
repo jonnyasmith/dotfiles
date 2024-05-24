@@ -4,7 +4,7 @@ This repository contains setup scripts to configure your WSL environment with es
 
 ## Prerequisites
 
-Ensure you have WSL installed and set up on your Windows machine. You can install WSL by following the [Microsoft WSL Installation Guide.] (https://learn.microsoft.com/en-us/windows/wsl/install)
+Ensure you have WSL installed and set up on your Windows machine. You can install WSL by following the [Microsoft WSL Installation Guide.](https://learn.microsoft.com/en-us/windows/wsl/install)
 
 ## Setup Script
 
