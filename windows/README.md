@@ -12,16 +12,17 @@ To install all Windows updates, open the Windows Settings app and navigate to Up
 winget install --id AgileBits.1Password
 winget install --id CoreyButler.NVMforWindows
 winget install --id Git.Git
+winget install --id Google.Chrome
 winget install --id JetBrains.Toolbox
 winget install --id Microsoft.AzureCLI
 winget install --id Microsoft.DotNet.SDK.8
 winget install --id Microsoft.PowerShell
 winget install --id Microsoft.VisualStudioCode
 winget install --id Neovim.Neovim
+winget install --id RandyRants.SharpKeys
 winget install --id Starship.Starship
 winget install --id junegunn.fzf
 winget install --id zig.zig
-winget install --id RandyRants.SharpKeys
 ```
 
 ## Install Packer
