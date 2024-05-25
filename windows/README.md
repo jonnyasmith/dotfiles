@@ -21,7 +21,7 @@ winget install --id Neovim.Neovim
 winget install --id Starship.Starship
 winget install --id junegunn.fzf
 winget install --id zig.zig
-winget install JanDeDobbeleer.OhMyPosh -s winget
+winget install --id RandyRants.SharpKeys
 ```
 
 ## Install Packer
