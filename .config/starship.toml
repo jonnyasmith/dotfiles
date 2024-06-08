@@ -44,9 +44,10 @@ conflicted = '!'
 format = '[$user@]($style)'
 style_user = 'bold dimmed green'
 style_root = 'bold yellow'
+show_always = true
 
 [hostname]
-ssh_only = true
+ssh_only = false
 format = '[$hostname ]($style)'
 style = 'bold dimmed green'
 
