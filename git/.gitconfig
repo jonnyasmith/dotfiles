@@ -69,7 +69,7 @@
 [core]
   pager = less -FXRS -x2
   editor = vim
-  sshCommand = ssh.exe
+  sshCommand = ssh
 [rerere]
     enabled = true
 [gitsh]

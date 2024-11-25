@@ -31,7 +31,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 Run the following commands to set up your environment:
 
 ```bash
-brew install git stow zsh fzf jq neovim starship tree zoxide
+brew install git stow zsh fzf jq neovim starship tree zoxide tmux pnpm curl wget
 brew install --cask 1password visual-studio-code
 ```
 
@@ -84,6 +84,14 @@ To install tpm
 ```bash
 # Clone the tmux plugin manager (tpm) into the .tmux/plugins directory
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
+
+## install nvm
+
+To install nvm, run the following command:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
 ```
 
 ## Install software
