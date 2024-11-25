@@ -16,7 +16,8 @@ for config (~/.config/zsh/*.zsh) source $config
 bindkey '^ ' autosuggest-accept  # ctrl + space | autosuggest-accept
 bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
 
-export PATH="$PATH:/opt/nvim-linux64/bin:/opt/zig"
+export DOTNET_ROOT=$HOME/.dotnet
+export PATH=$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -24,4 +25,5 @@ export NVM_DIR="$HOME/.nvm"
 
 source <(fzf --zsh)
 
+eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"

@@ -52,6 +52,7 @@ Run the following commands to symlink configuration files
 rm ~/.zshrc
 cd ~/.dotfiles
 stow git
+stow ideavim
 stow nvim
 stow starship
 stow tmux
