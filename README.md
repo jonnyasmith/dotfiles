@@ -32,7 +32,7 @@ Run the following commands to set up your environment:
 
 ```bash
 brew install git stow zsh fzf jq neovim starship tree zoxide tmux pnpm curl wget
-brew install --cask 1password visual-studio-code
+brew install --cask 1password visual-studio-code rectangle
 ```
 
 ## Setup 1password ssh agent and download dotfiles
@@ -107,4 +107,38 @@ To install nerd font, open your terminal and run the following command:
 
 ```bash
 bash -c  "$(curl -fsSL https://raw.githubusercontent.com/officialrajdeepsingh/nerd-fonts-installer/main/install.sh)"
+```
+
+## Configure Mac settings
+
+Run the following commands to configure your Mac settings:
+
+```bash
+    # echo "Finder: show all filename extensions"
+    defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+
+    # echo "Automatically hide and show the Dock"
+    defaults write com.apple.dock autohide -bool true
+
+    # echo "Use current directory as default search scope in Finder"
+    defaults write com.apple.finder FXDefaultSearchScope -string "SCcf"
+
+    # echo "Show Status bar in Finder"
+    defaults write com.apple.finder ShowStatusBar -bool true
+
+    # echo "Disable the warning when changing a file extension"
+    defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+    # echo "Disable the warning before emptying the Trash"
+    defaults write com.apple.finder WarnOnEmptyTrash -bool false
+
+    # echo "Empty Trash securely by default"
+    defaults write com.apple.finder EmptyTrashSecurely -bool true
+
+    # echo "Enable tap to click (Trackpad)"
+    defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+
+    # echo "Restarting system apps"
+    killall Finder
+    Killall Dock
 ```

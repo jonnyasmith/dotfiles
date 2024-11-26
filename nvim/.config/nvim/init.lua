@@ -1,5 +1,5 @@
 if vim.g.vscode then
-    require('vscode')
+    require('mscode')
     print("✔ nvim vscode loaded")
 else
     require('nvim')
