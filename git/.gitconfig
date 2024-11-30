@@ -92,3 +92,5 @@
     keepBackup = false
 [difftool "p4merge"]
     cmd = /Applications/p4merge.app/Contents/Resources/launchp4merge "\"$REMOTE\"" "\"$LOCAL\""
+[init]
+	defaultBranch = main

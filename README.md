@@ -31,7 +31,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 Run the following commands to set up your environment:
 
 ```bash
-brew install git stow zsh fzf jq neovim starship tree zoxide tmux pnpm curl wget
+brew install git stow zsh fzf jq neovim starship tree zoxide tmux pnpm curl wget lazygit
 brew install --cask 1password visual-studio-code rectangle
 ```
 
