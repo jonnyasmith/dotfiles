@@ -10,6 +10,9 @@ fi
 
 alias auu="sudo apt update && sudo apt upgrade -y"
 alias nuu="sudo nala update && sudo nala upgrade -y"
+alias buu="brew update && brew upgrade"
+alias yuu="yay -Syu --noconfirm"
+alias code='code --no-sandbox'
 
 alias vim="nvim"
 
@@ -18,7 +21,6 @@ alias y="yarn"
 alias h="history"
 alias clean-orig="find . -name '*.orig' -delete"
 
-alias buu="brew update && brew upgrade"
 
 alias ga='git a .'
 alias gcm='git cm'
