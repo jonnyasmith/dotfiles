@@ -9,6 +9,8 @@
 #     * In the list: the installed MAJOR row is GREEN (and shows "[Installed]" or "[vX.Y.Z Installed]" in yellow if behind)
 #     * Latest LTS label gets a ★ and is MAGENTA if it's NOT your installed major; if it IS your installed major, the whole row is GREEN and still shows ★
 #     * Other (older) LTS labels are CYAN (when not the installed major)
+# - Column layout with consistent gaps:
+#     * Number, Version (width 10), 2 spaces, Label (padded to max width), 2 spaces, Date, then note
 # - Calls your installer script with the chosen version
 
 set -Eeuo pipefail
@@ -22,6 +24,11 @@ MAX_SCAN=200
 # Cache in /tmp (refresh if not from today)
 CACHE_DIR="/tmp/node-version-cache"
 CACHE_FILE="${CACHE_DIR}/index.json"
+
+# Column widths / gaps
+VERSION_COL_WIDTH=10        # "24.6.0" fits well; 10 keeps it neat
+GAP_AFTER_VERSION=2         # spaces between version and label
+GAP_AFTER_LABEL=2           # spaces between label and date
 
 # Colors (ANSI-C quoted so they render correctly)
 RESET=$'\033[0m'
@@ -94,6 +101,8 @@ fi
 
 # Helpers
 get_major() { local v="${1#v}"; echo "${v%%.*}"; }
+strip_ansi() { sed 's/\x1b\[[0-9;]*m//g'; }
+spaces() { printf "%*s" "$1" ""; }
 
 # Latest LTS (first entry in newest→oldest with lts != false)
 LATEST_LTS_VERSION=""
@@ -142,7 +151,9 @@ for ((i=${#LATEST_PER_MAJOR[@]}-1; i>=0; i--)); do
 done
 M=${#MENU_LINES[@]}
 
-# Print the menu with numbering: newest is 1 at the bottom
+# Precompute display parts to align the date column.
+VER=(); DATE_=(); LABEL_RENDER=(); LABEL_CLEAN=(); ROW_COLOR=(); NOTE_RENDER=()
+
 for (( j=0; j<M; j++ )); do
   line="${MENU_LINES[$j]}"
   ver_full="$(printf '%s' "$line" | cut -f1)"   # vX.Y.Z
@@ -151,25 +162,19 @@ for (( j=0; j<M; j++ )); do
   sec="$(printf '%s' "$line" | cut -f3)"
   date="$(printf '%s' "$line" | cut -f4)"
 
-  # Is this the installed MAJOR row?
   is_installed_major="no"
   if [ -n "$CURRENT_INSTALLED" ] && [ "$(get_major "$ver")" = "$(get_major "$CURRENT_INSTALLED")" ]; then
     is_installed_major="yes"
   fi
 
-  # Build label with proper colors:
-  # - Latest LTS (not installed major) -> MAGENTA + ★
-  # - Latest LTS (installed major)     -> row is GREEN, label plain + ★
-  # - Other LTS (not installed major)  -> CYAN (no star)
-  # - Current / Security / Maintenance -> plain
-  label=""
+  # Build label with proper colors and star for latest LTS
   if [ "$lts" != "false" ]; then
     is_latest_lts="no"
     if [ -n "$LATEST_LTS_VERSION" ] && [ "$ver" = "$LATEST_LTS_VERSION" ]; then
       is_latest_lts="yes"
     fi
     if [ "$is_latest_lts" = "yes" ]; then
-      if [ "$is_installed_major" = "yes" ]; then
+      if [ "$is_installed_major" = "yes" ] ; then
         label="[LTS: $lts ★]"
       else
         label="[${MAGENTA}LTS: $lts ★${RESET}]"
@@ -189,7 +194,7 @@ for (( j=0; j<M; j++ )); do
     label="[Maintenance]"
   fi
 
-  # Row color + installed note
+  # Row color + installed note (rendered with colors)
   color="$RESET"
   installed_note=""
   if [ "$is_installed_major" = "yes" ]; then
@@ -201,9 +206,46 @@ for (( j=0; j<M; j++ )); do
     fi
   fi
 
-  num=$((M - j))  # newest (last printed) = 1
-  printf "%s%2d) %-10s %-14s %s%s%s\n" \
-    "$color" "$num" "$ver" "$label" "$date" "$installed_note" "$RESET"
+  VER+=("$ver")
+  DATE_+=("$date")
+  LABEL_RENDER+=("$label")
+  LABEL_CLEAN+=("$(printf '%s' "$label" | strip_ansi)")
+  ROW_COLOR+=("$color")
+  NOTE_RENDER+=("$installed_note")
+done
+
+# Compute max label width (without ANSI) to align dates
+max_label_len=0
+for cl in "${LABEL_CLEAN[@]}"; do
+  len=${#cl}
+  (( len > max_label_len )) && max_label_len=$len
+done
+
+# Print rows with consistent gaps:
+# number, version (fixed width), GAP_AFTER_VERSION spaces, label (padded to max_label_len),
+# GAP_AFTER_LABEL spaces, date, note
+for (( j=0; j<M; j++ )); do
+  num=$((M - j))                 # newest (last printed) = 1
+  color="${ROW_COLOR[$j]}"
+  ver="${VER[$j]}"
+  label="${LABEL_RENDER[$j]}"
+  clean_label="${LABEL_CLEAN[$j]}"
+  date="${DATE_[$j]}"
+  note="${NOTE_RENDER[$j]}"
+
+  pad=$((max_label_len - ${#clean_label}))
+
+  printf "%s%2d) %-${VERSION_COL_WIDTH}s%s%s%s%s %s%s%s\n" \
+    "$color" \
+    "$num" \
+    "$ver" \
+    "$(spaces "$GAP_AFTER_VERSION")" \
+    "$label" \
+    "$(spaces "$pad")" \
+    "$(spaces "$GAP_AFTER_LABEL")" \
+    "$date" \
+    "$note" \
+    "$RESET"
 done
 
 echo ""
@@ -215,8 +257,7 @@ fi
 
 # Map selection back to newest-bottom index
 j=$((M - sel))
-chosen="${MENU_LINES[$j]}"
-chosen_ver="$(printf '%s' "$chosen" | cut -f1 | sed 's/^v//')"
+chosen_ver="${VER[$j]}"
 
 echo ">>> Installing Node.js v${chosen_ver} ..."
 sudo "$INSTALLER" "$chosen_ver"

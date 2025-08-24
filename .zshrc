@@ -21,4 +21,4 @@ bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
 
-export PATH="/opt/node/bin:$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin"
+export PATH="/opt/node/bin:$HOME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin/:/home/jonny/.config/node-version"
