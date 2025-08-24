@@ -1,0 +1,4 @@
+---
+"terminal:ask_ai_assistant": none
+"terminal:accept_prompt_suggestions": ctrl-shift-space
+"editor_view:insert_autosuggestion": ctrl-space
