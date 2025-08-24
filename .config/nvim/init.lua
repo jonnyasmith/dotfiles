@@ -1,10 +1,6 @@
 vim.opt.clipboard="unnamed,unnamedplus"
 
 if vim.g.vscode then
-  local opts = { noremap = true, silent = true }
-  vim.keymap.set("n", "<Space>", function() vim.fn.VSCodeNotify "whichkey.show" end, opts)
-  vim.keymap.set("x", "<Space>", function() vim.fn.VSCodeNotify "whichkey.show" end, opts)
-
   vim.keymap.set('v', '<', '<gv', options)
   vim.keymap.set('v', '>', '>gv', options)
 
