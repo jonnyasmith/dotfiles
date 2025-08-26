@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# install-neovim: Install Neovim on Linux (latest or specific version) robustly.
+# - Works with new/old tarball names and the neovim-releases repo
+# - Installs to /opt/neovim/<version> and updates /opt/neovim/current
+# - Creates/updates /usr/local/bin/nvim symlink
+# - Usage:
+#     ./install-neovim            # latest
+#     ./install-neovim v0.10.4    # specific tag (with or without "v")
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+# --- auto-sudo if not root ---
+if [ "$(id -u)" -ne 0 ]; then
+  if command -v sudo >/dev/null 2>&1; then
+    echo "Re-running with sudo..."
+    exec sudo "$0" "$@"
+  else
+    echo "This installer needs root. Please run as root or install sudo." >&2
+    exit 1
+  fi
+fi
+
+# --- config ---
+INSTALL_ROOT="/opt/neovim"
+BIN_LINK="/usr/local/bin/nvim"
+VERSION="${1:-latest}"   # "latest" or "v0.10.4" or "0.10.4"
+
+# --- deps check ---
+need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing dependency: $1" >&2; exit 1; }; }
+need curl
+need tar
+
+# --- arch mapping -> candidate filenames ---
+case "$(uname -m)" in
+  x86_64)
+    CANDIDATES=("nvim-linux-x86_64.tar.gz" "nvim-linux64.tar.gz")
+    ;;
+  aarch64|arm64)
+    CANDIDATES=("nvim-linux-arm64.tar.gz" "nvim-linux-aarch64.tar.gz")
+    ;;
+  *)
+    echo "Unsupported architecture: $(uname -m)" >&2
+    exit 1
+    ;;
+esac
+
+BASE_LATEST="https://github.com/neovim/neovim-releases/releases/latest/download"
+BASE_TAG="https://github.com/neovim/neovim-releases/releases/download"  # /vX.Y.Z
+
+# Return the first working URL among CANDIDATES for a given base
+fetch_tar_url() {
+  local base="$1"
+  local name
+  for name in "${CANDIDATES[@]}"; do
+    if curl -fsLI "$base/$name" >/dev/null 2>&1; then
+      echo "$base/$name"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Resolve download URL + destination dir
+if [[ "$VERSION" == "latest" ]]; then
+  TAR_URL="$(fetch_tar_url "$BASE_LATEST")" || {
+    echo "Could not find a Linux tarball for your arch at latest." >&2
+    exit 1
+  }
+  DEST="${INSTALL_ROOT}/latest"
+else
+  TAG="v${VERSION#v}"
+  TAR_URL="$(fetch_tar_url "$BASE_TAG/$TAG")" || {
+    echo "Could not find a Linux tarball for $TAG on your arch." >&2
+    exit 1
+  }
+  DEST="${INSTALL_ROOT}/${TAG#v}"
+fi
+
+echo "→ Downloading: $TAR_URL"
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+curl -fL --retry 3 --retry-delay 1 -o "$tmp/nvim.tar.gz" "$TAR_URL"
+
+echo "→ Installing to: $DEST"
+rm -rf "$DEST"
+mkdir -p "$DEST"
+# Tarball contains a top-level folder (e.g., nvim-linux-xxx/) — strip it
+tar -xzf "$tmp/nvim.tar.gz" -C "$DEST" --strip-components=1
+
+echo "→ Updating symlinks"
+ln -sfn "$DEST" "${INSTALL_ROOT}/current"
+ln -sfn "${INSTALL_ROOT}/current/bin/nvim" "$BIN_LINK"
+
+# sanity check
+if ! command -v "$BIN_LINK" >/dev/null 2>&1; then
+  echo "Warning: $BIN_LINK not on PATH or link failed." >&2
+fi
+
+echo "✔ Installed: $("$BIN_LINK" --version | head -n1)"
+echo "   Bin: $BIN_LINK"
+echo "   Home: ${INSTALL_ROOT}/current"
+

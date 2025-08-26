@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+# Install/replace /opt/node with a specific Node.js version (poor-man's nvm).
+# - Stages on the same filesystem for atomic final swap
+# - Verifies SHA256
+# - Rollbacks on failure
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+INSTALL_DIR="/opt/node"
+BASE_URL="https://nodejs.org/dist"
+
+err() { echo "Error: $*" >&2; }
+log() { echo "[+] $*"; }
+
+check_root() {
+  if [ "$(id -u)" -ne 0 ]; then
+    err "This script must be run with sudo."
+    exit 1
+  fi
+}
+
+get_arch() {
+  case "$(uname -m)" in
+    x86_64)  echo "x64" ;;
+    aarch64) echo "arm64" ;;
+    armv7l)  echo "armv7l" ;;
+    *)
+      err "Unsupported architecture: $(uname -m)"
+      exit 1
+      ;;
+  esac
+}
+
+# --- Main ---
+check_root
+
+RAW_VERSION="${1:-}"
+if [ -z "$RAW_VERSION" ]; then
+  echo "Usage: sudo $0 <version>"
+  echo "Example: sudo $0 20.17.0"
+  exit 1
+fi
+
+# Accept both "20.17.0" and "v20.17.0"
+NODE_VERSION="${RAW_VERSION#v}"
+
+ARCH="$(get_arch)"
+FILENAME="node-v${NODE_VERSION}-linux-${ARCH}.tar.xz"
+DOWNLOAD_URL="${BASE_URL}/v${NODE_VERSION}/${FILENAME}"
+SHASUMS_URL="${BASE_URL}/v${NODE_VERSION}/SHASUMS256.txt"
+
+INSTALL_PARENT="$(dirname "$INSTALL_DIR")"
+# Stage on the same filesystem as INSTALL_DIR for atomic rename
+STAGING_DIR="$(mktemp -d -p "$INSTALL_PARENT" node-stage.XXXXXX)"
+BACKUP_DIR="${INSTALL_PARENT}/.node-backup.$(date +%s)"
+NEW_DIR="${STAGING_DIR}/node-new"
+EXTRACTED_DIR="${STAGING_DIR}/extracted"
+
+cleanup() {
+  # If we failed after moving old install, restore it
+  if [ -f "${STAGING_DIR}/_did_backup" ] && [ -d "$BACKUP_DIR" ]; then
+    log "Restoring previous installation..."
+    rm -rf "$INSTALL_DIR" || true
+    mv "$BACKUP_DIR" "$INSTALL_DIR" || true
+  fi
+  rm -rf "$STAGING_DIR" || true
+}
+trap cleanup EXIT
+
+log "Starting Node.js install ${NODE_VERSION} (${ARCH})"
+
+mkdir -p "$EXTRACTED_DIR"
+
+# Download tarball and checksums
+log "Downloading ${FILENAME}..."
+curl -fL --retry 3 --retry-delay 1 -o "${STAGING_DIR}/${FILENAME}" "$DOWNLOAD_URL"
+
+log "Downloading SHASUMS256.txt..."
+curl -fL --retry 3 --retry-delay 1 -o "${STAGING_DIR}/SHASUMS256.txt" "$SHASUMS_URL"
+
+# Verify SHA256
+log "Verifying checksum..."
+EXPECTED_SHA="$(grep "  ${FILENAME}\$" "${STAGING_DIR}/SHASUMS256.txt" | awk '{print $1}')"
+if [ -z "${EXPECTED_SHA:-}" ]; then
+  err "Could not find expected checksum for ${FILENAME}"
+  exit 1
+fi
+ACTUAL_SHA="$(sha256sum "${STAGING_DIR}/${FILENAME}" | awk '{print $1}')"
+if [ "$EXPECTED_SHA" != "$ACTUAL_SHA" ]; then
+  err "Checksum mismatch! Expected $EXPECTED_SHA, got $ACTUAL_SHA"
+  exit 1
+fi
+
+# Extract
+log "Extracting..."
+tar -xJf "${STAGING_DIR}/${FILENAME}" -C "$EXTRACTED_DIR"
+
+# The archive contains a top-level directory; normalize it to NEW_DIR
+TOP="$(find "$EXTRACTED_DIR" -maxdepth 1 -mindepth 1 -type d | head -n1)"
+if [ -z "${TOP:-}" ]; then
+  err "Extraction failed (no directory found)."
+  exit 1
+fi
+mv "$TOP" "$NEW_DIR"
+
+# Optional: keep versioned dir next to /opt/node (handy for debugging)
+# VERSIONED_DIR="${INSTALL_PARENT}/node-v${NODE_VERSION}-${ARCH}"
+# mv "$NEW_DIR" "$VERSIONED_DIR"
+
+# Backup current install (if any), then atomic swap
+if [ -d "$INSTALL_DIR" ] || [ -L "$INSTALL_DIR" ]; then
+  log "Backing up existing installation to ${BACKUP_DIR}..."
+  mv "$INSTALL_DIR" "$BACKUP_DIR"
+  touch "${STAGING_DIR}/_did_backup"
+fi
+
+log "Replacing installation at ${INSTALL_DIR}..."
+# mv within the same filesystem is atomic for the final rename
+mv -T "$NEW_DIR" "$INSTALL_DIR"
+
+# Success: drop backup
+if [ -d "$BACKUP_DIR" ]; then
+  rm -rf "$BACKUP_DIR"
+fi
+
+# Optionally create/update convenience symlinks on PATH
+# (comment out if you manage PATH differently)
+if command -v ln >/dev/null 2>&1; then
+  ln -sfn "${INSTALL_DIR}/bin/node" /usr/local/bin/node || true
+  ln -sfn "${INSTALL_DIR}/bin/npm"  /usr/local/bin/npm  || true
+  ln -sfn "${INSTALL_DIR}/bin/npx"  /usr/local/bin/npx  || true
+fi
+
+log "✅ Success! Node.js v${NODE_VERSION} installed at ${INSTALL_DIR}."
+log "node: $(${INSTALL_DIR}/bin/node -v)  npm: $(${INSTALL_DIR}/bin/npm -v)"

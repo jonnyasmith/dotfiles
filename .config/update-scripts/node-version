@@ -1,0 +1,263 @@
+#!/usr/bin/env bash
+# node-version: interactive picker for Node.js versions (one per major line)
+# - Caches Node index.json in /tmp (refreshes if cache is older than today)
+# - Shows only the latest release for each major (like the official download page)
+# - Prints oldest → newest so the latest is number 1 at the bottom (closest to prompt)
+# - Labels: [LTS: <codename>] / [Current] / [Security] / [Maintenance]
+# - Highlight rules:
+#     * Installed summary: GREEN if up to date, YELLOW if outdated (shows latest-for-major in GREEN)
+#     * In the list: the installed MAJOR row is GREEN (and shows "[Installed]" or "[vX.Y.Z Installed]" in yellow if behind)
+#     * Latest LTS label gets a ★ and is MAGENTA if it's NOT your installed major; if it IS your installed major, the whole row is GREEN and still shows ★
+#     * Other (older) LTS labels are CYAN (when not the installed major)
+# - Column layout with consistent gaps:
+#     * Number, Version (width 10), 2 spaces, Label (padded to max width), 2 spaces, Date, then note
+# - Calls your installer script with the chosen version
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+INDEX_URL="https://nodejs.org/dist/index.json"
+INSTALL_DIR="/opt/node"
+INSTALLER="/home/jonny/.dotfiles/.config/update-scripts/install-node"   # <-- change if your installer lives elsewhere
+MAX_SCAN=200
+
+# Cache in /tmp (refresh if not from today)
+CACHE_DIR="/tmp/node-version-cache"
+CACHE_FILE="${CACHE_DIR}/index.json"
+
+# Column widths / gaps
+VERSION_COL_WIDTH=10        # "24.6.0" fits well; 10 keeps it neat
+GAP_AFTER_VERSION=2         # spaces between version and label
+GAP_AFTER_LABEL=2           # spaces between label and date
+
+# Colors (ANSI-C quoted so they render correctly)
+RESET=$'\033[0m'
+BOLD=$'\033[1m'
+GREEN=$'\033[32m'
+YELLOW=$'\033[33m'
+CYAN=$'\033[36m'
+MAGENTA=$'\033[35m'
+
+require() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "Error: '$1' is required. Please install it and re-run." >&2
+    exit 1
+  }
+}
+require curl
+require jq
+
+# Detect currently installed version in /opt/node (strip leading 'v')
+CURRENT_INSTALLED=""
+if [ -x "${INSTALL_DIR}/bin/node" ]; then
+  if INST_VER="$("${INSTALL_DIR}/bin/node" -v 2>/dev/null)"; then
+    CURRENT_INSTALLED="${INST_VER#v}"
+  fi
+fi
+
+# Ensure cache dir exists
+mkdir -p "$CACHE_DIR"
+
+# Decide whether to refresh cache (once per day)
+needs_refresh=true
+if [ -f "$CACHE_FILE" ]; then
+  file_date=$(date -r "$CACHE_FILE" +%F 2>/dev/null || echo "1970-01-01")
+  today=$(date +%F)
+  if [ "$file_date" = "$today" ]; then
+    needs_refresh=false
+  fi
+fi
+
+if [ "$needs_refresh" = true ]; then
+  tmpdl="$(mktemp "${CACHE_DIR}/index.json.XXXXXX")"
+  if ! curl -fsSL --retry 3 --retry-delay 1 "$INDEX_URL" -o "$tmpdl"; then
+    echo "Error: failed to fetch Node versions list." >&2
+    rm -f "$tmpdl" || true
+    exit 1
+  fi
+  mv -f "$tmpdl" "$CACHE_FILE"
+fi
+
+# Read JSON from cache
+JSON="$(cat "$CACHE_FILE")"
+
+# Build "latest per major" list (newest→oldest), fields: version, lts, security, date
+mapfile -t LATEST_PER_MAJOR < <(
+  printf '%s' "$JSON" | jq -r --argjson max "$MAX_SCAN" '
+    .[0:$max]
+    | group_by(.version | capture("v(?<major>[0-9]+)").major | tonumber)
+    | map(.[0])  # latest within each major
+    | sort_by(.version | capture("v(?<major>[0-9]+)").major | tonumber)
+    | reverse
+    | .[]
+    | [ .version, (.lts // false), (.security // false), .date ] | @tsv
+  '
+)
+
+if [ "${#LATEST_PER_MAJOR[@]}" -eq 0 ]; then
+  echo "No versions parsed from index.json." >&2
+  exit 1
+fi
+
+# Helpers
+get_major() { local v="${1#v}"; echo "${v%%.*}"; }
+strip_ansi() { sed 's/\x1b\[[0-9;]*m//g'; }
+spaces() { printf "%*s" "$1" ""; }
+
+# Latest LTS (first entry in newest→oldest with lts != false)
+LATEST_LTS_VERSION=""
+for entry in "${LATEST_PER_MAJOR[@]}"; do
+  v_full="$(printf '%s' "$entry" | cut -f1)" # vX.Y.Z
+  lts_val="$(printf '%s' "$entry" | cut -f2)"
+  if [ "$lts_val" != "false" ]; then
+    LATEST_LTS_VERSION="${v_full#v}"
+    break
+  fi
+done
+
+# Current (newest non-LTS)
+NEWEST_NON_LTS_LABEL="v$(printf '%s\n' "${LATEST_PER_MAJOR[0]}" | awk -F'\t' '{print $1}')"
+
+# Determine latest for installed major (if installed)
+INST_LATEST_FOR_MAJOR=""
+if [ -n "$CURRENT_INSTALLED" ]; then
+  inst_major="$(get_major "$CURRENT_INSTALLED")"
+  latest_line_for_major="$(printf '%s\n' "${LATEST_PER_MAJOR[@]}" | awk -F'\t' -v m="$inst_major" '
+    { ver=$1; gsub(/^v/,"",ver); split(ver,a,"."); if (a[1]==m) { print; exit } }')"
+  if [ -n "$latest_line_for_major" ]; then
+    INST_LATEST_FOR_MAJOR="$(printf '%s' "$latest_line_for_major" | cut -f1 | sed 's/^v//')"
+  fi
+fi
+
+# ----- Top summary -----
+if [ -n "$CURRENT_INSTALLED" ]; then
+  if [ -n "$INST_LATEST_FOR_MAJOR" ] && [ "$CURRENT_INSTALLED" != "$INST_LATEST_FOR_MAJOR" ]; then
+    echo "Currently installed in ${INSTALL_DIR}: ${YELLOW}v${CURRENT_INSTALLED}${RESET} (outdated, latest for $(get_major "$CURRENT_INSTALLED").x is ${GREEN}v${INST_LATEST_FOR_MAJOR}${RESET})"
+  else
+    echo "Currently installed in ${INSTALL_DIR}: ${GREEN}v${CURRENT_INSTALLED}${RESET}"
+  fi
+else
+  echo "Currently installed in ${INSTALL_DIR}: (none)"
+fi
+
+echo ""
+echo "Available Node.js major versions (latest is 1 at the bottom):"
+echo ""
+
+# Build menu oldest→newest so newest is closest to prompt
+MENU_LINES=()
+for ((i=${#LATEST_PER_MAJOR[@]}-1; i>=0; i--)); do
+  MENU_LINES+=("${LATEST_PER_MAJOR[$i]}")
+done
+M=${#MENU_LINES[@]}
+
+# Precompute display parts to align the date column.
+VER=(); DATE_=(); LABEL_RENDER=(); LABEL_CLEAN=(); ROW_COLOR=(); NOTE_RENDER=()
+
+for (( j=0; j<M; j++ )); do
+  line="${MENU_LINES[$j]}"
+  ver_full="$(printf '%s' "$line" | cut -f1)"   # vX.Y.Z
+  ver="${ver_full#v}"                           # X.Y.Z
+  lts="$(printf '%s' "$line" | cut -f2)"
+  sec="$(printf '%s' "$line" | cut -f3)"
+  date="$(printf '%s' "$line" | cut -f4)"
+
+  is_installed_major="no"
+  if [ -n "$CURRENT_INSTALLED" ] && [ "$(get_major "$ver")" = "$(get_major "$CURRENT_INSTALLED")" ]; then
+    is_installed_major="yes"
+  fi
+
+  # Build label with proper colors and star for latest LTS
+  if [ "$lts" != "false" ]; then
+    is_latest_lts="no"
+    if [ -n "$LATEST_LTS_VERSION" ] && [ "$ver" = "$LATEST_LTS_VERSION" ]; then
+      is_latest_lts="yes"
+    fi
+    if [ "$is_latest_lts" = "yes" ]; then
+      if [ "$is_installed_major" = "yes" ] ; then
+        label="[LTS: $lts ★]"
+      else
+        label="[${MAGENTA}LTS: $lts ★${RESET}]"
+      fi
+    else
+      if [ "$is_installed_major" = "yes" ]; then
+        label="[LTS: $lts]"
+      else
+        label="[${CYAN}LTS: $lts${RESET}]"
+      fi
+    fi
+  elif [ "$ver_full" = "$NEWEST_NON_LTS_LABEL" ]; then
+    label="[Current]"
+  elif [ "$sec" = "true" ]; then
+    label="[Security]"
+  else
+    label="[Maintenance]"
+  fi
+
+  # Row color + installed note (rendered with colors)
+  color="$RESET"
+  installed_note=""
+  if [ "$is_installed_major" = "yes" ]; then
+    color="$GREEN"
+    if [ -n "$INST_LATEST_FOR_MAJOR" ] && [ "$CURRENT_INSTALLED" = "$INST_LATEST_FOR_MAJOR" ]; then
+      installed_note=" [Installed]"
+    else
+      installed_note=" [${YELLOW}v${CURRENT_INSTALLED} Installed${RESET}${GREEN}]"
+    fi
+  fi
+
+  VER+=("$ver")
+  DATE_+=("$date")
+  LABEL_RENDER+=("$label")
+  LABEL_CLEAN+=("$(printf '%s' "$label" | strip_ansi)")
+  ROW_COLOR+=("$color")
+  NOTE_RENDER+=("$installed_note")
+done
+
+# Compute max label width (without ANSI) to align dates
+max_label_len=0
+for cl in "${LABEL_CLEAN[@]}"; do
+  len=${#cl}
+  (( len > max_label_len )) && max_label_len=$len
+done
+
+# Print rows with consistent gaps:
+# number, version (fixed width), GAP_AFTER_VERSION spaces, label (padded to max_label_len),
+# GAP_AFTER_LABEL spaces, date, note
+for (( j=0; j<M; j++ )); do
+  num=$((M - j))                 # newest (last printed) = 1
+  color="${ROW_COLOR[$j]}"
+  ver="${VER[$j]}"
+  label="${LABEL_RENDER[$j]}"
+  clean_label="${LABEL_CLEAN[$j]}"
+  date="${DATE_[$j]}"
+  note="${NOTE_RENDER[$j]}"
+
+  pad=$((max_label_len - ${#clean_label}))
+
+  printf "%s%2d) %-${VERSION_COL_WIDTH}s%s%s%s%s %s%s%s\n" \
+    "$color" \
+    "$num" \
+    "$ver" \
+    "$(spaces "$GAP_AFTER_VERSION")" \
+    "$label" \
+    "$(spaces "$pad")" \
+    "$(spaces "$GAP_AFTER_LABEL")" \
+    "$date" \
+    "$note" \
+    "$RESET"
+done
+
+echo ""
+read -rp "==> Select one version to install (number): " sel
+if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "$M" ]; then
+  echo "Invalid choice. Enter a number from 1 to $M." >&2
+  exit 1
+fi
+
+# Map selection back to newest-bottom index
+j=$((M - sel))
+chosen_ver="${VER[$j]}"
+
+echo ">>> Installing Node.js v${chosen_ver} ..."
+sudo "$INSTALLER" "$chosen_ver"

@@ -1,0 +1,190 @@
+#!/usr/bin/env bash
+# install-zig: Install Zig on Linux (latest stable, dev, or specific version)
+# - Handles both platform name orders: x86_64-linux and linux-x86_64 (same for aarch64)
+# - Auto-sudo, retries, checksum verification, robust JSON scanning + URL fallback
+# - Installs into /opt/zig/<version> with /opt/zig/current and /usr/local/bin/zig
+
+set -Eeuo pipefail
+IFS=$'\n\t'
+
+# --- auto-sudo ---
+if [ "$(id -u)" -ne 0 ]; then
+  if command -v sudo >/dev/null 2>&1; then
+    echo "Re-running with sudo..."
+    exec sudo "$0" "$@"
+  else
+    echo "This installer needs root. Please run as root or install sudo." >&2
+    exit 1
+  fi
+fi
+
+# --- config ---
+INSTALL_ROOT="/opt/zig"
+BIN_LINK="/usr/local/bin/zig"
+REQ="${1:-latest}"                                # latest | dev | 0.15.1 | v0.15.1
+INDEX_URL="https://ziglang.org/download/index.json"
+
+# --- deps ---
+need() { command -v "$1" >/dev/null 2>&1 || { echo "Missing dependency: $1" >&2; exit 1; }; }
+need curl; need tar; need xz; need sha256sum; need jq
+
+# --- arch mapping + alias patterns (both orders!) ---
+case "$(uname -m)" in
+  x86_64)
+    PLATFORM_KEY="x86_64-linux"
+    FILE_PLAT_ALIASES=("x86_64-linux" "linux-x86_64")
+    ;;
+  aarch64|arm64)
+    PLATFORM_KEY="aarch64-linux"
+    FILE_PLAT_ALIASES=("aarch64-linux" "linux-aarch64")
+    ;;
+  *)
+    echo "Unsupported architecture: $(uname -m)" >&2
+    exit 1
+    ;;
+esac
+
+alias_regex="$(printf '%s|' "${FILE_PLAT_ALIASES[@]}")"
+alias_regex="${alias_regex%|}" # trim trailing |
+
+TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+IDX="$TMP/index.json"
+
+# --- helpers ---
+json_first_matching_url() {
+  # Find first URL that:
+  #   - is a string ending with .tar.xz
+  #   - contains one of our FILE_PLAT_ALIASES
+  #   - for stable/specific: lives under /download/<version>/; for dev: allow /builds/
+  local version="$1" mode="$2"
+  jq -r --arg v "$version" --arg mode "$mode" --arg re "$alias_regex" '
+    [
+      .. | objects
+      | (.tarball // .tarball_url // .url // empty)
+      | select(type=="string")
+      | select(endswith(".tar.xz"))
+      | select(test($re))
+      | select(
+          ($mode=="dev") or
+          (contains("/download/"+$v+"/"))
+        )
+    ][0] // empty
+  ' < "$IDX"
+}
+
+json_checksum_for_url() {
+  # Locate the object that contains this URL and read its shasum/sha256
+  local url="$1"
+  jq -r --arg u "$url" '
+    [
+      .. | objects
+      | select( (.tarball // .tarball_url // .url // "") == $u )
+      | (.shasum // .sha256 // empty)
+    ][0] // empty
+  ' < "$IDX"
+}
+
+probe_canonical_url() {
+  # Try both alias orders for a given version by doing a quick GET probe
+  local version="$1" a url
+  for a in "${FILE_PLAT_ALIASES[@]}"; do
+    url="https://ziglang.org/download/${version}/zig-${a}-${version}.tar.xz"
+    if curl -fLs -o /dev/null "$url"; then
+      echo "$url"
+      return 0
+    fi
+  done
+  return 1
+}
+
+sidecar_checksum() {
+  local url="$1"
+  local side="${url}.sha256"
+  curl -fLs "$side" | awk '{print $1; exit}' || return 1
+}
+
+# --- fetch index ---
+echo "→ Fetching Zig index…"
+curl -fL --retry 3 --retry-delay 1 -o "$IDX" "$INDEX_URL"
+
+# --- resolve version ---
+MODE="stable"
+if [[ "$REQ" == "latest" ]]; then
+  ZVER="$(jq -r '.stable.version // empty' < "$IDX")"
+  if [[ -z "$ZVER" || "$ZVER" == "null" ]]; then
+    # Fallback: highest semver key present that has our platform key
+    ZVER="$(jq -r '
+      [ to_entries[]
+        | select(.key | test("^[0-9]+([.][0-9]+){2}$"))
+        | select(.value | has("'"$PLATFORM_KEY"'"))
+        | .key
+      ]
+      | sort_by( split(".") | map(tonumber) )
+      | last // empty
+    ' < "$IDX")"
+  fi
+elif [[ "$REQ" == "dev" || "$REQ" == "master" ]]; then
+  ZVER="master"; MODE="dev"
+else
+  ZVER="${REQ#v}"; MODE="specific"
+fi
+
+[[ -n "$ZVER" && "$ZVER" != "null" ]] || { echo "Could not determine Zig version for request: $REQ" >&2; exit 1; }
+
+# --- resolve URL + checksum ---
+TAR_URL="$(json_first_matching_url "$ZVER" "$MODE")"
+if [[ -z "$TAR_URL" && "$MODE" != "dev" ]]; then
+  echo "→ JSON had no matching tarball link — trying canonical URLs…"
+  TAR_URL="$(probe_canonical_url "$ZVER" || true)"
+fi
+
+[[ -n "$TAR_URL" ]] || { echo "Could not resolve a tarball URL for version '$ZVER' ($PLATFORM_KEY)." >&2; exit 1; }
+
+SHASUM="$(json_checksum_for_url "$TAR_URL" || true)"
+if [[ -z "$SHASUM" || "$SHASUM" == "null" ]]; then
+  if SUM="$(sidecar_checksum "$TAR_URL" || true)"; then
+    SHASUM="$SUM"
+  fi
+fi
+
+echo "→ Selected: version=${ZVER} platform=${PLATFORM_KEY}"
+echo "→ Tarball:  ${TAR_URL}"
+
+# --- download ---
+TARBALL="$TMP/zig.tar.xz"
+curl -fL --retry 3 --retry-delay 1 -o "$TARBALL" "$TAR_URL"
+
+# --- verify ---
+if [[ -n "${SHASUM:-}" && "$SHASUM" != "null" ]]; then
+  echo "→ Verifying checksum…"
+  ACT="$(sha256sum "$TARBALL" | awk '{print $1}')"
+  if [[ "$ACT" != "$SHASUM" ]]; then
+    echo "Checksum mismatch!
+  expected: $SHASUM
+  actual:   $ACT" >&2
+    exit 1
+  fi
+else
+  echo "⚠ No checksum available; continuing without verification."
+fi
+
+# --- install ---
+DEST="${INSTALL_ROOT}/${ZVER}"
+echo "→ Installing to: $DEST"
+rm -rf "$DEST"; mkdir -p "$DEST"
+tar -xJf "$TARBALL" -C "$DEST" --strip-components=1
+
+# --- link ---
+echo "→ Updating symlinks"
+ln -sfn "$DEST" "${INSTALL_ROOT}/current"
+ln -sfn "${INSTALL_ROOT}/current/zig" "$BIN_LINK"
+
+# --- sanity ---
+if ! "$BIN_LINK" version >/dev/null 2>&1; then
+  echo "Warning: $BIN_LINK not executable or not on PATH." >&2
+fi
+
+echo "✔ Installed Zig: $("$BIN_LINK" version)"
+echo "   Bin:   $BIN_LINK"
+echo "   Home:  ${INSTALL_ROOT}/current"
+
