@@ -10,6 +10,7 @@ fi
 
 alias auu="sudo apt update && sudo apt upgrade -y"
 alias nuu="sudo nala update && sudo nala upgrade -y"
+alias yuu="yay -Syu --noconfirm"
 
 alias vim="nvim"
 

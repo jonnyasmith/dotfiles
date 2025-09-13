@@ -1,7 +1,7 @@
 # gitconfig
 [user]
     name = Jonny Smith
-    email = jonny.asmith@gmail.com
+    email = jonny.smith@gmail.com
 [github]
     user = jonnyasmith
 [alias]
@@ -69,7 +69,6 @@
 [core]
   pager = less -FXRS -x2
   editor = vim
-  sshCommand = ssh.exe
 [rerere]
     enabled = true
 [gitsh]
