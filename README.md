@@ -1,5 +1,24 @@
 # Arch Linux Installation
 
+## Setup Wifi
+
+```bash
+# open wifi utility
+iwctl
+
+# list wifi devices
+device list # e.g. wlan0
+
+# scan wifi networks
+station <device> scan
+
+# connect to wifi router
+station <device> connect <SSID>
+
+# exit wifi utility
+exit
+```
+
 - locale
   - keyboard layout: UK
   - Locale language: en_GB.UTF-8
