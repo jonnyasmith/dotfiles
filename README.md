@@ -88,6 +88,7 @@ yay -S \
     git \
     gnome-tweaks \
     less \
+    linux-firmware-qcom \
     nano \
     neofetch \
     net-tools \
@@ -263,25 +264,6 @@ Configure a sharp UI by disabling fractional scaling and using 200% integer scal
 sudo pacman -S --noconfirm gnome-tweaks
 ```
 
-### b) Apply Scaling Settings
-
-```bash
-# Disable fractional scaling
-gsettings set org.gnome.mutter experimental-features "[]"
-
-# Set interface scaling to 200% (integer scale)
-gsettings set org.gnome.desktop.interface scaling-factor 2
-
-# Set text scaling factor to 0.80 to achieve a comfortable size
-gsettings set org.gnome.desktop.interface text-scaling-factor 0.80
-```
-
-You must **log out and log back in** for these display settings to apply correctly.
-
-## 5. Verification
-
-After rebooting into integrated graphics mode, check your idle power draw when running on battery.
-
 ```bash
 # An optimised system should idle in the 5-8W range
 upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep "energy-rate"
@@ -290,3 +272,35 @@ upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep "energy-rate"
 ## Extension Manager
 
 Install 'Space Bar' from extension manager
+
+## Enable boot logging
+
+Open /etc/default/grub (if using GRUB) or adjust your bootloader config (if using systemd-boot).
+
+```bash
+sudo vi /etc/default/grub
+```
+
+Look for the line starting with:
+
+```bash
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
+```
+
+quiet suppresses most kernel and systemd messages.
+
+splash (if present) is used by a graphical splash screen (like Plymouth).
+
+👉 Remove quiet (and splash if you don’t want a splash screen).
+
+So it becomes:
+
+```bash
+GRUB_CMDLINE_LINUX_DEFAULT=""
+```
+
+Then update GRUB:
+
+```bash
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
