@@ -127,7 +127,19 @@ yay -S \
     --noconfirm
 ```
 
+## Configure 1Password
+
+Login it 1Password and link account, then setup ssh to be to setup the terminal correctly.
+
 ## Terminal setup
+
+## Install Nerd font
+
+To install nerd font, open your terminal and run the following command:
+
+```shell
+bash -c  "$(curl -fsSL https://raw.githubusercontent.com/officialrajdeepsingh/nerd-fonts-installer/main/install.sh)"
+```
 
 ```bash
 # Install Starship prompt
@@ -150,6 +162,24 @@ git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${Z
 
 # Clone the tmux plugin manager (tpm) into the .tmux/plugins directory
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+
+# Clone dotfiles
+git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
+
+cd ~/.dotfiles
+git checkout arch-linux
+
+# Backup existing .zshrc file by renaming it to .zshrc.orig
+mv ~/.zshrc ~/.zshrc.orig
+
+# Backup existing .gitconfig file by renaming it to .gitconfig.orig
+mv ~/.gitconfig ~/.gitconfig.orig
+
+# Use stow to symlink the dotfiles from the repository to the appropriate locations in the home directory
+stow .
+
+# Source the new .zshrc file to apply the Zsh configuration immediately
+source ~/.zshrc
 ```
 
 ## Enable pacman colors
@@ -256,3 +286,7 @@ After rebooting into integrated graphics mode, check your idle power draw when r
 # An optimised system should idle in the 5-8W range
 upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep "energy-rate"
 ```
+
+## Extension Manager
+
+Install 'Space Bar' from extension manager
