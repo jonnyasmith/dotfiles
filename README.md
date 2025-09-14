@@ -87,17 +87,22 @@ yay -S \
     fzf \
     git \
     gnome-tweaks \
+    lazygit \
     less \
     linux-firmware-qcom \
     nano \
     neofetch \
     net-tools \
+    npm \
     nvidia-lts \
     nvidia-settings \
     nvidia-utils \
+    pnpm \
     powertop \
     rsync \
+    ripgrep \
     stow \
+    stress \
     tlp \
     tlp-rdw \
     tmux \
@@ -224,6 +229,16 @@ sudo auto-cpufreq --install
 
 A **reboot** is recommended after this section to ensure all services start correctly.
 
+You can prove the cpu optimisation is working by viewing the auto-cpufreq util and running a stress test
+
+```bash
+auto-cpufreq --stats
+```
+
+```bash
+stress -c 4
+```
+
 ### b) Switch to Integrated Graphics
 
 ```bash
@@ -232,6 +247,12 @@ sudo envycontrol -s integrated
 ```
 
 You must **reboot** for this change to take effect. To switch back to using the NVIDIA card, run `sudo envycontrol -s hybrid` and reboot.
+
+Run the following to make sure the nvidia card is not listed which proves the card is turned off
+
+```bash
+spci -k | grep -A 2 -E "(VGA|3D)"
+```
 
 ## 3. System Tweaks
 

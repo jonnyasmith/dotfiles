@@ -1,4 +1,7 @@
+vim.opt.clipboard = "unnamedplus"
+
 if vim.g.vscode then
+    vim.opt.clipboard:append("unnamedplus")
     print("✔ nvim vscode loaded")
 else
     -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
