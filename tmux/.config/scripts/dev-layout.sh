@@ -53,6 +53,6 @@ tmux send-keys -t "$left"  'nvim .'  C-m
 tmux send-keys -t "$mid"   'lazygit' C-m
 # right pane stays a plain shell.
 
-# Land cursor on the top pane and start claude there.
-tmux send-keys -t "$top" 'claude' C-m
+# Land cursor on the top pane and start ai harness there.
+tmux send-keys -t "$top" 'omp' C-m
 tmux select-pane -t "$top"
