@@ -74,8 +74,8 @@ git clone https://github.com/zdharma-continuum/fast-syntax-highlighting.git ${ZS
 # Clone the zsh-autocomplete plugin into the Oh My Zsh custom plugins directory with a shallow clone
 git clone --depth 1 -- https://github.com/marlonrichert/zsh-autocomplete.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autocomplete
 
-# Clone the tmux plugin manager (tpm) into the .tmux/plugins directory
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+# Clone the tmux plugin manager (tpm) into the tmux config plugins directory
+git clone https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
 
 # Create a .config directory in the user's home directory if it doesn't exist
 mkdir ~/.config
