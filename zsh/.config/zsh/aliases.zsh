@@ -12,8 +12,10 @@ alias auu="sudo apt update && sudo apt upgrade -y"
 alias nuu="sudo nala update && sudo nala upgrade -y"
 
 alias vim="nvim"
+alias code="code-insiders"
 
 alias g="git"
+alias lg="lazygit"
 alias y="yarn"
 alias h="history"
 alias clean-orig="find . -name '*.orig' -delete"
