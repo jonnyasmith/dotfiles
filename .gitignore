@@ -10,6 +10,10 @@ gh/.config/gh/hosts.yml
 karabiner/.config/karabiner/automatic_backups/
 nvim/.config/nvim/.netrwhist
 nvim/.config/nvim/spell/
+herdr/.config/herdr/session.json
+herdr/.config/herdr/.plugins.lock
+herdr/.config/herdr/*.log
+herdr/.config/herdr/*.sock
 
 # Stow's own conflict artefacts.
 *.stow-local-ignore
