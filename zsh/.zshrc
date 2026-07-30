@@ -1,6 +1,6 @@
 # OPENSPEC:START
 # OpenSpec shell completions configuration
-fpath=("/Users/jonny/.oh-my-zsh/custom/completions" $fpath)
+fpath=("$HOME/.oh-my-zsh/custom/completions" $fpath)
 autoload -Uz compinit
 compinit
 # OPENSPEC:END
@@ -30,11 +30,12 @@ source <(fzf --zsh)
 
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
-# Added by Antigravity
-export PATH="/Users/jonny/.antigravity/antigravity/bin:$PATH"
+# Optional per-machine tools. Each is guarded: a fresh mac that has not
+# installed one yet should not print an error on every shell start.
+[ -d "$HOME/.antigravity/antigravity/bin" ] && export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
 # bun completions
-[ -s "/Users/jonny/.bun/_bun" ] && source "/Users/jonny/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
@@ -42,8 +43,7 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
-# opencode
-export PATH=/Users/jonny/.opencode/bin:$PATH
+[ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
 
 bindkey '^ ' autosuggest-accept  # ctrl + space | autosuggest-accept
 bindkey '\e' autosuggest-clear  # escape | autosuggest-clear
@@ -53,19 +53,15 @@ insert-buffer-newline() {
 zle -N insert-buffer-newline
 bindkey '^[[27;2;13~' insert-buffer-newline
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/jonny/.lmstudio/bin"
-# End of LM Studio CLI section
+[ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
 
-export PATH="$HOME/Library/pnpm/bin:$PATH"
-
-# pnpm
-export PNPM_HOME="/Users/jonny/Library/pnpm"
+# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
+# Distinct from the pnpm binary itself, which mise owns.
+export PNPM_HOME="$HOME/Library/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
-# pnpm end
-source /Users/jonny/dev/worktree-cli/examples/wrappers/zsh.sh
 
-export PATH="/Users/jonny/dev/devops-cli/bin:$PATH"
+[ -f "$HOME/dev/worktree-cli/examples/wrappers/zsh.sh" ] && source "$HOME/dev/worktree-cli/examples/wrappers/zsh.sh"
+[ -d "$HOME/dev/devops-cli/bin" ] && export PATH="$HOME/dev/devops-cli/bin:$PATH"
