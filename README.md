@@ -76,7 +76,7 @@ Each top-level directory is a stow package mirroring its path under `$HOME`:
 | `1password` | `~/.config/1Password/ssh/agent.toml` |
 | `ideavim` | `~/.ideavimrc` |
 | `tmux` | `~/.config/tmux` |
-| `zsh` | `~/.zshrc`, `~/.config/zsh` |
+| `zsh` | `~/.zshrc`, `~/.zshenv`, `~/.config/zsh` |
 
 Adding a package: create `<name>/` with the file at its `$HOME`-relative path,
 then `stow <name>`. `bootstrap.sh` discovers packages automatically, so nothing
@@ -84,6 +84,26 @@ else needs updating.
 
 **Keep configs free of absolute paths.** `$HOME`, not `/Users/jonny` — the
 whole point is that this clones onto any machine.
+
+`.zshenv` is sourced by **every** zsh — including non-interactive `zsh -c` —
+so it holds PATH only: uv's `~/.local/bin`, rustup's `cargo/env`, and the mise
+shims. The shims are appended there rather than in `.zshrc` because `mise
+activate` only runs for interactive shells, so git hooks, editor-spawned
+shells, and LaunchAgents would otherwise have no `node`/`npx`/`pnpm`. Anything
+that prints or needs a terminal belongs in `.zshrc` instead.
+
+The shims go at the *end* of `PATH`, so they never shadow a deliberately
+installed binary. The tradeoff: in a non-interactive shell a name that also
+exists in `/usr/bin` still resolves there — `python3` is Xcode's, not mise's.
+`node`, `npx` and `pnpm` have no `/usr/bin` equivalent, so they hit the shims,
+which is the case this exists for. Interactive shells get `mise activate`,
+which prepends the real install dirs and so wins for everything.
+
+`~/.zprofile` is deliberately **not** stowed: it holds machine-specific
+`brew shellenv` and OrbStack lines. The `stow` step will link a `zsh/.zprofile`
+if one is ever added, moving any real file to `.pre-stow` first — the same
+treatment `.zshrc` and `.zshenv` get, since oh-my-zsh, uv, and rustup all write
+those files before the bootstrap runs.
 
 Git config is XDG (`~/.config/git/config`), not `~/.gitconfig`. Git reads both,
 with `~/.gitconfig` last and therefore winning, so keep only one — a stray

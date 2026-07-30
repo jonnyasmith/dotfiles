@@ -104,11 +104,17 @@ step_stow() {
   say "Stow packages"
   have stow || { die "stow not installed (should have come from the Brewfile)"; return 1; }
 
-  # oh-my-zsh writes a default ~/.zshrc; stow refuses to clobber a real file.
-  if [[ -f "$HOME/.zshrc" && ! -L "$HOME/.zshrc" ]]; then
-    mv "$HOME/.zshrc" "$HOME/.zshrc.pre-stow"
-    warn "moved existing ~/.zshrc to ~/.zshrc.pre-stow"
-  fi
+  # stow refuses to clobber a real file, and these three get written by other
+  # installers before this script ever runs: oh-my-zsh drops a default .zshrc,
+  # uv and rustup append PATH lines to .zshenv, Homebrew's own instructions add
+  # a shellenv eval to .zprofile. Move any real file aside so stow can link.
+  local f
+  for f in .zshrc .zshenv .zprofile; do
+    if [[ -f "$HOME/$f" && ! -L "$HOME/$f" && -e "$DOTFILES/zsh/$f" ]]; then
+      mv "$HOME/$f" "$HOME/$f.pre-stow"
+      warn "moved existing ~/$f to ~/$f.pre-stow"
+    fi
+  done
 
   # Stow "folds": if a target directory does not exist it symlinks the whole
   # package directory instead of its contents. That is fine for dirs we own
