@@ -31,7 +31,7 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 Run the following commands to set up your environment:
 
 ```bash
-brew install git stow zsh fzf jq neovim starship tree zoxide tmux pnpm curl wget lazygit
+brew install git stow zsh fzf jq neovim starship tree zoxide tmux mise curl wget lazygit
 brew install --cask 1password visual-studio-code rectangle
 ```
 
@@ -53,6 +53,7 @@ rm ~/.zshrc
 cd ~/.dotfiles
 stow git
 stow ideavim
+stow mise
 stow nvim
 stow starship
 stow tmux
@@ -87,12 +88,96 @@ To install tpm
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
-## install nvm
+## Install dev tools with mise
 
-To install nvm, run the following command:
+`mise` replaces `nvm` (node) and the Homebrew `dotnet-sdk` casks. It was
+installed by `brew install` above, and `stow mise` symlinked
+`~/.config/mise/config.toml`, which declares every version. `.zshrc` runs
+`mise activate zsh`, so `PATH` is rewritten on `cd`.
+
+Install everything the config declares:
 
 ```bash
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+mise install
+mise ls
+```
+
+If one of the two .NET SDKs fails with `dotnet-install.sh: Permission denied
+(os error 13)`, that is an upstream race: both versions install concurrently
+and share a single cached copy of Microsoft's install script, so one execs it
+while the other is rewriting it. Just run `mise install` again — the second
+pass installs the missing version.
+
+That provides the .NET SDKs, node, pnpm, and the `npm:` CLIs (copilot,
+gemini-cli, firebase-tools, azure-functions-core-tools, cline, kanban, ...).
+
+Do **not** `brew install` node, nvm, pnpm, or the `dotnet-sdk` casks — mise owns
+those, and a Homebrew copy will shadow or fight it. `mise` sets `DOTNET_ROOT`
+and `DOTNET_MULTILEVEL_LOOKUP=0` itself, so never export them from the shell.
+
+.NET SDKs install side-by-side into one shared root, so `dotnet --list-sdks`
+shows every installed version and multi-targeting works without switching:
+
+```bash
+dotnet --list-sdks
+```
+
+Per-project versions come from the files already in the repo — `global.json`
+(`sdk.version`) and `.nvmrc` / `.node-version` — because
+`idiomatic_version_file_enable_tools` is set. Entering a directory switches
+automatically; no `nvm use`.
+
+To change a version, edit `mise/.config/mise/config.toml` directly and commit
+it. `mise use -g` also writes through the stow symlink (comments survive), but
+it **replaces** a multi-version array — `mise use -g node@24` rewrites
+`node = ["24", "22"]` down to `node = "24"` and drops node 22. Prefer editing
+the file by hand for any tool with more than one version pinned.
+
+```bash
+mise upgrade               # bump `latest` tools
+mise outdated              # report without applying
+```
+
+### .NET global tools
+
+`dotnet tool install --global` targets `~/.dotnet/tools`, which is separate from
+the SDK root and therefore not managed by mise. Reinstall those by hand:
+
+```bash
+dotnet tool install --global ilspycmd
+```
+
+### Migrating an existing mac off nvm and brew dotnet
+
+On a machine that already had `nvm` and the `dotnet-sdk` casks, do the above
+first, confirm `mise ls` looks right, then remove the old installs:
+
+```bash
+# nvm: ~/.nvm holds the node builds AND every `npm install -g` package,
+# so reinstall those through mise (above) before deleting it.
+rm -rf ~/.nvm
+
+# dotnet: the casks install a root-owned pkg payload, so this needs sudo.
+brew uninstall --cask dotnet-sdk dotnet-sdk@8
+
+# Microsoft's pkg installer leaves PATH fragments the cask uninstall misses.
+# (`dotnet-cli-tools` holds a literal `~/.dotnet/tools`, which path_helper
+# never expands, so it was always dead — mise supplies that dir instead.)
+sudo rm -f /etc/paths.d/dotnet /etc/paths.d/dotnet-cli-tools
+```
+
+`mise uninstall dotnet@<version>` only removes `sdk/<version>`, so a root left
+over from an older `DOTNET_ROOT` can keep hundreds of MB of `shared/`, `packs/`
+and `templates/`. Check with `du -sh ~/.dotnet` and delete those subdirectories
+if they are orphaned; keep `~/.dotnet/tools` and the sentinel files.
+
+Verify in a **new** shell (`exec zsh`), since the old one still has the stale
+`DOTNET_ROOT` and `PATH`:
+
+```bash
+type nvm                   # -> not found
+which -a dotnet node       # -> only mise paths
+dotnet --list-sdks
 ```
 
 ## Install software

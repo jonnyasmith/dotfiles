@@ -1,0 +1,49 @@
+# Global mise config — managed by ~/.dotfiles (stow package: mise).
+#
+# mise replaces nvm (node) and the Homebrew dotnet-sdk casks. It owns the
+# version of every tool below and rewrites PATH on `cd`, so do NOT export
+# DOTNET_ROOT / NVM_DIR or append these dirs to PATH in .zshrc — mise sets
+# DOTNET_ROOT and DOTNET_MULTILEVEL_LOOKUP=0 itself.
+#
+# Keep this file free of absolute paths so it stows onto any machine.
+
+[tools]
+# .NET SDKs install side-by-side into one shared DOTNET_ROOT, matching .NET's
+# native model, so `dotnet --list-sdks` shows both and multi-targeting works
+# without switching. First entry is the default when no global.json applies.
+dotnet = ["10", "8"]
+
+# First entry is the default `node`; the second stays installed so a project
+# .nvmrc / .node-version can select it.
+node = ["24", "22"]
+
+pnpm = "latest"
+
+# CLIs that used to be `npm install -g` under nvm. The npm: backend keeps them
+# outside any single node install, so upgrading node does not orphan them.
+# (mise deprecated ~/.default-npm-packages: warns 2026.11, removed 2027.11.)
+"npm:@github/copilot" = "latest"
+"npm:@google/gemini-cli" = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:@ollama/pi-web-search" = "latest"
+# kb is a small personal package that falls under aube's weekly-download
+# threshold, so it needs an explicit opt-in. Scoped to kb itself: its
+# transitive dependencies stay supply-chain gated.
+"npm:@dustinbyrne/kb" = { version = "latest", allow_low_downloads = true }
+"npm:azure-functions-core-tools" = "latest"
+"npm:ccstatusline" = "latest"
+"npm:cline" = "latest"
+"npm:firebase-tools" = "latest"
+"npm:kanban" = "latest"
+
+[env]
+# `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is
+# independent of DOTNET_ROOT. mise does not add it, so put it on PATH here.
+_.path = ["~/.dotnet/tools"]
+
+[settings]
+# Honour a project's global.json (sdk.version) and .nvmrc / .node-version.
+idiomatic_version_file_enable_tools = ["dotnet", "node"]
+
+# Install the corepack shims (yarn, yarnpkg) with every node version.
+node.corepack = true
