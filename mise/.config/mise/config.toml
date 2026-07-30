@@ -23,7 +23,10 @@ dotnet = ["10", "8"]
 # .nvmrc / .node-version can select it.
 node = ["24", "22"]
 
-pnpm = "latest"
+# Majors, not "latest": each resolves to the newest release in that line.
+# First entry is the default; a project selects the other with a mise.toml or
+# .tool-versions. mise does NOT read package.json's `packageManager` field.
+pnpm = ["11", "10"]
 
 # CLIs that used to be `npm install -g` under nvm. The npm: backend keeps them
 # outside any single node install, so upgrading node does not orphan them.
