@@ -110,8 +110,19 @@ step_stow() {
     warn "moved existing ~/.zshrc to ~/.zshrc.pre-stow"
   fi
 
+  # Stow "folds": if a target directory does not exist it symlinks the whole
+  # package directory instead of its contents. That is fine for dirs we own
+  # outright, but ~/.ssh and ~/.config/1Password/ssh are written to by ssh and
+  # 1Password (known_hosts, agent.toml.bak), and a folded link would send those
+  # writes into this repo. Pre-create them so stow only links the files.
+  local d
+  for d in "$HOME/.ssh" "$HOME/.config/1Password/ssh"; do
+    [[ -d "$d" ]] || { mkdir -p "$d" && ok "created $d"; }
+  done
+  chmod 700 "$HOME/.ssh"
+
   # Every top-level dir that is a stow package (has no leading dot, is not .git).
-  local pkgs=() d
+  local pkgs=()
   for d in */; do
     d="${d%/}"
     [[ "$d" == .* ]] && continue

@@ -1,0 +1,5 @@
+# Work identity. Pulled in automatically by the includeIf rules at the end of
+# ~/.config/git/config for any repo whose remote points at github.com/work/*
+# or Azure DevOps. Nothing else should include this file.
+[user]
+    email = work@example.com

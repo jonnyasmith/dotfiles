@@ -1,0 +1,56 @@
+# This is the 1Password SSH agent config file, which allows you to customize the
+# behavior of the SSH agent running on this machine.
+#
+# You can use it to:
+# * Enable keys from other vaults than the Private vault
+# * Control the order in which keys are offered to SSH servers
+#
+# EXAMPLE
+#
+# By default, all keys in your Private vault(s) are enabled:
+#
+#  [[ssh-keys]]
+#  vault = "Private"
+#
+# You can enable more keys by adding more `[[ssh-keys]]` entries.
+# For example, to first enable item "My SSH Key" from "My Custom Vault":
+#
+#  [[ssh-keys]]
+#  item = "My SSH Key"
+#  vault = "My Custom Vault"
+#
+#  [[ssh-keys]]
+#  vault = "Private"
+#
+# You can test the result by running:
+#
+#  SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock ssh-add -l
+#
+# More examples can be found here:
+#  https://developer.1password.com/docs/ssh/agent/config
+# ---------------------------------------------------------------------------
+# Which key gets used is NOT decided here - the order below only affects the
+# order the agent offers keys when a client asks for "any". ~/.ssh/config now
+# pins one key per host with IdentitiesOnly, so exactly one key is offered:
+#
+#   github.com         -> SSH Key - Ed25519          (jonnyasmith)
+#   github-work     -> SSH Key - Ed25519 work  (jonnysmith-work)
+#   ssh.dev.azure.com  -> SSH Key - work          (RSA)
+#
+# The `item` strings below are load-bearing: they are the comments ssh-add
+# reports, and ~/.ssh/1password/refresh maps them to the public-key stubs that
+# ~/.ssh/config references. Rename an item here -> re-run that script and update
+# its map().
+# ---------------------------------------------------------------------------
+
+[[ssh-keys]]
+item = "SSH Key - Ed25519"
+vault = "Personal"
+
+[[ssh-keys]]
+item = "SSH Key - Ed25519 work"
+vault = "Personal"
+
+[[ssh-keys]]
+item = "SSH Key - work"
+vault = "Personal"

@@ -13,18 +13,27 @@ Three manual prerequisites, because each needs a human:
    ```bash
    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
-3. **Sign in to 1Password** and enable the SSH agent, so git can reach GitHub:
-   ```bash
-   ssh -T git@github.com   # should greet you by username
-   ```
+3. **Sign in to 1Password** and enable *Settings → Developer → Use the SSH
+   agent*. Do not test it with `ssh -T git@github.com` yet — that cannot work
+   until the `ssh` package is stowed, because the `IdentityAgent` line pointing
+   ssh at 1Password's socket lives in `ssh/.ssh/config` *in this repo*.
 
-Then clone and run:
+Clone over **HTTPS**, for the same reason — SSH to GitHub does not work until
+`stow` has run:
 
 ```bash
-git clone git@github.com:jonnyasmith/dotfiles.git ~/.dotfiles
+git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles && git checkout mac
 ./bootstrap.sh
+git remote set-url origin git@github.com:jonnyasmith/dotfiles.git   # now that ssh works
 exec zsh
+```
+
+Verify SSH once the bootstrap has finished:
+
+```bash
+ssh -T git@github.com        # Hi jonnyasmith!
+ssh -T git@github-work    # Hi jonnysmith-work!
 ```
 
 That is the whole setup. `bootstrap.sh` is **idempotent** — re-run it any time
@@ -62,7 +71,9 @@ Each top-level directory is a stow package mirroring its path under `$HOME`:
 | package | links to |
 |---|---|
 | `btop`, `gh`, `ghostty`, `herdr`, `htop`, `karabiner`, `mise`, `nvim`, `starship` | `~/.config/<name>` |
-| `git` | `~/.gitconfig`, `~/.gitignore` |
+| `git` | `~/.config/git/` — `config`, `config.work`, `ignore` |
+| `ssh` | `~/.ssh/config`, `~/.ssh/1password/` |
+| `1password` | `~/.config/1Password/ssh/agent.toml` |
 | `ideavim` | `~/.ideavimrc` |
 | `tmux` | `~/.config/tmux` |
 | `zsh` | `~/.zshrc`, `~/.config/zsh` |
@@ -74,8 +85,68 @@ else needs updating.
 **Keep configs free of absolute paths.** `$HOME`, not `/Users/jonny` — the
 whole point is that this clones onto any machine.
 
+Git config is XDG (`~/.config/git/config`), not `~/.gitconfig`. Git reads both,
+with `~/.gitconfig` last and therefore winning, so keep only one — a stray
+`~/.gitconfig` on a machine will silently override this package. `git config
+--global` writes to `~/.config/git/config` as long as `~/.gitconfig` is absent.
+
+`~/.config/git/ignore` is the global ignore file git reads **by default**, which
+is why no `core.excludesFile` is set. A `~/.gitignore` is *not* read by default;
+one used to be stowed here and had been inert for its whole life.
+
 `gh/.config/gh/hosts.yml` holds an OAuth token and is gitignored; run
 `gh auth login` on a new machine.
+
+The `.pub` files in `ssh/.ssh/1password/` are **public** keys and are committed
+deliberately — see *SSH keys and identities* below. No private key material is
+in this repo; 1Password holds all of it.
+
+## SSH keys and identities
+
+Three keys live in 1Password, and both the key *and* the commit email are picked
+automatically from the remote URL. Nothing is switched by hand.
+
+| remote | key (1Password item) | commit email |
+|---|---|---|
+| `github.com/jonnyasmith/*`, everything else | `SSH Key - Ed25519` | `jonny.asmith@gmail.com` |
+| `github.com/work/*` | `SSH Key - Ed25519 work` | `work@example.com` |
+| `ssh.dev.azure.com` | `SSH Key - work` (RSA) | `work@example.com` |
+
+Azure DevOps accepts **only** the RSA key; both Ed25519 keys are rejected there.
+
+How the three pieces fit together:
+
+- **`ssh/.ssh/config`** pins one key per host with `IdentitiesOnly yes`. Without
+  it ssh offers every key in the agent and the first one the server accepts
+  wins — which silently authenticated work repos as the personal account, and
+  wasted two rejected attempts on every Azure connection.
+- **`ssh/.ssh/1password/*.pub`** are public-key stubs. `IdentityFile` needs a
+  local file to name *which* agent key to use; the private half never leaves
+  1Password. Regenerate them with `~/.ssh/1password/refresh` after adding or
+  renaming a key there — the item names in `agent.toml` are the map keys.
+- **`git/.config/git/config`** rewrites `git@github.com:work/*` to the
+  `github-work` host alias via `insteadOf`, so existing remotes and fresh
+  clones both route correctly with no per-repo setup, and selects the commit
+  email with `includeIf hasconfig:remote.*.url`.
+
+Adding a second work org means one `[url]` block and one `[includeIf]` block in
+`git/.config/git/config`; an unlisted org falls through to the personal key.
+
+Two traps worth remembering:
+
+- `hasconfig` matches the remote URL **as stored**, not as rewritten, so the
+  patterns use `git@github.com:...` even though the effective URL becomes
+  `git@github-work:...`.
+- `**` is only wildcard-magic directly after a `/`. `...azure.com:**` matches
+  nothing and fails **silently**; `...azure.com:v3/**` is correct.
+
+Check what a repo resolved to:
+
+```bash
+git -C <repo> config user.email
+git -C <repo> var GIT_AUTHOR_IDENT      # what a commit would stamp
+GIT_SSH_COMMAND='ssh -v' git ls-remote origin HEAD 2>&1 | grep 'Offering public key'
+```
 
 ## Packages
 
