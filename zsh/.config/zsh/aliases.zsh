@@ -33,6 +33,10 @@ alias gr='git r'
 alias gs='git s'
 alias push='git push'
 
+alias wtc='worktree create'
+alias wtr='worktree remove'
+alias wtl='worktree list'
+
 git_fetch_all() {
     original_dir=$(pwd)
     cd ~/dev && for dir in */; do
