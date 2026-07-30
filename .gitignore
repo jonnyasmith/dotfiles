@@ -1,0 +1,19 @@
+# Secrets — never commit these, even if a stow package would otherwise carry them.
+gh/.config/gh/hosts.yml
+**/*.token
+**/*_rsa
+**/*.pem
+.env
+.env.*
+
+# Machine-local state that tools write back into their own config dirs.
+karabiner/.config/karabiner/automatic_backups/
+nvim/.config/nvim/.netrwhist
+nvim/.config/nvim/spell/
+
+# Stow's own conflict artefacts.
+*.stow-local-ignore
+.stow-local-ignore
+
+# macOS noise.
+.DS_Store

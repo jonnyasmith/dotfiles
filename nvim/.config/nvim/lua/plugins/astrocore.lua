@@ -1,5 +1,3 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroCore provides a central place to modify mappings, vim options, autocommands, and more!
 -- Configuration documentation can be found with `:h astrocore`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
@@ -73,8 +71,25 @@ return {
           desc = "Close buffer from tabline",
         },
 
-        -- Markdown & Mermaid live browser preview toggle
-        ["<Leader>md"] = { "<cmd>MarkdownPreviewToggle<cr>", desc = "Toggle Markdown Browser Preview" },
+        -- smart close: drop the buffer while others remain, otherwise close the window
+        ["<Leader>q"] = {
+          function()
+            if #(vim.t.bufs or {}) > 1 then
+              require("astrocore.buffer").close()
+            else
+              vim.cmd "confirm q"
+            end
+          end,
+          desc = "Close buffer or window",
+        },
+
+        -- which-key group label for the Markdown prefix
+        ["<Leader>m"] = { desc = "Markdown" },
+
+        -- Markdown Live Preview
+        ["<Leader>mp"] = { "<cmd>MarkdownPreviewToggle<cr>", desc = "Toggle preview" },
+        ["<Leader>mo"] = { "<cmd>MarkdownPreview<cr>", desc = "Open preview" },
+        ["<Leader>ms"] = { "<cmd>MarkdownPreviewStop<cr>", desc = "Stop preview" },
 
         -- tables with just a `desc` key will be registered with which-key if it's installed
         -- this is useful for naming menus

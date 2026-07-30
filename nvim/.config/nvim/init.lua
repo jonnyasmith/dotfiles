@@ -1,6 +1,9 @@
-vim.opt.clipboard="unnamed,unnamedplus"
+-- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
+-- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
 
 if vim.g.vscode then
+  vim.opt.clipboard="unnamed,unnamedplus"
+
   local keymap = vim.api.nvim_set_keymap
   local options = { noremap = true, silent = true }
 
@@ -9,8 +12,6 @@ if vim.g.vscode then
 
   print("✔ nvim vscode loaded")
 else
-  -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
-  -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
   local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 
   if not (vim.env.LAZY or (vim.uv or vim.loop).fs_stat(lazypath)) then
