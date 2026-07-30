@@ -8,7 +8,6 @@ compinit
 export ZSH=$HOME/.oh-my-zsh
 
 export TERM='xterm-256color'
-export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
 
 plugins=(    
     zsh-autosuggestions
@@ -21,10 +20,15 @@ source $ZSH/oh-my-zsh.sh
 
 for config (~/.config/zsh/*.zsh) source $config
 
-# mise manages node + dotnet SDK versions (replaces nvm and brew dotnet-sdk).
-# DOTNET_ROOT, DOTNET_MULTILEVEL_LOOKUP and ~/.dotnet/tools come from
-# ~/.config/mise/config.toml, so do not export them here.
+# mise manages node, bun, python, pnpm and the dotnet SDKs (replaces nvm and
+# brew dotnet-sdk). DOTNET_ROOT, DOTNET_MULTILEVEL_LOOKUP and ~/.dotnet/tools
+# come from ~/.config/mise/config.toml, so do not export them here.
 eval "$(mise activate zsh)"
+
+# activate's own dirs now supersede the shims .zshenv put at the front, and must
+# outrank them — including any .venv/bin activate adds per directory. Defined in
+# .zshenv; interactive shells are the only ones that get this far.
+mise-shims-last
 
 source <(fzf --zsh)
 
@@ -34,12 +38,9 @@ eval "$(starship init zsh)"
 # installed one yet should not print an error on every shell start.
 [ -d "$HOME/.antigravity/antigravity/bin" ] && export PATH="$HOME/.antigravity/antigravity/bin:$PATH"
 
-# bun completions
+# bun completions. The runtime comes from mise and BUN_INSTALL/PATH from
+# .zshenv, so only the compdefs — which need an interactive shell — live here.
 [ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
 
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 

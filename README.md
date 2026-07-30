@@ -92,9 +92,9 @@ The three zsh files are stowed together because between them they decide which
 
 | file | sourced by | does |
 |---|---|---|
-| `.zshenv` | **every** zsh, incl. `zsh -c` | PATH only: uv's `~/.local/bin`, rustup's `cargo/env`, mise shims |
+| `.zshenv` | **every** zsh, incl. `zsh -c` | PATH and env only: uv's `~/.local/bin`, rustup's `cargo/env`, `BUN_INSTALL`, mise shims |
 | `.zprofile` | login zsh | `brew shellenv`, OrbStack, then re-asserts the shims |
-| `.zshrc` | interactive zsh | oh-my-zsh, starship, aliases, `mise activate` |
+| `.zshrc` | interactive zsh | oh-my-zsh, starship, aliases, `mise activate`, then demotes the shims |
 
 Anything that prints, prompts, or needs a terminal belongs in `.zshrc`; the
 other two are sourced by non-interactive shells where output breaks things.
@@ -107,21 +107,31 @@ shells, LaunchAgents and cron get none of it, and without the shims they see no
 pipx / platformio dependency) ship one. Those are the exact interpreters
 `mise/.config/mise/config.toml` exists to keep off `PATH`.
 
-So the shims go at the **front** of `PATH`, not the back, and `.zshenv` defines
-`mise-shims-first` as a function rather than a one-off export: `brew shellenv`
-prepends `/opt/homebrew/bin` *after* `.zshenv` has run, so `.zprofile` has to
-call it again to win. Nothing in `~/.local/bin` shares a name with a shim
-(compare it against `ls ~/.local/share/mise/shims`), so this shadows nothing.
-In an interactive shell `mise activate` then prepends the real install dirs
-ahead of the shims, which additionally applies `[env]` vars and
-`python.uv_venv_auto` that shims cannot.
+So the shims go at the **front** of `PATH`, not the back — both `/usr/bin` and
+`/opt/homebrew/bin` ship a `python3`, so an appended shim loses to them. Nothing
+in `~/.local/bin` or `~/.bun/bin` shares a name with a shim (compare against `ls
+~/.local/share/mise/shims`), so this shadows nothing.
+
+`.zshenv` defines that as a pair of functions, `mise-shims-first` and
+`mise-shims-last`, because the ordering has to be re-asserted twice more:
+
+- **`.zprofile`** calls `mise-shims-first` again — `brew shellenv` prepends
+  `/opt/homebrew/bin` *after* `.zshenv` has run, so a one-shot prepend there
+  cannot hold.
+- **`.zshrc`** calls `mise-shims-last` after `mise activate`, which supersedes
+  the shims with the real install dirs and adds a uv project's `.venv/bin`
+  (`python.uv_venv_auto`). A shim left in front would sit ahead of that
+  `.venv/bin` too and shadow the project interpreter with the global one —
+  verified: promoting the shims inside a uv project turns `python` from
+  `.venv/bin/python` into `installs/python/3.13.14`.
 
 Result — mise's tools in all four modes, brew's untouched:
 
 ```
-zsh -c   python3 → shims/python3       3.13.14
-zsh -lc  python3 → shims/python3       3.13.14   (git/stow/gh still brew's)
+zsh -c   python3 → shims/python3       3.13.14    bun → shims/bun
+zsh -lc  python3 → shims/python3       3.13.14    (git/stow/gh still brew's)
 zsh -ic  python3 → installs/python/3.13/bin/python3
+         inside a uv project → .venv/bin/python
 ```
 
 Shims respect project pins the same way `activate` does: inside a repo with
@@ -209,7 +219,7 @@ brew bundle cleanup --file=Brewfile  # what is installed but unrecorded?
 
 ## Dev tools (mise)
 
-`mise` owns node, python, the .NET SDKs, pnpm, and the CLIs that used to be
+`mise` owns node, bun, python, the .NET SDKs, pnpm, and the CLIs that used to be
 `npm install -g`. Versions are declared in `mise/.config/mise/config.toml`, and
 `.zshrc` runs `mise activate zsh`, so `PATH` is rewritten on `cd`.
 
@@ -220,9 +230,11 @@ mise outdated    # what is behind
 mise upgrade     # bump tools pinned to a moving target
 ```
 
-Do **not** `brew install` node, nvm, pnpm, or the `dotnet-sdk` casks — mise owns
-those and a Homebrew copy will shadow it. mise sets `DOTNET_ROOT` and
-`DOTNET_MULTILEVEL_LOOKUP` itself; never export them from the shell.
+Do **not** `brew install` node, nvm, pnpm, bun, or the `dotnet-sdk` casks, and do
+not use a vendor's `curl | bash` installer for them — mise owns those and a
+second copy will shadow it or, worse, self-update behind mise's back. mise sets
+`DOTNET_ROOT` and `DOTNET_MULTILEVEL_LOOKUP` itself; never export them from the
+shell.
 
 Per-project versions come from files already in your repos — `global.json`
 (`sdk.version`), `.nvmrc` / `.node-version`, and `.python-version` — because
@@ -258,6 +270,34 @@ To change a version, edit `mise/.config/mise/config.toml` and commit. `mise use
 -g` writes through the stow symlink and preserves comments, but it **replaces**
 a multi-version array — `mise use -g node@24` rewrites `node = ["24", "22"]`
 down to `node = "24"`. Hand-edit anything with more than one version pinned.
+
+### Bun
+
+bun came from oven-sh's `curl | bash` installer originally, which left a
+self-updating 63 MB binary at `~/.bun/bin/bun` that mise could not see, exported
+its `PATH` line from `.zshrc` (so no bun in git hooks or any non-interactive
+shell), and prepended its directory unguarded — three copies of `~/.bun/bin` in
+`PATH` by the third nested shell. mise owns the binary now; the installer's copy
+is deleted.
+
+`~/.bun` stays, because it is two separate things and only one of them was the
+runtime:
+
+| path | what | owner |
+|---|---|---|
+| `~/.bun/bin/bun` | the runtime — **deleted**, comes from mise | mise |
+| `~/.bun/bin/*` | `bun install -g` binaries, e.g. `omp` | bun |
+| `~/.bun/install/global/` | the global `node_modules` behind them | bun |
+| `~/.bun/_bun` | completions, sourced by `.zshrc` | `bun completions` |
+
+So `BUN_INSTALL=$HOME/.bun` and `$BUN_INSTALL/bin` on `PATH` are still needed —
+they point at bun's *global package* dir, not at the runtime — and both moved to
+`.zshenv`. Check with `bun pm bin -g`.
+
+Never run `bun upgrade`: it rewrites the binary in place and would put a second,
+unmanaged runtime back. Use `mise upgrade bun`. Globals installed with `bun
+install -g` are **not** tracked by this repo; the mise config's `npm:` backend
+entries are the tracked equivalent for node CLIs.
 
 ### Known upstream issue: first `mise install` can drop one .NET SDK
 

@@ -19,6 +19,12 @@
 # without switching. First entry is the default when no global.json applies.
 dotnet = ["10", "8"]
 
+# bun. Was installed by oven-sh's curl installer into ~/.bun, which meant a
+# second self-updating runtime (`bun upgrade`) that mise could not see. mise
+# owns the binary now; ~/.bun stays as BUN_INSTALL, i.e. bun's *global package*
+# dir, so `bun install -g` bins keep working. Never run `bun upgrade`.
+bun = "1"
+
 # First entry is the default `node`; the second stays installed so a project
 # .nvmrc / .node-version can select it.
 node = ["24", "22"]
