@@ -6,6 +6,12 @@
 # DOTNET_ROOT and DOTNET_MULTILEVEL_LOOKUP=0 itself.
 #
 # Keep this file free of absolute paths so it stows onto any machine.
+#
+# In particular do NOT set `dotnet.dotnet_root`. It is declared type = "Path"
+# but does not expand `~`: a value of "~/.dotnet" is exported verbatim as
+# DOTNET_ROOT and `dotnet` becomes command-not-found. An absolute path works
+# but hardcodes one machine's $HOME. mise's default root needs neither.
+# (`[env] _.path` below does expand `~` — the inconsistency is upstream.)
 
 [tools]
 # .NET SDKs install side-by-side into one shared DOTNET_ROOT, matching .NET's
