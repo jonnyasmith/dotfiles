@@ -150,9 +150,10 @@ step_mise() {
   say "Dev tools (mise)"
   have mise || { die "mise not installed (should have come from the Brewfile)"; return 1; }
 
-  # dotnet 8 and 10 race over one shared copy of Microsoft's install script, so
-  # the first pass can lose one SDK to a Permission denied. A second pass fixes
-  # it; this is upstream, not a config problem.
+  # mise runs Microsoft's dotnet-install.sh internally, from a single cached
+  # copy shared by every version, so installing dotnet 8 and 10 concurrently
+  # can lose one SDK to a Permission denied. Upstream race, not a config
+  # problem, and a second pass installs whatever the first one dropped.
   if ! mise install --yes 2>&1 | sed 's/^/      /'; then
     warn "first pass failed (likely the dotnet install-script race) — retrying"
     mise install --yes 2>&1 | sed 's/^/      /' || { die "mise install failed twice"; return 1; }

@@ -122,12 +122,21 @@ To change a version, edit `mise/.config/mise/config.toml` and commit. `mise use
 a multi-version array — `mise use -g node@24` rewrites `node = ["24", "22"]`
 down to `node = "24"`. Hand-edit anything with more than one version pinned.
 
-### Known upstream issue
+### Known upstream issue: first `mise install` can drop one .NET SDK
 
-Installing both .NET SDKs concurrently can fail one with
-`dotnet-install.sh: Permission denied (os error 13)` — they share a single
-cached copy of Microsoft's install script. `bootstrap.sh` retries automatically;
-by hand, just run `mise install` again.
+Nothing here calls Microsoft's installer directly — mise does, internally. Its
+`dotnet` backend downloads `dotnet-install.sh` into its own cache and runs it
+per version, but both jobs share one cached copy of that script, so installing
+`dotnet = ["10", "8"]` concurrently can leave one execing the file while the
+other rewrites it:
+
+```
+Failed to install core:dotnet@8: dotnet-install.sh: Permission denied (os error 13)
+```
+
+It is a race in mise, not a config problem. `bootstrap.sh` retries
+automatically; by hand, run `mise install` again and the second pass installs
+the missing SDK.
 
 ## Migrating an existing mac off nvm and brew dotnet
 
