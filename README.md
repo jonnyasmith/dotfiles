@@ -48,7 +48,7 @@ to pick up new packages or re-link configs; steps that are already done report
 
 | step | does |
 |---|---|
-| `preflight` | checks macOS + Homebrew, puts brew on the login `PATH` |
+| `preflight` | checks macOS + Homebrew, and that `zsh/.zprofile` still puts brew on the login `PATH` |
 | `brew` | `brew bundle` from the `Brewfile` |
 | `omz` | oh-my-zsh + the four plugins `.zshrc` expects |
 | `stow` | symlinks every package into `$HOME` |
@@ -76,7 +76,7 @@ Each top-level directory is a stow package mirroring its path under `$HOME`:
 | `1password` | `~/.config/1Password/ssh/agent.toml` |
 | `ideavim` | `~/.ideavimrc` |
 | `tmux` | `~/.config/tmux` |
-| `zsh` | `~/.zshrc`, `~/.zshenv`, `~/.config/zsh` |
+| `zsh` | `~/.zshrc`, `~/.zshenv`, `~/.zprofile`, `~/.config/zsh` |
 
 Adding a package: create `<name>/` with the file at its `$HOME`-relative path,
 then `stow <name>`. `bootstrap.sh` discovers packages automatically, so nothing
@@ -85,25 +85,47 @@ else needs updating.
 **Keep configs free of absolute paths.** `$HOME`, not `/Users/jonny` — the
 whole point is that this clones onto any machine.
 
-`.zshenv` is sourced by **every** zsh — including non-interactive `zsh -c` —
-so it holds PATH only: uv's `~/.local/bin`, rustup's `cargo/env`, and the mise
-shims. The shims are appended there rather than in `.zshrc` because `mise
-activate` only runs for interactive shells, so git hooks, editor-spawned
-shells, and LaunchAgents would otherwise have no `node`/`npx`/`pnpm`. Anything
-that prints or needs a terminal belongs in `.zshrc` instead.
+### Shell files and tool precedence
 
-The shims go at the *end* of `PATH`, so they never shadow a deliberately
-installed binary. The tradeoff: in a non-interactive shell a name that also
-exists in `/usr/bin` still resolves there — `python3` is Xcode's, not mise's.
-`node`, `npx` and `pnpm` have no `/usr/bin` equivalent, so they hit the shims,
-which is the case this exists for. Interactive shells get `mise activate`,
-which prepends the real install dirs and so wins for everything.
+The three zsh files are stowed together because between them they decide which
+`python3` and `node` you get, and they run in a fixed order:
 
-`~/.zprofile` is deliberately **not** stowed: it holds machine-specific
-`brew shellenv` and OrbStack lines. The `stow` step will link a `zsh/.zprofile`
-if one is ever added, moving any real file to `.pre-stow` first — the same
-treatment `.zshrc` and `.zshenv` get, since oh-my-zsh, uv, and rustup all write
-those files before the bootstrap runs.
+| file | sourced by | does |
+|---|---|---|
+| `.zshenv` | **every** zsh, incl. `zsh -c` | PATH only: uv's `~/.local/bin`, rustup's `cargo/env`, mise shims |
+| `.zprofile` | login zsh | `brew shellenv`, OrbStack, then re-asserts the shims |
+| `.zshrc` | interactive zsh | oh-my-zsh, starship, aliases, `mise activate` |
+
+Anything that prints, prompts, or needs a terminal belongs in `.zshrc`; the
+other two are sourced by non-interactive shells where output breaks things.
+
+`mise activate` runs in `.zshrc`, so **only interactive shells** get it. Git
+hooks (husky runs `npx lint-staged` under `sh`), editor- and GUI-spawned
+shells, LaunchAgents and cron get none of it, and without the shims they see no
+`node`/`npx`/`pnpm` at all — plus the wrong `python3`, because both `/usr/bin`
+(Xcode's 3.9) and `/opt/homebrew/bin` (python@3.14, pulled in as an azure-cli /
+pipx / platformio dependency) ship one. Those are the exact interpreters
+`mise/.config/mise/config.toml` exists to keep off `PATH`.
+
+So the shims go at the **front** of `PATH`, not the back, and `.zshenv` defines
+`mise-shims-first` as a function rather than a one-off export: `brew shellenv`
+prepends `/opt/homebrew/bin` *after* `.zshenv` has run, so `.zprofile` has to
+call it again to win. Nothing in `~/.local/bin` shares a name with a shim
+(compare it against `ls ~/.local/share/mise/shims`), so this shadows nothing.
+In an interactive shell `mise activate` then prepends the real install dirs
+ahead of the shims, which additionally applies `[env]` vars and
+`python.uv_venv_auto` that shims cannot.
+
+Result — mise's tools in all four modes, brew's untouched:
+
+```
+zsh -c   python3 → shims/python3       3.13.14
+zsh -lc  python3 → shims/python3       3.13.14   (git/stow/gh still brew's)
+zsh -ic  python3 → installs/python/3.13/bin/python3
+```
+
+Shims respect project pins the same way `activate` does: inside a repo with
+`.nvmrc` 22 they give node 22, outside it the global default 24.
 
 Git config is XDG (`~/.config/git/config`), not `~/.gitconfig`. Git reads both,
 with `~/.gitconfig` last and therefore winning, so keep only one — a stray

@@ -46,13 +46,15 @@ step_preflight() {
   fi
   ok "Homebrew $(brew --version | head -1 | awk '{print $2}')"
 
-  # Apple silicon puts brew outside the default PATH; make sure login shells see it.
-  local shellenv='eval "$(/opt/homebrew/bin/brew shellenv)"'
-  if [[ -x /opt/homebrew/bin/brew ]] && ! grep -qF "$shellenv" "$HOME/.zprofile" 2>/dev/null; then
-    printf '\n%s\n' "$shellenv" >> "$HOME/.zprofile"
-    ok "added brew shellenv to ~/.zprofile"
+  # Login shells get brew from this repo's zsh/.zprofile (linked by the stow
+  # step), which also re-asserts the mise shims *after* brew has prepended
+  # /opt/homebrew/bin. So do not append a shellenv line here: ~/.zprofile is a
+  # stow symlink, the write would land in the repo, and it would land below
+  # mise-shims-first — putting Homebrew's python3 back ahead of mise's.
+  if grep -q 'brew shellenv' "$DOTFILES/zsh/.zprofile" 2>/dev/null; then
+    skip "brew reaches login shells via zsh/.zprofile"
   else
-    skip "brew already on the login PATH"
+    die "zsh/.zprofile no longer runs brew shellenv; login shells will not see brew"
   fi
 }
 

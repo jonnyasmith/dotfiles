@@ -13,13 +13,24 @@ export PATH="$HOME/.local/bin:$PATH"
 # unguarded `.` on a missing file aborts every zsh -c in the session.
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
-# mise shims as a PATH *fallback*, so node/npx/pnpm/python resolve in contexts
-# that never source .zshrc: git hooks (husky runs `npx lint-staged` under sh),
-# editor/GUI-spawned shells, LaunchAgents, cron. Interactive shells are
-# unaffected -- `mise activate` in .zshrc runs later and prepends the real
-# install dirs, which also apply [env] vars and python.uv_venv_auto that shims
-# do not. Appended (not prepended) so it never shadows an explicit tool.
-case ":$PATH:" in
-	*":$HOME/.local/share/mise/shims:"*) ;;
-	*) export PATH="$PATH:$HOME/.local/share/mise/shims" ;;
-esac
+# mise shims, for the contexts that never source .zshrc and so never run `mise
+# activate`: git hooks (husky runs `npx lint-staged` under sh), editor/GUI
+# spawned shells, LaunchAgents, cron. Without them those see no node/npx/pnpm
+# at all, and `python3` falls through to /usr/bin (Xcode's 3.9) or, once
+# .zprofile has run brew shellenv, to Homebrew's python@3.14 — the two
+# interpreters mise/config.toml exists to keep off PATH.
+#
+# FRONT of PATH, not the back: /usr/bin and /opt/homebrew/bin both ship a
+# `python3`, so an appended shim loses to them. Nothing in ~/.local/bin shares a
+# name with a shim (`ls ~/.local/share/mise/shims`), so this shadows nothing.
+#
+# A function because ordering has to be re-asserted: .zprofile's brew shellenv
+# runs after this file and prepends /opt/homebrew/bin, so login shells call it
+# again. Interactive shells then get `mise activate` in .zshrc, which prepends
+# the real install dirs ahead of the shims and also applies [env] vars and
+# python.uv_venv_auto that shims cannot.
+mise-shims-first() {
+	path=("$HOME/.local/share/mise/shims" ${path:#"$HOME/.local/share/mise/shims"})
+	export PATH
+}
+mise-shims-first
