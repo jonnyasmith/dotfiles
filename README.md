@@ -96,7 +96,7 @@ brew bundle cleanup --file=Brewfile  # what is installed but unrecorded?
 
 ## Dev tools (mise)
 
-`mise` owns node, the .NET SDKs, pnpm, and the CLIs that used to be
+`mise` owns node, python, the .NET SDKs, pnpm, and the CLIs that used to be
 `npm install -g`. Versions are declared in `mise/.config/mise/config.toml`, and
 `.zshrc` runs `mise activate zsh`, so `PATH` is rewritten on `cd`.
 
@@ -112,10 +112,34 @@ those and a Homebrew copy will shadow it. mise sets `DOTNET_ROOT` and
 `DOTNET_MULTILEVEL_LOOKUP` itself; never export them from the shell.
 
 Per-project versions come from files already in your repos — `global.json`
-(`sdk.version`) and `.nvmrc` / `.node-version` — because
+(`sdk.version`), `.nvmrc` / `.node-version`, and `.python-version` — because
 `idiomatic_version_file_enable_tools` is set. Entering a directory switches
 automatically. mise does *not* read `package.json`'s `packageManager` field; to
 pin pnpm per project use `mise use pnpm@10` or a `.tool-versions`.
+
+### Python
+
+Homebrew's `python@3.14` is a **dependency** of `azure-cli`, `pipx`, `pytest`
+and `platformio`, so it is upgraded whenever any of those are, and every venv
+built against it drifts. Leave it installed — those formulae each have a
+private `libexec` venv with a hardcoded shebang, so none of them consume
+`/opt/homebrew/bin/python3` and mise can own `python3` safely. Never remove
+`/usr/bin/python3` either; that is Apple's and the OS uses it.
+
+The split that keeps this stable:
+
+| owns | what |
+|---|---|
+| mise | the interpreter — which `python3` you get, per directory |
+| uv | per-project `.venv` and `uv tool install` |
+| brew | nothing you invoke; just a dependency of the formulae above |
+
+`python.uv_venv_auto` is on, so a project's `.venv` activates on `cd` without
+`source .venv/bin/activate`. Create one with `uv venv` and mise will enter it.
+
+Build project venvs from a mise or uv python, never a bare `python3 -m venv`
+picked up from `PATH` before `mise activate` runs — that is how venvs end up
+pinned to Homebrew or, worse, Xcode's 3.9.6.
 
 To change a version, edit `mise/.config/mise/config.toml` and commit. `mise use
 -g` writes through the stow symlink and preserves comments, but it **replaces**
