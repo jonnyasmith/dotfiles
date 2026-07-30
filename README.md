@@ -61,7 +61,7 @@ Each top-level directory is a stow package mirroring its path under `$HOME`:
 
 | package | links to |
 |---|---|
-| `btop`, `ghostty`, `gh`, `htop`, `karabiner`, `mise`, `nvim`, `starship` | `~/.config/<name>` |
+| `btop`, `gh`, `ghostty`, `herdr`, `htop`, `karabiner`, `mise`, `nvim`, `starship` | `~/.config/<name>` |
 | `git` | `~/.gitconfig`, `~/.gitignore` |
 | `ideavim` | `~/.ideavimrc` |
 | `tmux` | `~/.config/tmux` |
