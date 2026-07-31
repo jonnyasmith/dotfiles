@@ -241,7 +241,10 @@ cannot be committed by accident.
   host with `IdentitiesOnly yes`. Without it ssh offers every key in the agent
   and the first one the server accepts wins — which silently authenticated work
   repos as the personal account. The `github-work` alias is just a label and
-  stays tracked.
+  stays tracked. Each block is `Match originalhost`, **not** `Host`: the alias
+  sets `HostName github.com`, and a `Host github.com` block matches it too, so
+  both identities load and agent order picks the account — the same bug
+  `IdentitiesOnly` was meant to close.
 - **`home/.ssh/1password/*.pub`** are public-key stubs, committed deliberately.
   `IdentityFile` needs a local file to name *which* agent key to use; the
   private half never leaves 1Password. ssh matches on the key blob, not the
@@ -356,6 +359,17 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   present.
 - **`btop` is `os = ["linux"]`** — its aqua backend has no darwin build. macOS
   takes it from brew.
+- **The dotfiles phase is all-or-nothing on pre-existing files.** If any target
+  mise would symlink already exists as a real file, it lists every conflict and
+  applies *nothing* — so a first run on a machine that already had AstroNvim,
+  herdr or 1Password installed leaves every other dotfile unapplied too. Back
+  the conflicts up and re-run `mise bootstrap dotfiles apply --force`; `copy`
+  and `template` targets are overwritten either way and never appear in that
+  list. Missing parent directories are *not* a problem — mise creates them.
+- **A dangling symlink in a target's path fails the phase with a bare
+  `ln -sf ... No such file or directory`.** Left over from the pre-mise stow
+  layout, which linked `~/.config/zsh -> ~/.dotfiles/.config/zsh` (the repo now
+  keeps everything under `home/`). `find ~ -maxdepth 4 -xtype l` finds them.
 
 ## History
 
