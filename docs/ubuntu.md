@@ -79,6 +79,25 @@ old runbook.
 If Ubuntu's `apt:neovim` is too old for the config, drop it and let mise own the
 binary with `[tools] neovim = "latest"` instead.
 
+## 5a. Ghostty comes from a PPA, not the Ubuntu archive
+
+Ubuntu carries `ghostty` from 26.04 onwards, but that copy lags upstream and
+24.04 has nothing at all. `pre-packages` adds `ppa:mkasberg/ghostty-ubuntu` —
+the PPA ghostty.org itself points Ubuntu users at — and `apt:ghostty` installs
+from it, so updates arrive through apt like everything else.
+
+That PPA step is the only one in the hook gated on the distro rather than on the
+package manager. Launchpad builds PPAs for Ubuntu suites only, so adding it on
+Debian or Raspberry Pi OS would register a suite that 404s and break every later
+`apt update`. The gate is `ID`/`ID_LIKE` containing `ubuntu`.
+
+The upshot is that `apt:ghostty`, like `apt:ubuntu-restricted-extras`, does not
+resolve on the non-Ubuntu members of the apt family. Ghostty ships official
+binaries for macOS only; every Linux package is a distro or community build, and
+there is no Debian one worth wiring in. Do not substitute the project's
+`curl … | bash` installer — see the note in `docs/fedora.md` on third-party
+install scripts.
+
 ## 6. 1Password — GUI sign-in and SSH agent
 
 1. Launch **1Password** and sign in. If the browser hand-off does not fire,

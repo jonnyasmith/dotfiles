@@ -102,6 +102,21 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
   fi
 
+  # Ghostty COPR. Ghostty is not in Fedora's own repositories — the project
+  # ships official binaries for macOS only and leaves Linux to distro and
+  # community packagers. scottames/ghostty is the COPR that ghostty.org itself
+  # points Fedora users at. `copr enable` writes
+  # /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo,
+  # so testing for that file is the idempotency guard; -y suppresses the
+  # "this repository is not part of Fedora" acknowledgement prompt.
+  #
+  # The copr subcommand lives in dnf5-plugins, which Fedora Workstation ships
+  # but a minimal install does not.
+  if [ ! -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo ]; then
+    rpm -q dnf5-plugins >/dev/null 2>&1 || sudo dnf install -y dnf5-plugins
+    sudo dnf -y copr enable scottames/ghostty
+  fi
+
   sudo dnf -q check-update || true
 fi
 
@@ -146,6 +161,33 @@ if command -v apt-get >/dev/null 2>&1; then
       'Signed-By: /usr/share/keyrings/microsoft.gpg' \
       | sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null
   fi
+
+  # Ghostty PPA. Ghostty reached Ubuntu's own repositories in 26.04, but that
+  # copy lags the upstream release; mkasberg/ghostty-ubuntu is the PPA
+  # ghostty.org points Ubuntu users at and it covers 24.04 as well. Explicitly
+  # NOT the `curl … | bash` installer from the same project — see docs/fedora.md
+  # on why third-party install scripts are not piped into a shell here.
+  #
+  # Guarded to the Ubuntu family specifically, unlike the two repos above.
+  # Launchpad only builds PPAs for Ubuntu suites, so on Debian or Raspberry Pi
+  # OS add-apt-repository would add a suite that 404s and break `apt update`
+  # for every subsequent run. `apt:ghostty` is then unresolvable there — the
+  # same shape as the existing apt:ubuntu-restricted-extras entry.
+  #
+  # The guard greps for the PPA's URL rather than a filename: add-apt-repository
+  # writes `<owner>-ubuntu-<ppa>-<codename>.sources` on 24.04+ but a `.list` on
+  # older releases, so the name is not stable across the versions this repo has
+  # to work on. The URL is.
+  . /etc/os-release
+  case "${ID:-}:${ID_LIKE:-}" in
+    *ubuntu*)
+      if ! grep -rqs 'ppa.launchpadcontent.net/mkasberg/ghostty-ubuntu' \
+           /etc/apt/sources.list /etc/apt/sources.list.d/; then
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:mkasberg/ghostty-ubuntu
+      fi
+      ;;
+  esac
 
   sudo apt-get update
 fi

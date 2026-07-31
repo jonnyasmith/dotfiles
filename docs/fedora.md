@@ -60,7 +60,7 @@ cd ~/.dotfiles
 That installs mise and runs `mise bootstrap`, which handles:
 
 - dnf tuning (`max_parallel_downloads`, `fastestmirror`)
-- the RPM Fusion, 1Password and VS Code repos
+- the RPM Fusion, 1Password, VS Code and Ghostty (`scottames/ghostty` COPR) repos
 - every `dnf:` package
 - oh-my-zsh and its plugins, tpm
 - the 18 GNOME `gsettings` writes plus the two workspace-keybinding loops
