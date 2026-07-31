@@ -180,7 +180,6 @@ fi
 
 [tasks."setup:fedora"]
 description = "Fedora post-bootstrap setup. No-op without dnf."
-depends = ["gtk-settings", "gnome-settings"]
 run = '''
 command -v dnf >/dev/null 2>&1 || exit 0
 echo "  . fedora setup complete"
@@ -188,7 +187,6 @@ echo "  . fedora setup complete"
 
 [tasks."setup:debian"]
 description = "Debian/Ubuntu post-bootstrap setup. No-op without apt-get."
-depends = ["gtk-settings", "gnome-settings"]
 run = '''
 command -v apt-get >/dev/null 2>&1 || exit 0
 echo "  . debian/ubuntu setup complete"
@@ -216,49 +214,65 @@ mkdir -p "$HOME/.1password"
 echo "  . wsl setup complete"
 '''
 
-# Shared by setup:fedora and setup:debian. Split in two because most of the old
-# fedora/install/linux.sh `gsettings set` lines are read by GNOME Shell, mutter
-# or gnome-settings-daemon and are inert under any other desktop — verified on
-# Fedora 44 running COSMIC, where the whole block applied cleanly and changed
-# nothing. `gsettings` itself is no guard: it ships with glib2 and exists on
-# every machine with GTK on it.
+# --- Desktop axis -----------------------------------------------------------
+#
+# Distribution and desktop are independent: GNOME on Debian and Arch, GNOME or
+# COSMIC on Fedora, and both installed side by side on the same machine. So the
+# desktop tasks are siblings of setup:fedora/debian/arch, not dependencies of
+# them, and each guards on the same kind of thing its distro counterpart does —
+# is the software there.
+#
+# Detection is on what is INSTALLED, never on what is running.
+# $XDG_CURRENT_DESKTOP only describes the session that happens to be live: it
+# is unset over SSH and on a tty, and on a dual-desktop machine it would leave
+# the other desktop unconfigured until you logged into it and re-bootstrapped.
+# Configuring every desktop that is present is both idempotent and complete.
+#
+# `gsettings` is not a GNOME probe either. It ships with glib2, so it exists on
+# any machine with GTK; `gnome-shell` is the thing that reads GNOME's keys.
+#
+# GNOME state is dconf, COSMIC state is RON files under ~/.config/cosmic, so
+# each task applies a payload from desktop/ in the repo rather than carrying a
+# wall of `gsettings set` lines. `dconf load` is idempotent, needs no installed
+# schema, and merges — it writes the listed keys and touches nothing else.
 
-[tasks.gtk-settings]
-description = "GTK settings every desktop honours. No-op without gsettings."
+[tasks."setup:gtk"]
+description = "GTK settings for any desktop. No-op without dconf."
 shell = "bash -c"
 run = '''
-command -v gsettings >/dev/null 2>&1 || exit 0
+set -u
+command -v dconf >/dev/null 2>&1 || exit 0
 
-# GTK3/GTK4 apps read these through xdg-desktop-portal whatever the desktop is,
-# so they are deliberately not gated on GNOME. `gsettings set` is idempotent.
-gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
-gsettings set org.gnome.desktop.interface font-hinting 'full'
-gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
-gsettings set org.gnome.desktop.interface enable-animations false
-gsettings set org.gtk.gtk4.Settings.FileChooser show-hidden true
-gsettings set org.gtk.gtk4.Settings.FileChooser sort-directories-first true
+# Over SSH or from a tty unit the session bus is usually still there but not in
+# the environment; without it GIO silently falls back to the memory backend and
+# the write is lost.
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+fi
+
+dconf load / < "$HOME/.dotfiles/desktop/gtk.dconf"
+echo "  . gtk settings applied"
 '''
 
-[tasks.gnome-settings]
-description = "GNOME Shell settings. No-op off GNOME."
+[tasks."setup:gnome"]
+description = "GNOME Shell settings. No-op where GNOME is not installed."
 shell = "bash -c"
 run = '''
-command -v gsettings >/dev/null 2>&1 || exit 0
+set -u
+if ! command -v gnome-shell >/dev/null 2>&1; then
+  echo "  . gnome not installed, skipped"
+  exit 0
+fi
 
-# XDG_CURRENT_DESKTOP is colon-separated and set by the session, so this also
-# skips a headless Raspberry Pi, a server, and a bootstrap run over plain SSH —
-# all cases where writing GNOME keys into dconf achieves nothing.
-case "${XDG_CURRENT_DESKTOP:-}" in
-  *GNOME*) ;;
-  *)
-    echo "  . gnome-settings skipped (XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-unset})"
-    exit 0
-    ;;
-esac
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+fi
 
-# gnome-tweaks exposes what this task writes, so it is installed here rather
-# than declared in mise.toml's package lists: those have no desktop dimension,
-# and a GNOME-only GUI has no business on a COSMIC or headless box.
+dconf load / < "$HOME/.dotfiles/desktop/gnome.dconf"
+
+# gnome-tweaks exposes what this writes. It is installed here rather than
+# declared in mise.toml because package lists have an `os` dimension but no
+# desktop one, and a GNOME-only GUI has no business on a COSMIC or headless box.
 if ! command -v gnome-tweaks >/dev/null 2>&1; then
   if command -v dnf >/dev/null 2>&1; then sudo dnf install -y gnome-tweaks
   elif command -v apt-get >/dev/null 2>&1; then sudo apt-get install -y gnome-tweaks
@@ -266,29 +280,103 @@ if ! command -v gnome-tweaks >/dev/null 2>&1; then
   fi
 fi
 
-gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
-gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
-gsettings set org.gnome.desktop.interface show-battery-percentage true
-gsettings set org.gnome.desktop.input-sources xkb-options "['caps:swapescape']"
-gsettings set org.gnome.desktop.interface clock-show-seconds true
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
-gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
-gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
-gsettings set org.gnome.desktop.privacy recent-files-max-age 30
-gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-left "['<Shift><Super>Left']"
-gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-right "['<Shift><Super>Right']"
+echo "  . gnome settings applied"
+'''
 
-# Nautilus is not a GNOME Shell dependency; without this guard the task prints
-# `No such schema` on any GNOME install that uses a different file manager.
-if gsettings list-schemas | grep -qx 'org.gnome.nautilus.preferences'; then
-  gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+[tasks."setup:cosmic"]
+description = "COSMIC settings. No-op where COSMIC is not installed."
+shell = "bash -c"
+run = '''
+set -u
+if ! command -v cosmic-comp >/dev/null 2>&1; then
+  echo "  . cosmic not installed, skipped"
+  exit 0
 fi
 
-# Bind super+N to workspaces: first drop GNOME's switch-to-application default,
-# then bind switch-to-workspace in its place.
-for i in {1..9}; do gsettings set org.gnome.shell.keybindings switch-to-application-$i "[]";done
-for i in {1..9}; do gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-$i "['<Super>$i']";done
+src="$HOME/.dotfiles/desktop/cosmic"
+dst="$HOME/.config/cosmic"
 
-# To undo the workspace binding:
-#   for i in {1..9}; do gsettings set org.gnome.shell.keybindings switch-to-application-$i "['<Super>$i']";done
+# Copy, not symlink: cosmic-config owns these files at runtime and rewrites them
+# whenever a setting changes in the GUI, so a symlink would either be replaced
+# behind our back or turn every GUI tweak into a dirty working tree. The repo is
+# the seed for a new machine; to capture a change made in Settings, copy it back.
+n=0
+while IFS= read -r rel; do
+  out="$dst/$rel"
+  mkdir -p "$(dirname "$out")"
+  # @HOME@ keeps the Spawn() paths in the shortcut bindings machine-independent.
+  tmp="$(mktemp)"
+  sed "s|@HOME@|$HOME|g" "$src/$rel" > "$tmp"
+  if cmp -s "$tmp" "$out"; then rm -f "$tmp"; else mv "$tmp" "$out"; n=$((n+1)); fi
+done < <(cd "$src" && find . -type f -printf '%P\n')
+
+if [ "$n" -gt 0 ]; then echo "  + cosmic: $n key(s) written"; else echo "  . cosmic settings current"; fi
+'''
+
+# Not part of bootstrap — `check:*` is outside the `setup:*` glob. Run it after
+# editing desktop/*.dconf, because `dconf load` accepts any path at all and a
+# section header that does not match an installed schema's path is written to
+# dconf and then read by nobody. That is the one way these payloads can rot
+# silently; a wrong *value* is rejected by the schema at read time and a missing
+# component (nautilus on a GNOME box without it) is reported, not failed.
+[tasks."check:dconf"]
+description = "Verify desktop/*.dconf section paths against installed schemas"
+shell = "bash -c"
+run = '''
+set -u
+dir=/usr/share/glib-2.0/schemas
+[ -d "$dir" ] || { echo "  . no glib schemas installed, skipped"; exit 0; }
+
+# Reads the schema XML rather than GSettings: `gi` is not importable from the
+# mise-managed python3, and PyGObject is a separate distro package on Debian
+# and Arch. The XML is always there — glib-compile-schemas needs it.
+python3 - "$dir" "$HOME/.dotfiles/desktop" <<'PY'
+import pathlib, sys
+import xml.etree.ElementTree as ET
+
+schemas, keys = {}, {}
+for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
+    try:
+        root = ET.parse(x).getroot()
+    except ET.ParseError:
+        continue
+    for s in root.iter("schema"):
+        path = s.get("path")
+        if not path:  # relocatable: no fixed path to check against
+            continue
+        p = path.strip("/")
+        schemas[p] = s.get("id")
+        keys[p] = {k.get("name") for k in s.iter("key")}
+
+bad = 0
+for f in sorted(pathlib.Path(sys.argv[2]).glob("*.dconf")):
+    section, optional = None, False
+    for n, line in enumerate(f.read_text().splitlines(), 1):
+        line = line.strip()
+        if line.startswith("#"):
+            # A `# optional` comment marks the next section as belonging to a
+            # component that may not be installed (nautilus on a GNOME box that
+            # uses another file manager). Without it an absent schema is a typo.
+            optional = line.startswith("# optional")
+            continue
+        if not line:
+            continue
+        if line.startswith("["):
+            section = line[1:-1].strip("/")
+            if section not in schemas:
+                if optional:
+                    print(f"  . {f.name}: /{section}/ not installed, unchecked")
+                else:
+                    print(f"  ! {f.name}:{n} no installed schema at /{section}/")
+                    bad += 1
+            optional = False
+            continue
+        key = line.split("=", 1)[0].strip()
+        if section in keys and key not in keys[section]:
+            print(f"  ! {f.name}:{n} {schemas[section]} has no key '{key}'")
+            bad += 1
+
+print(f"  ! {bad} problem(s)" if bad else "  . dconf payloads valid")
+sys.exit(1 if bad else 0)
+PY
 '''

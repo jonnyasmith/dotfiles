@@ -68,6 +68,7 @@ mise.linux.toml      ├─ loaded only on that platform
 mise.windows.toml   ─┘
 .miserc.toml        auto_env = true, which is what makes the above load
 home/               mirrors $HOME — every dotfile source
+desktop/            per-desktop settings: gnome.dconf, gtk.dconf, cosmic/
 docs/               the parts of each runbook a human must still do
 packages/           winget ids and VS Code extension ids
 bootstrap.sh        installs mise, then `mise bootstrap`
@@ -123,6 +124,53 @@ code --list-extensions | sort > packages/vscode.txt      # re-record extensions
 ```
 
 Commit the result. There is no separate manifest to keep in sync.
+
+## Distribution and desktop are two axes
+
+Distribution and desktop vary independently — GNOME on Debian and Arch, GNOME
+*or* COSMIC on Fedora, and on this laptop both installed side by side. So they
+are two independent sets of sibling `setup:*` tasks, never nested:
+
+| axis | task | guard |
+|---|---|---|
+| distribution | `setup:fedora` | `dnf` on PATH |
+| | `setup:debian` | `apt-get` on PATH |
+| | `setup:arch` | `pacman` on PATH |
+| desktop | `setup:gtk` | `dconf` on PATH |
+| | `setup:gnome` | `gnome-shell` **installed** |
+| | `setup:cosmic` | `cosmic-comp` **installed** |
+
+Both desktop tasks can fire on one machine, and should: each desktop is
+configured whether or not you are currently logged into it, so switching
+sessions needs no re-bootstrap.
+
+**Detection is on what is installed, never on what is running.**
+`$XDG_CURRENT_DESKTOP` describes only the live session — it is unset over SSH
+and on a tty, and on a dual-desktop machine it would silently leave the other
+desktop unconfigured. `gsettings` is not a GNOME probe either: it ships with
+glib2 and exists on anything with GTK.
+
+The payloads are data, not shell:
+
+| desktop | store | applied by |
+|---|---|---|
+| GTK apps, any desktop | dconf | `dconf load / < desktop/gtk.dconf` |
+| GNOME | dconf | `dconf load / < desktop/gnome.dconf` |
+| COSMIC | RON files in `~/.config/cosmic/<component>/v1/<key>` | copied from `desktop/cosmic/` |
+
+`dconf load` merges, is idempotent, and needs no installed schema — so a
+`gnome.dconf` key for a component this box lacks is written silently instead of
+erroring. The cost is that it does not validate: a section header is a dconf
+*path*, not a schema id, and the two differ (`org.gtk.Settings.FileChooser`
+lives at `/org/gtk/settings/file-chooser`). A wrong path is written and then
+read by nobody, so **`mise run check:dconf`** validates both payloads against
+the installed schema XML. Run it after editing them.
+
+COSMIC is copied rather than symlinked because `cosmic-config` owns those files
+at runtime and rewrites them on every GUI change; the repo is the seed for a new
+machine, and a setting changed in Settings is copied back by hand. `@HOME@` in
+`desktop/cosmic/` is expanded at apply time, which is what keeps the `Spawn()`
+paths in the shortcut bindings machine-independent.
 
 ## Dotfiles
 
@@ -370,15 +418,18 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   `ln -sf ... No such file or directory`.** Left over from the pre-mise stow
   layout, which linked `~/.config/zsh -> ~/.dotfiles/.config/zsh` (the repo now
   keeps everything under `home/`). `find ~ -maxdepth 4 -xtype l` finds them.
-- **`gsettings` is not a GNOME probe.** It ships with glib2, so the old
-  `command -v gsettings` guard also fired on COSMIC, KDE and anything else with
-  GTK installed, writing ~20 GNOME Shell keys into dconf that nothing reads. The
-  cross-desktop GTK keys are now `[tasks.gtk-settings]`; the Shell/mutter ones
-  are `[tasks.gnome-settings]`, gated on `XDG_CURRENT_DESKTOP` matching `*GNOME*`
-  — which also skips a bootstrap run over SSH, where that variable is unset.
-- **Package lists have no desktop dimension**, only `os`. `gnome-tweaks` is
-  therefore installed from inside `[tasks.gnome-settings]` rather than declared,
-  so a COSMIC or headless box does not get a GNOME-only GUI.
+- **Package lists have an `os` dimension but no desktop one.** `gnome-tweaks` is
+  therefore installed from inside `[tasks."setup:gnome"]` rather than declared
+  in `mise.toml`, so a COSMIC or headless box does not get a GNOME-only GUI.
+- **`dconf load` accepts any path**, including one no schema claims. That is
+  what makes it usable for a component that may not be installed, and also what
+  lets a typo sit there doing nothing — hence `mise run check:dconf`, and the
+  `# optional` marker in `desktop/*.dconf` for sections that are legitimately
+  absent on some machines.
+- **`gi` is not importable from the mise-managed python3**, and PyGObject is a
+  separate distro package. `check:dconf` therefore parses
+  `/usr/share/glib-2.0/schemas/*.gschema.xml` directly rather than asking
+  GSettings.
 
 ## History
 

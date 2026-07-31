@@ -1,0 +1,62 @@
+# Applied by [tasks."setup:gnome"] with `dconf load /`.
+#
+# Every key here is interpreted by GNOME Shell, mutter or gnome-settings-daemon
+# and is dead weight anywhere else — which is why the task is gated on
+# gnome-shell being installed, not on `gsettings` existing. Cross-desktop GTK
+# keys live in gtk.dconf; the COSMIC equivalents of these live in cosmic/.
+#
+# `dconf load` needs no schema, so keys for a component that is not installed
+# (nautilus, say) are written silently instead of erroring.
+
+[org/gnome/desktop/peripherals/touchpad]
+tap-to-click=true
+
+[org/gnome/desktop/wm/preferences]
+button-layout='appmenu:minimize,maximize,close'
+
+[org/gnome/desktop/interface]
+clock-show-seconds=true
+show-battery-percentage=true
+
+[org/gnome/desktop/input-sources]
+xkb-options=['caps:swapescape']
+
+[org/gnome/desktop/privacy]
+recent-files-max-age=30
+
+[org/gnome/settings-daemon/plugins/power]
+sleep-inactive-ac-type='nothing'
+sleep-inactive-battery-type='nothing'
+
+[org/gnome/settings-daemon/plugins/color]
+night-light-enabled=true
+
+# optional — nautilus is not a GNOME Shell dependency
+[org/gnome/nautilus/preferences]
+default-folder-viewer='list-view'
+
+[org/gnome/desktop/wm/keybindings]
+move-to-workspace-left=['<Shift><Super>Left']
+move-to-workspace-right=['<Shift><Super>Right']
+switch-to-workspace-1=['<Super>1']
+switch-to-workspace-2=['<Super>2']
+switch-to-workspace-3=['<Super>3']
+switch-to-workspace-4=['<Super>4']
+switch-to-workspace-5=['<Super>5']
+switch-to-workspace-6=['<Super>6']
+switch-to-workspace-7=['<Super>7']
+switch-to-workspace-8=['<Super>8']
+switch-to-workspace-9=['<Super>9']
+
+# Super+N must be freed from switch-to-application before it can bind to
+# switch-to-workspace above; an empty array is the documented 'unbound'.
+[org/gnome/shell/keybindings]
+switch-to-application-1=@as []
+switch-to-application-2=@as []
+switch-to-application-3=@as []
+switch-to-application-4=@as []
+switch-to-application-5=@as []
+switch-to-application-6=@as []
+switch-to-application-7=@as []
+switch-to-application-8=@as []
+switch-to-application-9=@as []

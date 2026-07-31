@@ -104,8 +104,9 @@ Then browse https://extensions.gnome.org and enable what you want. **Log out and
 back in** — GNOME Shell on Wayland will not load a newly installed extension
 into a running session.
 
-`gnome-tweaks` is installed by `apt:gnome-tweaks`; the settings it exposes are
-already written by the `gnome-settings` mise task.
+`gnome-tweaks` is installed by `[tasks."setup:gnome"]`, not declared in
+`mise.toml` — package lists have no desktop dimension. The settings it exposes
+are already written from `desktop/gnome.dconf`.
 
 ## 8. Docker Engine
 

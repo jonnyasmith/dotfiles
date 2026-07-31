@@ -94,21 +94,30 @@ repo hook.
 
 ## 6. Desktop settings
 
-Fedora ships GNOME by default but this laptop runs **COSMIC**, so the desktop
-half of the bootstrap is split:
+This laptop has **both** GNOME and COSMIC installed and switches between them
+at the login screen, so bootstrap configures both — see *Distribution and
+desktop are two axes* in the README. Nothing is keyed on which session happens
+to be running.
 
-| Task | Runs when | What it writes |
+| Task | Runs when | Payload |
 | --- | --- | --- |
-| `gtk-settings` | `gsettings` exists | dark theme, font hinting/antialiasing, animations off, GTK4 file-chooser — read by GTK apps under any desktop |
-| `gnome-settings` | `XDG_CURRENT_DESKTOP` contains `GNOME` | touchpad, `caps:swapescape`, workspace keybindings, idle/night-light, titlebar buttons, `gnome-tweaks` |
+| `setup:gtk` | `dconf` on PATH | `desktop/gtk.dconf` — dark theme, font hinting/antialiasing, animations off, GTK3+GTK4 file-chooser |
+| `setup:gnome` | `gnome-shell` installed | `desktop/gnome.dconf` — touchpad, `caps:swapescape`, workspace keybindings, idle/night-light, titlebar buttons, plus `gnome-tweaks` |
+| `setup:cosmic` | `cosmic-comp` installed | `desktop/cosmic/` copied into `~/.config/cosmic/` — keyboard, shortcuts, panel/dock, idle, dark mode |
 
-Everything in the second row is consumed by GNOME Shell, mutter or
-gnome-settings-daemon, and is **inert under COSMIC** — it lands in dconf and is
-never read. COSMIC keeps its own state in `~/.config/cosmic/<component>/v1/`
-(RON, not dconf); `caps:swapescape` for example lives in
-`com.system76.CosmicComp/v1/xkb_config`. None of that is tracked by this repo
-yet, so on a COSMIC machine the keyboard, shortcuts and power settings are
-still a manual pass through **Settings**.
+The two desktops share nothing: GNOME's state is dconf, COSMIC's is RON files
+under `~/.config/cosmic/<component>/v1/`. `caps:swapescape` is
+`/org/gnome/desktop/input-sources/xkb-options` on one and
+`com.system76.CosmicComp/v1/xkb_config` on the other, so it is declared twice —
+once per payload. Neither is read by the other desktop.
+
+To pick up a change made in COSMIC **Settings**, copy the file back into
+`desktop/cosmic/` and commit it; `setup:cosmic` copies rather than symlinks
+because `cosmic-config` rewrites these files itself at runtime.
+
+```shell
+mise run check:dconf   # after editing desktop/*.dconf
+```
 
 ### GNOME extensions
 

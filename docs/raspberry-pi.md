@@ -1,8 +1,9 @@
 # Raspberry Pi (Raspberry Pi OS / Debian)
 
-Headless ARM box. No GNOME, so the `gnome-settings` mise task guards on
-`command -v gsettings` and no-ops here. Packages, oh-my-zsh, its plugins and tpm
-come from `mise bootstrap`; everything below needs a human.
+Headless ARM box. No desktop, so `setup:gnome` and `setup:cosmic` find no
+`gnome-shell`/`cosmic-comp` and no-op here, and `setup:gtk` no-ops without
+`dconf`. Packages, oh-my-zsh, its plugins and tpm come from `mise bootstrap`;
+everything below needs a human.
 
 Harvested from `archive/main:raspberry-pi/README.md`, `raspberry-pi/install.sh`,
 `raspberry-pi/scripts/linux.sh`, `raspberry-pi/scripts/packages.sh`,
