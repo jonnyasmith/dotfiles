@@ -55,6 +55,11 @@
 [push]
     # push will only do the current branch, not all branches
     default = current
+    # `default = current` pushes to a same-named remote branch but does NOT
+    # record an upstream, so the branch stays untracked and `git pull` fails
+    # with "There is no tracking information for the current branch". This sets
+    # the upstream on the first push, which is what `git push -u` does by hand.
+    autoSetupRemote = true
 [branch]
     # set up 'git pull' to rebase instead of merge
     autosetuprebase = always
