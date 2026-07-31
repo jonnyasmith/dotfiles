@@ -27,6 +27,15 @@
 # [dotfiles] entries themselves have NO os filter, so anything that must exist
 # on only one platform lives in mise.<os>.toml beside this file instead.
 
+# Everything below assumes mise features that did not always exist: [dotfiles]
+# with symlink-each, `mise bootstrap`, auto_env platform configs, and glob
+# `depends`. An older mise does not error on any of them — it ignores the
+# sections it does not know, so a stale binary would "succeed" while silently
+# skipping the whole per-OS half of this file. Hard floor, not a soft warning:
+# a partially-applied bootstrap is worse than a refusal. 2026.7.17 is the
+# version every behavioural note in this file was verified against.
+min_version = "2026.7.17"
+
 [settings]
 # Must be absolute or ~/-prefixed. A RELATIVE value here is silently broken:
 # mise writes the relative string straight into the symlink target, so
@@ -35,6 +44,18 @@
 # has to be cloned to ~/.dotfiles specifically; [settings] is not templated, so
 # {{config_root}} does not work here either. Both verified on mise 2026.7.17.
 dotfiles.root = "~/.dotfiles/home"
+
+# Read .nvmrc/.node-version and .python-version. Disabled by default in mise —
+# without this the second entry in `node`/`python` below is unreachable, since
+# nothing but a project mise.toml or .tool-versions could select it. Verified
+# on 2026.7.18: with the setting empty, a directory containing .node-version
+# resolves to the default 24, not the pinned version.
+#
+# Enabled for node and python only. uv writes .python-version into its
+# projects, so this makes mise and uv agree on the interpreter instead of mise
+# holding 3.13 while the venv is 3.12; a version that is pinned but not
+# installed is auto-installed on first use (not_found_auto_install).
+idiomatic_version_file_enable_tools = ["node", "python"]
 
 # ---------------------------------------------------------------- dotfiles --
 #
