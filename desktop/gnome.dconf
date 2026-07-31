@@ -7,6 +7,12 @@
 #
 # `dconf load` needs no schema, so keys for a component that is not installed
 # (nautilus, say) are written silently instead of erroring.
+#
+# `check:dconf` can only validate these paths where GNOME's own schemas are
+# installed, so the file declares what it needs below and is skipped elsewhere.
+# Same gate setup:gnome applies with `command -v gnome-shell`.
+
+# requires org.gnome.shell
 
 [org/gnome/desktop/peripherals/touchpad]
 tap-to-click=true

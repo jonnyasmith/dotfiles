@@ -9,6 +9,13 @@
 # schema `org.gtk.Settings.FileChooser` lives at /org/gtk/settings/file-chooser.
 # `dconf load` does not validate against installed schemas, so a wrong path is
 # written silently and simply never read. `mise run check:dconf` catches that.
+#
+# `check:dconf` can only validate these paths where the GTK schemas exist, so
+# the file declares what it needs below and is skipped elsewhere. setup:gtk
+# still applies it wherever dconf exists — this gates the check, not the write.
+
+# requires org.gtk.Settings.FileChooser
+# requires org.gtk.gtk4.Settings.FileChooser
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'

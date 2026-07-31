@@ -389,6 +389,13 @@ if [ "$n" -gt 0 ]; then echo "  + cosmic: $n key(s) written"; else echo "  . cos
 # dconf and then read by nobody. That is the one way these payloads can rot
 # silently; a wrong *value* is rejected by the schema at read time and a missing
 # component (nautilus on a GNOME box without it) is reported, not failed.
+#
+# A payload is only checkable on a machine that has the software owning its
+# schemas, so each one declares that with a `# requires <schema-id>` header and
+# is skipped where the schema is absent. Without it this task fails on any
+# machine holding a partial schema set — a CI runner, or a headless box that
+# pulled in gsettings-desktop-schemas as a dependency — where every section
+# belonging to an uninstalled component looks exactly like a typo.
 [tasks."check:dconf"]
 description = "Verify desktop/*.dconf section paths against installed schemas"
 shell = "bash -c"
@@ -404,13 +411,14 @@ python3 - "$dir" "$HOME/.dotfiles/desktop" <<'PY'
 import pathlib, sys
 import xml.etree.ElementTree as ET
 
-schemas, keys = {}, {}
+schemas, keys, ids = {}, {}, set()
 for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
     try:
         root = ET.parse(x).getroot()
     except ET.ParseError:
         continue
     for s in root.iter("schema"):
+        ids.add(s.get("id"))
         path = s.get("path")
         if not path:  # relocatable: no fixed path to check against
             continue
@@ -420,8 +428,15 @@ for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
 
 bad = 0
 for f in sorted(pathlib.Path(sys.argv[2]).glob("*.dconf")):
+    text = f.read_text()
+    missing = [l.split(None, 2)[2] for l in text.splitlines()
+               if l.startswith("# requires ") and l.split(None, 2)[2] not in ids]
+    if missing:
+        print(f"  . {f.name}: {', '.join(missing)} not installed, skipped")
+        continue
+
     section, optional = None, False
-    for n, line in enumerate(f.read_text().splitlines(), 1):
+    for n, line in enumerate(text.splitlines(), 1):
         line = line.strip()
         if line.startswith("#"):
             # A `# optional` comment marks the next section as belonging to a
