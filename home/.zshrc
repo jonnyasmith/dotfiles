@@ -30,6 +30,26 @@ eval "$(mise activate zsh)"
 # .zshenv; interactive shells are the only ones that get this far.
 mise-shims-last
 
+# mise completions. compinit has already run (the OPENSPEC block at the top of
+# this file), so a _mise written now is not picked up until the next shell —
+# hence the manual autoload on the first run. Regenerated in the background
+# every start so it never lags a `mise self-update`. The script itself shells
+# out to the `usage` CLI, which mise.toml installs as a tool.
+#
+# This is oh-my-zsh's own plugins/mise logic minus its `mise activate` call,
+# which would activate a second time in the wrong place in the ordering above.
+_mise_comp="$HOME/.oh-my-zsh/custom/completions/_mise"
+if [[ ! -f $_mise_comp ]]; then
+	mkdir -p "${_mise_comp:h}"
+	mise completion zsh >| "$_mise_comp"
+	autoload -Uz _mise
+	typeset -g -A _comps
+	_comps[mise]=_mise
+else
+	mise completion zsh >| "$_mise_comp" &|
+fi
+unset _mise_comp
+
 source <(fzf --zsh)
 
 eval "$(zoxide init zsh)"

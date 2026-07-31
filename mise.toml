@@ -220,6 +220,10 @@ neovim = "latest"
 ripgrep = "latest"
 starship = "latest"
 terraform = "latest"
+# The completion scripts mise (and any other usage-spec CLI) emits shell out to
+# `usage` at completion time — without it, tab-completing `mise ` prints an
+# error instead of completing. See the block in home/.zshrc that installs them.
+usage = "latest"
 uv = "latest"
 zoxide = "latest"
 # zig was installed four different ways across the old branches: `dnf install
