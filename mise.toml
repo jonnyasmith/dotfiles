@@ -262,6 +262,10 @@ python = ["3.13", "3.12"]
 # installed harmlessly — .zshenv puts mise's shims ahead of /opt/homebrew/bin,
 # and `mise activate` puts the real install dirs ahead of that. Remove them
 # deliberately with `mise bootstrap packages prune --manager brew`.
+# bat, the cat replacement (syntax highlighting, git gutter, paging). Scoped to
+# linux+macos: it backs the `cat` alias in home/.config/zsh/aliases.zsh, and
+# Windows has no zsh.
+bat = { version = "latest", os = ["linux", "macos"] }
 # btop's aqua backend publishes Linux binaries only — on macOS it fails with
 # `unsupported env: darwin/arm64 (supported: ["linux"])` and takes the whole
 # tools phase with it. `os` filtering keeps the declaration cross-platform;

@@ -11,6 +11,13 @@ fi
 alias vim="nvim"
 alias code="code-insiders"
 
+# bat as cat. --paging=never keeps `cat` non-interactive (bat would otherwise
+# pipe tty output through less); bat already strips decorations when stdout is
+# not a tty, so `cat file | ...` and `cat > file` behave as before. Guarded:
+# mise installs bat, but a shell started before `mise bootstrap` should not
+# lose `cat`. `bat` itself stays available for the paged, decorated view.
+command -v bat >/dev/null && alias cat="bat --paging=never"
+
 alias g="git"
 alias lg="lazygit"
 alias y="yarn"
