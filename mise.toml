@@ -139,8 +139,44 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # so symlink-each keeps those in ~ rather than in the repo.
 "~/.config/herdr" = { source = "home/.config/herdr", mode = "symlink-each" }
 
-# This file, as the global mise config. Everything above applies from anywhere.
+# This repo's mise config, as the *global* mise config.
+#
+# All five files, not just this one. Linking config.toml alone made mise.toml
+# global but left mise.<os>.toml as project-only files: outside ~/.dotfiles
+# `mise cfg` listed config.toml and nothing else, so the [env], [tools] and
+# tasks in the per-OS files existed only while your shell happened to be inside
+# the repo. That was invisible as long as those files held bootstrap-time
+# things and bootstrap.sh cd'd here first, and it is the reason [env] below can
+# now be split per OS at all.
+#
+# .miserc.toml has to come too, and under its global name (`miserc.toml`, no
+# dot — mise looks for `.miserc.toml` only in the cwd and its parents). Without
+# it auto_env is off everywhere but the repo, and the config.<os>.toml links
+# are dead files.
+#
+# The macOS and Windows links are made on Linux as well; [dotfiles] has no os
+# filter and it does not matter, because auto_env only ever loads the one that
+# matches os().
+#
+# PRECEDENCE INVERTS between the two views of these files, so keep them
+# key-disjoint. Verified on 2026.7.18: for a project config the platform file
+# overrides the base (documented: unix < {os} < {os}-{arch}), but in the global
+# config dir the base overrides the platform file. Same two files, opposite
+# winner depending on your cwd. Nothing here collides today — the per-OS files
+# hold only keys the shared one does not define — and nothing here should.
 "~/.config/mise/config.toml" = "mise.toml"
+"~/.config/mise/config.linux.toml" = "mise.linux.toml"
+"~/.config/mise/config.macos.toml" = "mise.macos.toml"
+"~/.config/mise/config.windows.toml" = "mise.windows.toml"
+"~/.config/mise/miserc.toml" = ".miserc.toml"
+
+# The lockfile mise writes for the global config. mise names it after the
+# config *directory*, not the config file, and writes it wherever that dir is —
+# so without this link it lands in a real ~/.config/mise and never reaches the
+# repo. mise writes THROUGH the symlink rather than replacing it (verified on
+# 2026.7.18), which is what makes a committed lockfile possible at all.
+# Regenerate with `mise lock -g`; see the note above [tools].
+"~/.config/mise/mise.lock" = "mise.lock"
 
 # ------------------------------------------------------------------- repos --
 #
@@ -169,6 +205,26 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # collapsed the old per-distro package lists — node, neovim, starship, fzf and
 # the rest used to be installed six different ways (nvm curl, dotnet-install.sh,
 # snap, a tarball into /opt, yay, winget) and are now one line each.
+#
+# THE VERSIONS BELOW ARE NOT WHAT GETS INSTALLED — mise.lock is. `latest` and
+# `24` are the *range*; the lockfile pins the exact version, URL and sha256 for
+# all seven platforms mise builds for, so two machines bootstrapped a month
+# apart get identical tools instead of whatever shipped in between. It also
+# means installs stop hitting the GitHub API for release metadata, which is the
+# usual cause of a rate-limited bootstrap.
+#
+# It only exists because [dotfiles] links it out of ~/.config/mise and into
+# this repo; see the note there. Refresh it deliberately:
+#
+#   mise lock -g --dry-run   # what would move
+#   mise lock -g --bump      # re-resolve `latest`/majors, touch no config
+#   mise upgrade             # bump, install, and update the lockfile
+#
+# `-g` is required: without it mise locks the active *project* config, and from
+# inside this repo that resolves to a root with no tools and reports "No tools
+# configured to lock". `locked = true` is deliberately NOT set — settings are
+# global in scope, so it would force every unrelated project on the machine to
+# carry a complete lockfile too.
 
 [tools]
 # .NET SDKs install side-by-side into one shared DOTNET_ROOT, matching .NET's
