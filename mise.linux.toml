@@ -180,7 +180,7 @@ fi
 
 [tasks."setup:fedora"]
 description = "Fedora post-bootstrap setup. No-op without dnf."
-depends = ["gnome-settings"]
+depends = ["gtk-settings", "gnome-settings"]
 run = '''
 command -v dnf >/dev/null 2>&1 || exit 0
 echo "  . fedora setup complete"
@@ -188,7 +188,7 @@ echo "  . fedora setup complete"
 
 [tasks."setup:debian"]
 description = "Debian/Ubuntu post-bootstrap setup. No-op without apt-get."
-depends = ["gnome-settings"]
+depends = ["gtk-settings", "gnome-settings"]
 run = '''
 command -v apt-get >/dev/null 2>&1 || exit 0
 echo "  . debian/ubuntu setup complete"
@@ -216,36 +216,73 @@ mkdir -p "$HOME/.1password"
 echo "  . wsl setup complete"
 '''
 
-# Shared by setup:fedora and setup:debian. Every `gsettings set` line from the
-# old fedora/install/linux.sh, verbatim, plus both keybinding loops. `gsettings
-# set` is already idempotent. Guarded on the binary so it no-ops on a headless
-# Raspberry Pi, on servers, and on the Arch/WSL boxes that share this file.
-[tasks.gnome-settings]
-description = "Apply GNOME desktop settings. No-op without gsettings."
+# Shared by setup:fedora and setup:debian. Split in two because most of the old
+# fedora/install/linux.sh `gsettings set` lines are read by GNOME Shell, mutter
+# or gnome-settings-daemon and are inert under any other desktop — verified on
+# Fedora 44 running COSMIC, where the whole block applied cleanly and changed
+# nothing. `gsettings` itself is no guard: it ships with glib2 and exists on
+# every machine with GTK on it.
+
+[tasks.gtk-settings]
+description = "GTK settings every desktop honours. No-op without gsettings."
 shell = "bash -c"
 run = '''
-if ! command -v gsettings >/dev/null 2>&1; then
-  exit 0
+command -v gsettings >/dev/null 2>&1 || exit 0
+
+# GTK3/GTK4 apps read these through xdg-desktop-portal whatever the desktop is,
+# so they are deliberately not gated on GNOME. `gsettings set` is idempotent.
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+gsettings set org.gnome.desktop.interface font-hinting 'full'
+gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
+gsettings set org.gnome.desktop.interface enable-animations false
+gsettings set org.gtk.gtk4.Settings.FileChooser show-hidden true
+gsettings set org.gtk.gtk4.Settings.FileChooser sort-directories-first true
+'''
+
+[tasks.gnome-settings]
+description = "GNOME Shell settings. No-op off GNOME."
+shell = "bash -c"
+run = '''
+command -v gsettings >/dev/null 2>&1 || exit 0
+
+# XDG_CURRENT_DESKTOP is colon-separated and set by the session, so this also
+# skips a headless Raspberry Pi, a server, and a bootstrap run over plain SSH —
+# all cases where writing GNOME keys into dconf achieves nothing.
+case "${XDG_CURRENT_DESKTOP:-}" in
+  *GNOME*) ;;
+  *)
+    echo "  . gnome-settings skipped (XDG_CURRENT_DESKTOP=${XDG_CURRENT_DESKTOP:-unset})"
+    exit 0
+    ;;
+esac
+
+# gnome-tweaks exposes what this task writes, so it is installed here rather
+# than declared in mise.toml's package lists: those have no desktop dimension,
+# and a GNOME-only GUI has no business on a COSMIC or headless box.
+if ! command -v gnome-tweaks >/dev/null 2>&1; then
+  if command -v dnf >/dev/null 2>&1; then sudo dnf install -y gnome-tweaks
+  elif command -v apt-get >/dev/null 2>&1; then sudo apt-get install -y gnome-tweaks
+  elif command -v pacman >/dev/null 2>&1; then sudo pacman -S --needed --noconfirm gnome-tweaks
+  fi
 fi
 
 gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
 gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
-gsettings set org.gnome.desktop.interface font-hinting 'full'
-gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
 gsettings set org.gnome.desktop.interface show-battery-percentage true
 gsettings set org.gnome.desktop.input-sources xkb-options "['caps:swapescape']"
-gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
 gsettings set org.gnome.desktop.interface clock-show-seconds true
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
 gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
 gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
-gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
-gsettings set org.gtk.gtk4.Settings.FileChooser show-hidden true
-gsettings set org.gtk.gtk4.Settings.FileChooser sort-directories-first true
 gsettings set org.gnome.desktop.privacy recent-files-max-age 30
-gsettings set org.gnome.desktop.interface enable-animations false
 gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-left "['<Shift><Super>Left']"
 gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-right "['<Shift><Super>Right']"
+
+# Nautilus is not a GNOME Shell dependency; without this guard the task prints
+# `No such schema` on any GNOME install that uses a different file manager.
+if gsettings list-schemas | grep -qx 'org.gnome.nautilus.preferences'; then
+  gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+fi
 
 # Bind super+N to workspaces: first drop GNOME's switch-to-application default,
 # then bind switch-to-workspace in its place.

@@ -370,6 +370,15 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   `ln -sf ... No such file or directory`.** Left over from the pre-mise stow
   layout, which linked `~/.config/zsh -> ~/.dotfiles/.config/zsh` (the repo now
   keeps everything under `home/`). `find ~ -maxdepth 4 -xtype l` finds them.
+- **`gsettings` is not a GNOME probe.** It ships with glib2, so the old
+  `command -v gsettings` guard also fired on COSMIC, KDE and anything else with
+  GTK installed, writing ~20 GNOME Shell keys into dconf that nothing reads. The
+  cross-desktop GTK keys are now `[tasks.gtk-settings]`; the Shell/mutter ones
+  are `[tasks.gnome-settings]`, gated on `XDG_CURRENT_DESKTOP` matching `*GNOME*`
+  — which also skips a bootstrap run over SSH, where that variable is unset.
+- **Package lists have no desktop dimension**, only `os`. `gnome-tweaks` is
+  therefore installed from inside `[tasks.gnome-settings]` rather than declared,
+  so a COSMIC or headless box does not get a GNOME-only GUI.
 
 ## History
 

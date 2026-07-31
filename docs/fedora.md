@@ -92,9 +92,27 @@ system authentication. The dnf package from `downloads.1password.com` is the
 only build that does — that is why `mise.toml` installs it via `dnf:` behind a
 repo hook.
 
-## 6. GNOME extensions
+## 6. Desktop settings
 
-`gsettings` writes are automated; installing extensions is not — they come from
+Fedora ships GNOME by default but this laptop runs **COSMIC**, so the desktop
+half of the bootstrap is split:
+
+| Task | Runs when | What it writes |
+| --- | --- | --- |
+| `gtk-settings` | `gsettings` exists | dark theme, font hinting/antialiasing, animations off, GTK4 file-chooser — read by GTK apps under any desktop |
+| `gnome-settings` | `XDG_CURRENT_DESKTOP` contains `GNOME` | touchpad, `caps:swapescape`, workspace keybindings, idle/night-light, titlebar buttons, `gnome-tweaks` |
+
+Everything in the second row is consumed by GNOME Shell, mutter or
+gnome-settings-daemon, and is **inert under COSMIC** — it lands in dconf and is
+never read. COSMIC keeps its own state in `~/.config/cosmic/<component>/v1/`
+(RON, not dconf); `caps:swapescape` for example lives in
+`com.system76.CosmicComp/v1/xkb_config`. None of that is tracked by this repo
+yet, so on a COSMIC machine the keyboard, shortcuts and power settings are
+still a manual pass through **Settings**.
+
+### GNOME extensions
+
+GNOME sessions only. Extensions are not automated — they come from
 extensions.gnome.org through a browser connector.
 
 ```shell
@@ -110,12 +128,15 @@ Then, in a browser, visit https://extensions.gnome.org and enable:
 **Log out and back in** after installing extensions. GNOME Shell will not load a
 newly installed extension into a running session on Wayland.
 
+On COSMIC there is no extension mechanism and none of this applies; the panel's
+own applets cover the tray.
+
 ## 7. Things that need a logout or reboot
 
 | Change | Why |
 | --- | --- |
 | GNOME extensions | Shell only loads them at session start (Wayland) |
-| `caps:swapescape` | Applied by `gsettings`, but a running app may hold the old map |
+| `caps:swapescape` | Set by `gsettings` on GNOME, by `com.system76.CosmicComp/v1/xkb_config` on COSMIC; either way a running app may hold the old map |
 | Login shell → zsh | `[bootstrap.user].login_shell` calls `chsh`; PAM only reads it at login |
 | Kernel / `systemd` upgrade | Reboot |
 
