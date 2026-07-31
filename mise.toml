@@ -70,8 +70,12 @@ dotfiles.root = "~/.dotfiles/home"
 
 # git. config.os carries the mergetool paths, the only part that differs per OS.
 # git silently ignores the include when it has not rendered yet.
+#
+# config.local and config.work are deliberately absent: they hold the work org
+# and work email, are untracked, and are created per machine from
+# home/.config/git/config.local.example. bootstrap.sh warns when they are
+# missing. config.local.example itself is never applied to $HOME.
 "~/.config/git/config" = {}
-"~/.config/git/config.work" = {}
 "~/.config/git/ignore" = {}
 "~/.config/git/config.os" = { source = "home/.config/git/config.os.tmpl", mode = "template" }
 

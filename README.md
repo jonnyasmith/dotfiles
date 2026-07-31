@@ -205,28 +205,55 @@ picked from the remote URL. Nothing is switched by hand.
 
 | remote | key (1Password item) | commit email |
 |---|---|---|
-| `github.com/jonnyasmith/*`, everything else | `SSH Key - Ed25519` | `jonny.asmith@gmail.com` |
-| `github.com/work/*` | `SSH Key - Ed25519 work` | `work@example.com` |
-| `ssh.dev.azure.com` | `SSH Key - work` (RSA) | `work@example.com` |
+| everything not listed below | `SSH Key - Ed25519` | personal |
+| the work GitHub org | `SSH Key - Ed25519 Work` | work |
+| `ssh.dev.azure.com` | `SSH Key - Work` (RSA) | work |
 
 Azure DevOps accepts **only** the RSA key; both Ed25519 keys are rejected there.
+
+**This repo is public, so the work org name and work email are not in it.**
+They live in two untracked files that git picks up from `~/.config/git/`:
+
+| file | holds |
+|---|---|
+| `config.local` | the org name, its `github-work` URL rewrite, and the two `includeIf` conditions that key off it |
+| `config.work` | `[user] email` for work repos |
+
+Set them up once per machine:
+
+```bash
+cp home/.config/git/config.local.example ~/.config/git/config.local
+$EDITOR ~/.config/git/config.local            # replace ORG
+printf '[user]\n\temail = you@example.com\n' > ~/.config/git/config.work
+```
+
+A missing include is *silently ignored* by git, so skipping this does not
+error — work repos just quietly commit under the personal identity, which is
+the exact failure the routing exists to prevent. `bootstrap.sh` therefore
+warns on every run until `config.local` exists.
+
+This works because a relative `include.path` resolves against the directory of
+the config file **as git opened it** — `~/.config/git/`, not the symlink's
+target inside `~/.dotfiles`. So the untracked files sit next to the symlink and
+cannot be committed by accident.
 
 - **`~/.ssh/config`** (rendered from `home/.ssh/config.tmpl`) pins one key per
   host with `IdentitiesOnly yes`. Without it ssh offers every key in the agent
   and the first one the server accepts wins — which silently authenticated work
-  repos as the personal account.
+  repos as the personal account. The `github-work` alias is just a label and
+  stays tracked.
 - **`home/.ssh/1password/*.pub`** are public-key stubs, committed deliberately.
   `IdentityFile` needs a local file to name *which* agent key to use; the
-  private half never leaves 1Password. Regenerate with
-  `~/.ssh/1password/refresh`.
-- **`home/.config/git/config`** rewrites `git@github.com:work/*` to the
-  `github-work` alias via `insteadOf`, and selects the commit email with
-  `includeIf hasconfig:remote.*.url`.
+  private half never leaves 1Password. ssh matches on the key blob, not the
+  comment, so the comments are generic. Regenerate with
+  `~/.ssh/1password/refresh`, which maps 1Password item titles to filenames —
+  rename an item in the vault and you must update its `map()`.
 
 Two traps worth remembering:
 
 - `hasconfig` matches the remote URL **as stored**, not as rewritten, so the
-  patterns use `git@github.com:...`.
+  patterns use `git@github.com:...`. Both the `git@` and `ssh://` spellings
+  need their own block.
 - `**` is only wildcard-magic directly after a `/`. `...azure.com:**` matches
   nothing and fails **silently**; `...azure.com:v3/**` is correct.
 
@@ -235,8 +262,8 @@ The agent socket differs per OS — a Group Container path on macOS,
 npiperelay bridge to the Windows agent ([docs/wsl.md](docs/wsl.md)).
 
 ```bash
-ssh -T git@github.com          # Hi jonnyasmith!
-ssh -T git@github-work      # Hi jonnysmith-work!
+ssh -T git@github.com          # personal account
+ssh -T git@github-work         # work account
 git -C <repo> config user.email
 ```
 

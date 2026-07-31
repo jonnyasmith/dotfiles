@@ -38,7 +38,7 @@ sudo dnf install -y git
 `ssh-keygen` is scriptable; uploading the public key is not.
 
 ```shell
-ssh-keygen -t ed25519 -C "jonny.asmith@gmail.com"
+ssh-keygen -t ed25519 -C "$(git config user.email)"
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/id_ed25519
 cat ~/.ssh/id_ed25519.pub

@@ -69,6 +69,17 @@ fi
 # mise refuses to read a config it has not been told to trust. Idempotent.
 mise trust --quiet "$DOTFILES" || die "mise trust failed"
 ok "config trusted"
+
+# The work org and work email are not in this repo, which is public. Without
+# config.local, git silently ignores the missing include and work repos commit
+# under the personal identity — a wrong-identity failure with no error, which is
+# precisely what the routing exists to prevent. So say so, loudly, every run.
+if [[ -f "$HOME/.config/git/config.local" ]]; then
+	ok "work git identity configured"
+else
+	warn "no ~/.config/git/config.local — work repos will commit as $(git config --get user.email 2>/dev/null || echo 'the personal identity')"
+	warn "  cp home/.config/git/config.local.example ~/.config/git/config.local  # then edit, and add config.work"
+fi
 printf '\n'
 
 case "$MODE" in

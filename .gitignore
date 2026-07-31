@@ -1,3 +1,10 @@
+# Work identity. This repo is public; the employer's GitHub org and email
+# address live only on the machine, in ~/.config/git/{config.local,config.work}.
+# These patterns are belt-and-braces — those files are outside the repo — but
+# `mise bootstrap dotfiles add` would otherwise capture them happily.
+home/.config/git/config.local
+home/.config/git/config.work
+
 # Secrets — never commit these, even if a dotfiles entry would otherwise carry them.
 home/.config/gh/hosts.yml
 **/*.token

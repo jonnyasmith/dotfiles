@@ -27,7 +27,7 @@ Reboot if a new kernel was installed.
 ## 3. SSH key and GitHub
 
 ```shell
-ssh-keygen -t ed25519 -C "jonny.asmith@gmail.com"
+ssh-keygen -t ed25519 -C "$(git config user.email)"
 eval "$(ssh-agent -s)"
 touch ~/.ssh/config
 ssh-add ~/.ssh/id_ed25519

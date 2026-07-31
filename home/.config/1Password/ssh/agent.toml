@@ -33,9 +33,9 @@
 # order the agent offers keys when a client asks for "any". ~/.ssh/config now
 # pins one key per host with IdentitiesOnly, so exactly one key is offered:
 #
-#   github.com         -> SSH Key - Ed25519          (jonnyasmith)
-#   github-work     -> SSH Key - Ed25519 work  (jonnysmith-work)
-#   ssh.dev.azure.com  -> SSH Key - work          (RSA)
+#   github.com         -> SSH Key - Ed25519       (personal)
+#   github-work        -> SSH Key - Ed25519 Work
+#   ssh.dev.azure.com  -> SSH Key - Work          (RSA)
 #
 # The `item` strings below are load-bearing: they are the comments ssh-add
 # reports, and ~/.ssh/1password/refresh maps them to the public-key stubs that
@@ -48,9 +48,9 @@ item = "SSH Key - Ed25519"
 vault = "Personal"
 
 [[ssh-keys]]
-item = "SSH Key - Ed25519 work"
+item = "SSH Key - Ed25519 Work"
 vault = "Personal"
 
 [[ssh-keys]]
-item = "SSH Key - work"
+item = "SSH Key - Work"
 vault = "Personal"

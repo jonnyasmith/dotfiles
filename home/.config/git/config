@@ -89,49 +89,51 @@
 # ~/.ssh/config pins one 1Password key per host and sets IdentitiesOnly, so a
 # connection no longer authenticates with whichever key the agent offers first.
 #
-# github.com                -> "SSH Key - Ed25519"         (jonnyasmith)
-# github-work            -> "SSH Key - Ed25519 work" (jonnysmith-work)
-# ssh.dev.azure.com         -> "SSH Key - work"         (RSA; the only key
-#                                                           registered in ADO)
+# github.com          -> "SSH Key - Ed25519"      (personal)
+# github-work         -> "SSH Key - Ed25519 Work"
+# ssh.dev.azure.com   -> "SSH Key - Work"         (RSA; the only key ADO accepts)
 #
-# The rewrite below makes the work-account routing automatic: any remote under
-# the work GitHub org resolves to the github-work alias, so existing
-# remotes and a fresh `git clone git@github.com:work/...` both pick the right
-# key with no per-repo setup. pushInsteadOf is unnecessary - insteadOf covers
-# both directions. Add another [url] block here for each new work org.
+# The work org name and the work email address are deliberately NOT in this
+# repo, which is public. They live in two untracked files alongside this one:
 #
-# Note: github.com/personal-org is owned by the *personal* account, so it stays on
-# the default github.com route.
+#   ~/.config/git/config.local   the work org, and its URL rewrite
+#   ~/.config/git/config.work    [user] email for work repos
+#
+# See home/.config/git/config.local.example for the shape, and README.md
+# "SSH keys and identities". A missing include is silently ignored by git, so
+# a machine without them still gets a working personal config - but work repos
+# will quietly commit as the personal identity, so bootstrap.sh warns when
+# config.local is absent.
+#
+# Relative include paths resolve next to *this* file as it was opened - that is
+# ~/.config/git/, not the symlink target inside ~/.dotfiles - which is what
+# keeps the untracked files outside the repo. Verified: `git config
+# --show-origin --get mergetool.smerge.keepBackup` reports
+# file:~/.config/git/config.os, and no config.os exists in the repo.
 # ---------------------------------------------------------------------------
-[url "git@github-work:work/"]
-    insteadOf = git@github.com:work/
-    insteadOf = ssh://git@github.com/work/
+[include]
+    path = config.local
 
 # ---------------------------------------------------------------------------
-# Commit identity per account.
+# Commit identity for Azure DevOps.
 #
-# These match on the remote URL as *stored* in the repo's config, so the
-# insteadOf rewrite above does not interfere - `git@github.com:work/...`
-# still matches even though the effective URL becomes `git@github-work:...`.
+# The GitHub equivalents live in config.local because their match patterns
+# contain the org name; this one is generic, so it stays here.
+#
+# Matches on the remote URL as *stored* in the repo's config, so the insteadOf
+# rewrite in config.local does not interfere.
 #
 # Must stay below the [user] block at the top of this file: later values win, so
-# these override the personal default (jonny.asmith@gmail.com) and anything not
-# matched keeps it. Repos with no remote yet also keep the default.
+# this overrides the personal default and anything unmatched keeps it. Repos
+# with no remote yet also keep the default.
 #
 # Gotcha: `**` is only wildcard-magic directly after a `/`. A trailing
 # `...azure.com:**` matches nothing and fails silently; `...azure.com:v3/**` is
 # correct and covers both the `Platform%20Interactive` and `Platform
 # Interactive` spellings present in remotes.
 #
-# The include paths are relative, so git resolves them next to this file - no
-# absolute path, and the stow symlink works on any machine.
-#
 # Verify in any repo with:  git config user.email
 # ---------------------------------------------------------------------------
-[includeIf "hasconfig:remote.*.url:git@github.com:work/**"]
-    path = config.work
-[includeIf "hasconfig:remote.*.url:ssh://git@github.com/work/**"]
-    path = config.work
 [includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:v3/**"]
     path = config.work
 
