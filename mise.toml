@@ -80,11 +80,14 @@ dotfiles.root = "~/.dotfiles/home"
 "~/.config/git/config.os" = { source = "home/.config/git/config.os.tmpl", mode = "template" }
 
 # ssh. Templated for the 1Password agent socket, which is a macOS Group
-# Container path and a plain ~/.1password/agent.sock on Linux. The .pub files
-# are public key stubs telling the agent which key to use; *.tmpl is excluded so
-# symlink-each does not link the template beside its own rendered output.
+# Container path and a plain ~/.1password/agent.sock on Linux.
+#
+# The .pub stubs are deliberately NOT linked into ~/.ssh/1password. ~/.ssh/config
+# names them by their in-repo path instead, because a missing IdentityFile is
+# fatal to every ssh remote on the machine and those links proved able to go
+# missing. Only `refresh`, which regenerates the stubs from the agent, is
+# rendered into ~; it writes back into the working tree.
 "~/.ssh/config" = { source = "home/.ssh/config.tmpl", mode = "template" }
-"~/.ssh/1password" = { source = "home/.ssh/1password", mode = "symlink-each", exclude = ["*.tmpl"] }
 "~/.ssh/1password/refresh" = { source = "home/.ssh/1password/refresh.tmpl", mode = "template" }
 "~/.config/1Password/ssh/agent.toml" = {}
 

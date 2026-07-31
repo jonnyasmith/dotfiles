@@ -243,6 +243,13 @@ with `~/.gitconfig` last and therefore winning, so keep only one — a stray
 `config.os`, pulled in by an `[include]`; git ignores a missing include, so this
 is safe before the template has rendered.
 
+`push.default = current` pushes a branch to the same name on the remote but
+records **no** upstream, so every locally-created branch stayed untracked and
+`git pull` failed with *"There is no tracking information for the current
+branch"* until someone ran `git push -u` by hand. `push.autoSetupRemote = true`
+sets the upstream on the first push instead. Branches pushed before that was
+added still need one `git branch --set-upstream-to=origin/<name>`.
+
 `~/.config/gh/hosts.yml` holds an OAuth token, is gitignored, and is
 deliberately unmanaged — run `gh auth login` on a new machine.
 
@@ -298,7 +305,17 @@ cannot be committed by accident.
   private half never leaves 1Password. ssh matches on the key blob, not the
   comment, so the comments are generic. Regenerate with
   `~/.ssh/1password/refresh`, which maps 1Password item titles to filenames —
-  rename an item in the vault and you must update its `map()`.
+  rename an item in the vault and you must update its `map()`. It writes into
+  the working tree, so regenerating shows up as a git diff to commit.
+- **`~/.ssh/config` names those stubs by their in-repo path**
+  (`~/.dotfiles/home/.ssh/1password/*.pub`), not via `~/.ssh/1password/`. They
+  used to be symlinks planted there by the dotfiles phase, and that is a
+  single point of failure for the entire machine: ssh treats a missing
+  `IdentityFile` as fatal for the host, so the instant those links were absent
+  *every* remote broke with `no such identity: ... No such file or directory`
+  followed by `Permission denied (publickey)`. They vanished three times in one
+  day. Reading the stub out of the working tree means it exists the moment the
+  repo is cloned — before mise has run at all — and only git can remove it.
 
 Two traps worth remembering:
 
