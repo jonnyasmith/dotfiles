@@ -7,6 +7,24 @@
 # skipped elsewhere, but the casks are a long list and keeping them beside the
 # other mac-only sections is clearer than burying them in the shared file.
 
+# ------------------------------------------------------------------- env --
+#
+# The macOS half of what used to be Tera branches in
+# home/.config/zsh/os.zsh.tmpl. See the matching block in mise.linux.toml for
+# why this moved; in short, the per-OS files are linked into ~/.config/mise now
+# and so are loaded everywhere, not only inside the repo.
+
+[env]
+# 1Password SSH agent socket. A Group Container path on macOS. The space in it
+# needed a backslash escape while this was shell source; mise exports the value
+# directly, so it is written literally here.
+SSH_AUTH_SOCK = "{{env.HOME}}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+
+# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
+# Distinct from the pnpm binary itself, which mise owns.
+PNPM_HOME = "{{env.HOME}}/Library/pnpm"
+_.path = ["{{env.HOME}}/Library/pnpm/bin"]
+
 [bootstrap.user]
 # `login_shell` is not templated — it must be a literal absolute path, which is
 # why it is per-platform. This replaces the `chsh` step and the oh-my-zsh

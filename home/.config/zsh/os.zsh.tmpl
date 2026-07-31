@@ -1,38 +1,17 @@
-# OS-specific zsh config. Rendered from home/.config/zsh/os.zsh.tmpl by
+# OS-specific zsh *aliases*. Rendered from home/.config/zsh/os.zsh.tmpl by
 # `mise bootstrap` — edit the template, never the rendered ~/.config/zsh/os.zsh.
 #
-# .zshrc picks this up with `for config (~/.config/zsh/*.zsh) source $config`,
-# which runs before `mise activate`, before every later PATH edit and before
-# anything that reads SSH_AUTH_SOCK or PNPM_HOME. aliases.zsh sorts before
-# os.zsh, so anything defined here wins over the shared file.
-
-# 1Password SSH agent socket.
+# .zshrc picks this up with `for config (~/.config/zsh/*.zsh) source $config`.
+# aliases.zsh sorts before os.zsh, so anything defined here wins over the
+# shared file.
 #
-# On Linux this is one path, but under WSL nothing listens on it until the
-# npiperelay/socat bridge to the Windows agent is running — see docs/wsl.md.
-# Exporting it unconditionally is still correct: ssh fails identically with a
-# missing socket and an unset variable, and the bridge creates the socket at
-# this exact path once started. Tera cannot branch on WSL (os() returns
-# "linux" there), so this stays a comment rather than a third branch.
-{%- if os() == "macos" %}
-export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
-{%- elif os() == "linux" %}
-export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
-{%- endif %}
-
-# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
-# Distinct from the pnpm binary itself, which mise owns.
-{%- if os() == "macos" %}
-export PNPM_HOME="$HOME/Library/pnpm"
-{%- elif os() == "linux" %}
-export PNPM_HOME="$HOME/.local/share/pnpm"
-{%- endif %}
-{%- if os() == "macos" or os() == "linux" %}
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-{%- endif %}
+# Environment used to live here too — SSH_AUTH_SOCK and PNPM_HOME. It is now in
+# [env] in mise.linux.toml / mise.macos.toml, which mise applies from every
+# directory and for `mise x`/`mise en`/tasks/shims, not just interactive zsh.
+# What is left is aliases, which mise cannot carry: [shell_alias] is
+# unsupported in nushell and PowerShell, and half of these are probed at
+# runtime rather than at render time because Tera knows the OS but not the
+# distro.
 
 # Package-manager update shorthands. brew is macOS or linuxbrew; apt/nala are
 # Debian-family only, so those are probed at runtime rather than at render time

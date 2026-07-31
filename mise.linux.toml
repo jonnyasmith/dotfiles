@@ -12,6 +12,34 @@
 # The declarative package lists do NOT live here — they are in mise.toml, where
 # the `apt:`/`dnf:`/`pacman:` manager prefix already scopes them correctly.
 
+# ------------------------------------------------------------------- env --
+#
+# Environment that differs per OS. This lives here rather than as a Tera branch
+# in home/.config/zsh/os.zsh.tmpl because the per-OS files are now linked into
+# ~/.config/mise (see [dotfiles] in mise.toml), so this file is loaded from
+# every directory rather than only inside the repo.
+#
+# What that buys over the rendered zsh: `mise x`, `mise en`, `mise run` and shim
+# invocations all see these, not just interactive zsh, and the values stop
+# needing shell quoting. What it does not change: a shell that never runs
+# `mise activate` still does not get them, exactly as before — os.zsh was
+# sourced from .zshrc only.
+
+[env]
+# 1Password SSH agent socket. Under WSL nothing listens on it until the
+# npiperelay/socat bridge to the Windows agent is running (docs/wsl.md), but
+# exporting it unconditionally is still correct: ssh fails identically with a
+# missing socket and an unset variable, and the bridge creates the socket at
+# this exact path once started.
+SSH_AUTH_SOCK = "{{env.HOME}}/.1password/agent.sock"
+
+# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
+# Distinct from the pnpm binary itself, which mise owns. The literal path is
+# repeated rather than written as {{env.PNPM_HOME}} because env entries resolve
+# in order and a var is not guaranteed visible to its own table.
+PNPM_HOME = "{{env.HOME}}/.local/share/pnpm"
+_.path = ["{{env.HOME}}/.local/share/pnpm/bin"]
+
 [bootstrap.user]
 # Every one of the old runbooks ended with "install zsh, then remember to chsh"
 # and none of them did it. This is step 8 of `mise bootstrap`.

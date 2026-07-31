@@ -97,10 +97,13 @@ Now they are one line each and every machine gets the same version. This is what
 shrank the per-distro package lists to the genuine rump: system libraries, GUI
 apps, fonts, and 1Password.
 
-**3. Config that really does differ per OS is a template.** Five files render
-`{{ os() }}` at apply time; everything else is a plain symlink. The whole
-divergence is the 1Password agent socket, git's mergetool paths, ghostty's
-mac-only key, `PNPM_HOME`, and a handful of BSD-vs-GNU aliases.
+**3. Config that really does differ per OS is a template, environment is not.**
+Four files render `{{ os() }}` at apply time; everything else is a plain
+symlink. The whole template divergence is the 1Password agent socket, git's
+mergetool paths, ghostty's mac-only key, and a handful of BSD-vs-GNU aliases.
+Per-OS *environment* — `SSH_AUTH_SOCK`, `PNPM_HOME` — is `[env]` in
+`mise.linux.toml` / `mise.macos.toml` instead, so it reaches `mise x`, `mise
+en`, tasks and shims rather than interactive zsh alone.
 
 What each `[bootstrap.*]` section replaced:
 
@@ -235,7 +238,11 @@ zsh -ic  python3 → installs/python/3.13/bin/python3
 
 `~/.config/zsh/os.zsh` is rendered per-OS and picked up by the
 `for config (~/.config/zsh/*.zsh)` loop, which runs *before* `mise activate`.
-It carries `SSH_AUTH_SOCK`, `PNPM_HOME`, and the BSD-vs-GNU aliases.
+It carries the BSD-vs-GNU aliases and nothing else: `[shell_alias]` is the one
+mise mechanism that cannot replace it, being unsupported in nushell and
+PowerShell, and half of these are probed at runtime because Tera knows the OS
+but not the distro. The environment that used to live here is now `[env]` in
+the per-OS configs.
 
 Git config is XDG (`~/.config/git/config`), not `~/.gitconfig`. Git reads both,
 with `~/.gitconfig` last and therefore winning, so keep only one — a stray

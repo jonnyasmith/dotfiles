@@ -301,6 +301,10 @@ be written into the repo copy and follow you to macOS.
   shims: `wt`, `pn`, `pnpx`), unrelated to the pnpm binary, which mise owns.
 - `SSH_AUTH_SOCK` is `$HOME/.1password/agent.sock` (section 6), not the macOS
   group-container path.
+- Both come from `[env]` in `mise.linux.toml`, not from a shell file, so a
+  shell that never runs `mise activate` does not see them — same as before,
+  when they were exported from `~/.config/zsh/os.zsh`, which only `.zshrc`
+  sourced.
 - The archived `.zshrc` also set `export TERM='xterm-256color'` and put
   `/opt/nvim/bin`, `/opt/zig` and `/home/jonny/.local/bin` on `PATH`. The two
   `/opt` entries are dead — mise installs neovim and zig now — and the third
