@@ -23,7 +23,9 @@
 set -uo pipefail
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$DOTFILES"
+# `set -e` is deliberately absent (the script reports and continues), so this cd
+# has to guard itself: every path below is relative to the repo.
+cd "$DOTFILES" || { printf 'cannot cd to %s\n' "$DOTFILES" >&2; exit 1; }
 
 if [[ -t 1 ]]; then
 	BOLD=$'\033[1m'; GREEN=$'\033[32m'; YELLOW=$'\033[33m'; RED=$'\033[31m'; RESET=$'\033[0m'

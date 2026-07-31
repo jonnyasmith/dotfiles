@@ -451,3 +451,129 @@ while IFS= read -r ext; do
 done < "$list"
 if [ "$n" -gt 0 ]; then echo "  + $n extension(s)"; else echo "  . all extensions present"; fi
 '''
+
+# ------------------------------------------------------------------ checks --
+#
+# `mise run check` — everything that can be verified without converging a
+# machine. Run it before committing; CI runs the same task and nothing else, so
+# there is no second list of commands to keep in sync (see AGENTS.md).
+#
+# `check:*` is deliberately outside the `setup:*` glob that [tasks.bootstrap]
+# fans out to: verification is not convergence, and a bootstrap should not fail
+# because a payload in desktop/ has a typo.
+#
+# Unix-only. `shell = "bash -c"` because mise's default inline shell on Windows
+# is `cmd /c`, and none of this is worth porting for a machine that is
+# provisioned by bootstrap.ps1 anyway.
+
+[tasks.check]
+description = "Everything verifiable without touching the machine"
+depends = ["check:*"]
+run = "echo 'all checks passed'"
+
+[tasks."check:tasks"]
+description = "Static validation of every task definition"
+run = "mise tasks validate"
+
+[tasks."check:shell"]
+description = "Syntax-check the shell files this repo installs"
+shell = "bash -c"
+run = '''
+set -u
+cd "$HOME/.dotfiles"
+bad=0
+
+# zsh -n parses without executing. The rendered os.zsh is checked from the
+# live copy rather than the template: the template is not valid zsh until Tera
+# has run, and a broken render is exactly the failure worth catching.
+for f in home/.zshrc home/.zshenv home/.zprofile home/.config/zsh/aliases.zsh "$HOME/.config/zsh/os.zsh"; do
+  [ -f "$f" ] || continue
+  zsh -n "$f" || { echo "  ! $f"; bad=1; }
+done
+
+bash -n bootstrap.sh || { echo "  ! bootstrap.sh"; bad=1; }
+
+# shellcheck is not in [tools] — it is a nice-to-have, not a dependency.
+if command -v shellcheck >/dev/null 2>&1; then
+  shellcheck -S warning bootstrap.sh || bad=1
+else
+  echo "  . shellcheck not installed, skipped"
+fi
+
+[ "$bad" -eq 0 ] && echo "  . shell files parse"
+exit "$bad"
+'''
+
+[tasks."check:config"]
+description = "Parse every mise config and assert this repo's invariants"
+shell = "bash -c"
+run = '''
+set -u
+# Every mise.<os>.toml, including the ones this machine never loads. A syntax
+# error in mise.macos.toml is otherwise invisible until someone is on a Mac,
+# because auto_env only reads the file matching os().
+#
+# Any python3 with tomllib (3.11+) does — mise's own, or the system one when
+# CI runs this with --skip-tools. No third-party imports, for that reason.
+command -v python3 >/dev/null 2>&1 || { echo "  ! python3 (3.11+) is required"; exit 1; }
+python3 - "$HOME/.dotfiles" <<'PY'
+import pathlib, sys, tomllib
+
+repo = pathlib.Path(sys.argv[1])
+bad = []
+configs = {}
+
+for name in [".miserc.toml", *sorted(p.name for p in repo.glob("mise*.toml"))]:
+    f = repo / name
+    if not f.exists():
+        continue
+    try:
+        configs[name] = tomllib.loads(f.read_text())
+    except tomllib.TOMLDecodeError as e:
+        bad.append(f"{name}: {e}")
+
+shared = configs.get("mise.toml", {})
+dotfiles = shared.get("dotfiles", {})
+
+# dotfiles.root must be absolute or ~-prefixed. A relative value is written
+# straight into the symlink target, resolves against $HOME, dangles, and still
+# reports "applied" — see the comment on the setting itself.
+root = shared.get("settings", {}).get("dotfiles", {}).get("root", "")
+if not root.startswith(("~", "/")):
+    bad.append(f"settings.dotfiles.root is relative: {root!r}")
+root_dir = repo / "home" if root.endswith("/home") else repo
+
+# Every source must exist. Catches a rename in home/ that the manifest missed,
+# which otherwise surfaces as a failed bootstrap on a fresh machine only.
+for target, spec in dotfiles.items():
+    if isinstance(spec, str):
+        src = repo / spec
+    elif spec.get("source"):
+        src = repo / spec["source"]
+    else:  # `{}` mirrors the home-relative target under dotfiles.root
+        src = root_dir / target.removeprefix("~/")
+    if not src.exists():
+        bad.append(f"[dotfiles] {target}: source does not exist: {src.relative_to(repo)}")
+
+# Exactly one [tasks.bootstrap]. Same-named tasks across merged configs replace
+# each other silently, so a second one shadows the fan-out with no warning.
+owners = [n for n, c in configs.items() if "bootstrap" in c.get("tasks", {})]
+if owners != ["mise.toml"]:
+    bad.append(f"[tasks.bootstrap] must be defined once, in mise.toml; found in {owners}")
+
+# Every platform config must be linked into ~/.config/mise, or it is a
+# project-only file that exists solely while your shell is inside the repo.
+for name in configs:
+    if name == "mise.toml":
+        continue
+    link = "~/.config/mise/" + ("miserc.toml" if name == ".miserc.toml"
+                                else name.replace("mise.", "config.", 1))
+    if dotfiles.get(link) != name:
+        bad.append(f"{name} is not linked to {link} in [dotfiles]")
+
+for b in bad:
+    print(f"  ! {b}")
+print(f"  ! {len(bad)} problem(s)" if bad else f"  . {len(configs)} config(s) valid")
+sys.exit(1 if bad else 0)
+PY
+'''

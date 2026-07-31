@@ -1,0 +1,52 @@
+# CI runs exactly one thing: `mise run check`.
+#
+# The checks themselves live in [tasks."check:*"] in mise.toml, not here, so
+# there is no second list of commands that can drift from the one you run
+# locally. Adding a check means adding a task; this file does not change.
+#
+# What CI cannot check: anything that needs a converged machine. `mise bootstrap
+# --dry-run` still executes the setup:* tasks, and those touch dnf/apt/systemd,
+# so it stays a local command (see AGENTS.md).
+
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Every task here hardcodes ~/.dotfiles. That is not laziness: [settings]
+      # is not templated, so dotfiles.root has to be a literal path, and
+      # bootstrap.sh refuses to run from anywhere else. CI models the same
+      # layout rather than pretending the repo is relocatable.
+      - name: Put the checkout where the config expects it
+        run: ln -s "$GITHUB_WORKSPACE" "$HOME/.dotfiles"
+
+      # check:shell parses the zsh files this repo installs and check:config
+      # needs a stdlib tomllib (python 3.11+). Runners ship python3 and bash;
+      # zsh they do not. shellcheck is optional to the task and free here.
+      - name: Install check dependencies
+        run: sudo apt-get update && sudo apt-get install -y zsh shellcheck python3
+
+      # install: false stops the *action* installing [tools]. It is not enough
+      # on its own: `mise run` installs the active toolset before it runs a
+      # task, so without --skip-tools below, `mise run check` still spends
+      # minutes pulling 33 tools — verified in a clean ubuntu:24.04 container.
+      - uses: jdx/mise-action@v3
+        with:
+          install: false
+
+      - run: mise trust --all
+
+      # The checks need python3, zsh and bash, all of which the runner already
+      # has. None of them needs a mise-managed tool.
+      - run: mise run --skip-tools check
