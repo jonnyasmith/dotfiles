@@ -1,0 +1,30 @@
+# winget package IDs installed by ./bootstrap.ps1 on native Windows.
+#
+# This list exists because mise's [bootstrap.packages] has no `winget:` manager
+# (apk apt dnf pacman brew brew-cask flatpak mas + plugins only), so Windows
+# GUI apps cannot live in mise.toml. Everything here is a GUI app, a shell, or
+# an installer-managed SDK — anything mise's registry can install is a [tools]
+# entry in mise.windows.toml instead.
+#
+# One ID per line. Blank lines and `#` comments are ignored.
+# Harvested from archive/main: windows/README.md and windows/install/winget.ps1.
+
+AgileBits.1Password
+Git.Git
+Google.Chrome
+JetBrains.Toolbox
+Microsoft.AzureCLI
+Microsoft.PowerShell
+Microsoft.PowerToys
+Microsoft.VisualStudioCode
+
+# Container runtime. Docker Desktop was in windows/install/winget.ps1 but
+# setup.txt says "remove docker desktop"; Podman Desktop was already alongside
+# it in the same list, so it is the one that stays.
+RedHat.Podman-Desktop
+
+# Registry-level scancode remaps (HKLM Scancode Map), which apply at the logon
+# screen and survive with no process running. PowerToys Keyboard Manager only
+# remaps while PowerToys is running — see docs/windows.md, which uses PowerToys
+# for the day-to-day remaps per setup.txt.
+RandyRants.SharpKeys

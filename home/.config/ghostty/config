@@ -1,0 +1,4 @@
+# OS-specific settings (macos-option-as-alt) live in os-local, rendered from
+# home/.config/ghostty/os-local.tmpl by `mise bootstrap`. The `?` prefix makes
+# ghostty ignore the file when it is absent instead of erroring.
+config-file = ?os-local

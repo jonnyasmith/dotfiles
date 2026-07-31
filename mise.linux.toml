@@ -1,0 +1,257 @@
+# Linux-only configuration. Loaded automatically beside mise.toml because
+# .miserc.toml sets `auto_env = true`; on macOS and Windows this file is not
+# read at all. Merges with mise.toml rather than replacing it.
+#
+# IMPORTANT: this file loads on EVERY Linux — Arch, Fedora, Debian, Ubuntu,
+# Raspberry Pi and WSL alike. There is no mise.arch.toml or mise.wsl.toml, and
+# `os()` returns plain "linux" under WSL. So everything imperative in here must
+# self-guard on something that identifies the distro (`command -v pacman`,
+# `command -v dnf`, `command -v apt-get`, `grep -qi microsoft /proc/version`)
+# and no-op cleanly everywhere else.
+#
+# The declarative package lists do NOT live here — they are in mise.toml, where
+# the `apt:`/`dnf:`/`pacman:` manager prefix already scopes them correctly.
+
+[bootstrap.user]
+# Every one of the old runbooks ended with "install zsh, then remember to chsh"
+# and none of them did it. This is step 8 of `mise bootstrap`.
+#
+# /usr/bin/zsh, not /bin/zsh: chsh validates against /etc/shells, and Fedora and
+# Debian/Ubuntu both list the /usr path there. `login_shell` is not templated,
+# which is exactly why it is in a per-platform file.
+#
+# Still prompts for the account password, and PAM only picks the change up at
+# the next login.
+login_shell = "/usr/bin/zsh"
+
+# ------------------------------------------------------------ repo setup --
+#
+# Runs before [bootstrap.packages]. Its whole job is adding the third-party
+# repositories that some of those packages come from — mise can install a
+# package but cannot teach a package manager where to find it.
+#
+# Hook `run` bodies are NOT tera-templated (handed straight to sh), so shell
+# syntax here is unrestricted. Everything is guarded so re-running is free.
+
+[bootstrap.hooks.pre-packages]
+run = '''
+set -eu
+
+# ---------------------------------------------------------------- Fedora ----
+if command -v dnf >/dev/null 2>&1; then
+
+  # dnf tuning. The Fedora runbook used:
+  #   echo "max_parallel_downloads=10" | sudo tee /etc/dnf/dnf.conf --append
+  # which is NOT idempotent — `tee --append` re-appends on every run, so a box
+  # bootstrapped five times ends up with five copies of each key. Test first.
+  for kv in max_parallel_downloads=10 fastestmirror=true; do
+    key=${kv%%=*}
+    if ! grep -qE "^[[:space:]]*${key}[[:space:]]*=" /etc/dnf/dnf.conf; then
+      echo "$kv" | sudo tee -a /etc/dnf/dnf.conf >/dev/null
+    fi
+  done
+
+  # RPM Fusion (free). Not in the original runbook, but `dnf:vlc` cannot resolve
+  # without it on stock Fedora — the old packages.sh silently failed on vlc
+  # unless someone had enabled RPM Fusion by hand first.
+  if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
+    sudo dnf install -y \
+      "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
+  fi
+
+  # 1Password rpm repo, verbatim from the Fedora runbook.
+  if [ ! -f /etc/yum.repos.d/1password.repo ]; then
+    sudo rpm --import https://downloads.1password.com/linux/keys/1password.asc
+    sudo sh -c 'echo -e "[1password]\nname=1Password Stable Channel\nbaseurl=https://downloads.1password.com/linux/rpm/stable/\$basearch\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=\"https://downloads.1password.com/linux/keys/1password.asc\"" > /etc/yum.repos.d/1password.repo'
+  fi
+
+  # VS Code yum repo. The old packages.sh listed `code` in its dnf array but
+  # never added a repo, so it only ever worked on a machine where someone had
+  # already done this by hand.
+  if [ ! -f /etc/yum.repos.d/vscode.repo ]; then
+    sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\nautorefresh=1\ntype=rpm-md\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" \
+      | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
+  fi
+
+  sudo dnf -q check-update || true
+fi
+
+# -------------------------------------------------------- Debian / Ubuntu ----
+if command -v apt-get >/dev/null 2>&1; then
+
+  # Accept the Microsoft core fonts EULA up front. Without this,
+  # apt:ubuntu-restricted-extras raises a debconf dialog and a non-interactive
+  # bootstrap hangs on it indefinitely.
+  if command -v debconf-set-selections >/dev/null 2>&1; then
+    echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
+      | sudo debconf-set-selections
+  fi
+
+  # 1Password apt repo, replacing `snap install 1password`. The snap build
+  # cannot use the SSH agent or system authentication, and the SSH agent is the
+  # entire reason 1Password is on these machines.
+  if [ ! -f /etc/apt/sources.list.d/1password.list ]; then
+    curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+      | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
+    echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' \
+      | sudo tee /etc/apt/sources.list.d/1password.list >/dev/null
+    sudo mkdir -p /etc/debsig/policies/AC2D62742012EA22/
+    curl -sS https://downloads.1password.com/linux/debian/debsig/1password.pol \
+      | sudo tee /etc/debsig/policies/AC2D62742012EA22/1password.pol >/dev/null
+    sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
+    curl -sS https://downloads.1password.com/linux/keys/1password.asc \
+      | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  fi
+
+  # VS Code apt repo (deb822), replacing `snap install --classic code`.
+  if [ ! -f /etc/apt/sources.list.d/vscode.sources ]; then
+    sudo apt-get install -y wget gpg
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
+      | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+    printf '%s\n' \
+      'Types: deb' \
+      'URIs: https://packages.microsoft.com/repos/code' \
+      'Suites: stable' \
+      'Components: main' \
+      'Architectures: amd64,arm64,armhf' \
+      'Signed-By: /usr/share/keyrings/microsoft.gpg' \
+      | sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null
+  fi
+
+  sudo apt-get update
+fi
+'''
+
+# ------------------------------------------------------------------- tasks --
+#
+# One task per platform, all reached by the single [tasks.bootstrap] in
+# mise.toml via `depends = ["setup:*"]`. Each must be idempotent (it runs on
+# every bootstrap) and self-guarding (this file loads on all Linux).
+#
+# Do NOT define [tasks.bootstrap] here: same-named tasks across merged configs
+# replace each other silently, so it would shadow the shared one.
+#
+# Note task `run` bodies ARE tera-templated, unlike hook bodies — keep `{{` and
+# `{%` out of them.
+
+[tasks."setup:arch"]
+description = "Arch: AUR packages, TLP/auto-cpufreq/fstrim, pacman colour, swappiness"
+run = '''
+command -v pacman >/dev/null 2>&1 || exit 0
+
+# mise's pacman manager reads the official repos only, so the AUR packages go
+# through yay. yay itself is a manual prerequisite — see docs/arch.md.
+if command -v yay >/dev/null 2>&1; then
+  # --needed makes this idempotent: already-current packages are skipped.
+  yay -S --needed --noconfirm \
+    auto-cpufreq \
+    envycontrol \
+    neofetch \
+    1password \
+    visual-studio-code-bin
+else
+  echo "  ! yay not installed; see docs/arch.md. Skipping AUR packages." >&2
+fi
+
+# Power management. [bootstrap.linux.systemd.units] is deliberately NOT used
+# here: that section *creates* unit files, and tlp/NetworkManager-dispatcher/
+# fstrim/auto-cpufreq all ship their own. They only need enabling.
+sudo systemctl enable --now tlp.service
+sudo systemctl enable --now NetworkManager-dispatcher.service
+# TLP owns radio-device state; systemd-rfkill fights it over wifi/bt blocks.
+sudo systemctl mask systemd-rfkill.service systemd-rfkill.socket
+# `auto-cpufreq --install` is not idempotent, so only run it if the unit is absent.
+if command -v auto-cpufreq >/dev/null 2>&1 \
+   && ! systemctl list-unit-files auto-cpufreq.service >/dev/null 2>&1; then
+  sudo auto-cpufreq --install
+fi
+sudo systemctl enable --now fstrim.timer
+
+# Uncomment `#Color` in pacman.conf. Naturally idempotent: once the line reads
+# `Color`, the ^#Color$ pattern no longer matches.
+sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
+
+# Prioritise RAM over swap. Guarded so the file is written once, not appended to.
+if ! grep -qs '^vm.swappiness=10$' /etc/sysctl.d/99-swappiness.conf; then
+  echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/99-swappiness.conf
+fi
+'''
+
+[tasks."setup:fedora"]
+description = "Fedora post-bootstrap setup. No-op without dnf."
+depends = ["gnome-settings"]
+run = '''
+command -v dnf >/dev/null 2>&1 || exit 0
+echo "  . fedora setup complete"
+'''
+
+[tasks."setup:debian"]
+description = "Debian/Ubuntu post-bootstrap setup. No-op without apt-get."
+depends = ["gnome-settings"]
+run = '''
+command -v apt-get >/dev/null 2>&1 || exit 0
+echo "  . debian/ubuntu setup complete"
+'''
+
+[tasks."setup:wsl"]
+description = "WSL-only setup. No-op outside WSL."
+run = '''
+set -u
+# There is no mise.wsl.toml and os() returns "linux" under WSL, so this is the
+# only reliable probe.
+if [ -z "${WSL_DISTRO_NAME:-}" ] && ! grep -qi microsoft /proc/version 2>/dev/null; then
+  exit 0
+fi
+
+# /etc/wsl.conf: start docker at distro boot. This REPORTS rather than writes —
+# `mise bootstrap` should not need sudo for this, and the original runbook's
+# `tee` truncated the whole file, destroying any [automount]/[user] stanzas.
+if ! grep -q '^command="service docker start"' /etc/wsl.conf 2>/dev/null; then
+  echo "  ! /etc/wsl.conf is missing the docker boot stanza — see docs/wsl.md section 4"
+fi
+
+# Socket directory for the 1Password SSH-agent relay (docs/wsl.md section 6).
+mkdir -p "$HOME/.1password"
+echo "  . wsl setup complete"
+'''
+
+# Shared by setup:fedora and setup:debian. Every `gsettings set` line from the
+# old fedora/install/linux.sh, verbatim, plus both keybinding loops. `gsettings
+# set` is already idempotent. Guarded on the binary so it no-ops on a headless
+# Raspberry Pi, on servers, and on the Arch/WSL boxes that share this file.
+[tasks.gnome-settings]
+description = "Apply GNOME desktop settings. No-op without gsettings."
+shell = "bash -c"
+run = '''
+if ! command -v gsettings >/dev/null 2>&1; then
+  exit 0
+fi
+
+gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true
+gsettings set org.gnome.desktop.wm.preferences button-layout 'appmenu:minimize,maximize,close'
+gsettings set org.gnome.desktop.interface font-hinting 'full'
+gsettings set org.gnome.desktop.interface font-antialiasing 'rgba'
+gsettings set org.gnome.desktop.interface show-battery-percentage true
+gsettings set org.gnome.desktop.input-sources xkb-options "['caps:swapescape']"
+gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
+gsettings set org.gnome.nautilus.preferences default-folder-viewer 'list-view'
+gsettings set org.gtk.gtk4.Settings.FileChooser show-hidden true
+gsettings set org.gtk.gtk4.Settings.FileChooser sort-directories-first true
+gsettings set org.gnome.desktop.privacy recent-files-max-age 30
+gsettings set org.gnome.desktop.interface enable-animations false
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-left "['<Shift><Super>Left']"
+gsettings set org.gnome.desktop.wm.keybindings move-to-workspace-right "['<Shift><Super>Right']"
+
+# Bind super+N to workspaces: first drop GNOME's switch-to-application default,
+# then bind switch-to-workspace in its place.
+for i in {1..9}; do gsettings set org.gnome.shell.keybindings switch-to-application-$i "[]";done
+for i in {1..9}; do gsettings set org.gnome.desktop.wm.keybindings switch-to-workspace-$i "['<Super>$i']";done
+
+# To undo the workspace binding:
+#   for i in {1..9}; do gsettings set org.gnome.shell.keybindings switch-to-application-$i "['<Super>$i']";done
+'''

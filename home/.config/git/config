@@ -1,0 +1,146 @@
+# gitconfig
+[user]
+    name = Jonny Smith
+    email = jonny.asmith@gmail.com
+[github]
+    user = jonnyasmith
+[alias]
+    a    = add -A                                                   # Add all changes
+    b    = branch                                                   # List branches
+    c    = commit                                                   # Commit changes
+    ca   = commit --amend                                           # Amend last commit
+    caa  = commit --amend -a                                        # Amend last commit and add all changes
+    caan = commit --amend -a --no-edit                              # Amend last commit, add all changes, and don't edit message
+    cam  = commit -a -m                                             # Commit all changes with a message
+    cm   = commit -m                                                # Commit with a message
+    co   = checkout                                                 # Checkout a branch
+    cob  = checkout -b                                              # Checkout a new branch
+    cp   = cherry-pick -x                                           # Cherry pick a commit
+    d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines    # Show diff ignoring whitespace and blank lines
+    f    = !git fetch --prune                                       # Fetch and prune branches
+    m    = merge                                                    # Merge a branch
+    mt   = mergetool                                                # Open merge tool
+    p    = !git pull                                                # Pull changes
+    r    = rebase                                                   # Rebase
+    i    = init                                                     # Initialize a new repository
+    rl   = reflog                                                   # Show reflog
+    s    = status -s -b                                             # Show short and branch status
+    sb   = show-branch                                              # Show branches
+    t    = tag                                                      # List tags
+    l    = log --pretty=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative                      # Show a pretty log
+    ll   = l -10
+    lg   = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)'   # Show a pretty log graph
+
+[color]
+    diff = auto
+    status = auto
+    branch = auto
+    interactive = auto
+    ui = auto
+[color "branch"]
+    current = green bold
+    local = green
+    remote = red bold
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+[color "status"]
+    added = green bold
+    changed = yellow bold
+    untracked = red
+[color "sh"]
+    branch = yellow
+[push]
+    # push will only do the current branch, not all branches
+    default = current
+[branch]
+    # set up 'git pull' to rebase instead of merge
+    autosetuprebase = always
+[diff]
+    renames = copies
+    mnemonicprefix = true
+[difftool]
+    prompt = false
+[apply]
+    # do not warn about missing whitespace at EOF
+    whitespace = nowarn
+[core]
+  pager = less -FXRS -x2
+  editor = vim
+  sshCommand = ssh
+[rerere]
+    enabled = true
+[gitsh]
+    defaultCommand = s
+[grep]
+    extendRegexp = true
+    lineNumber = true
+[merge]
+    keepBackup = false
+    tool = smerge
+[init]
+	defaultBranch = main
+
+# ---------------------------------------------------------------------------
+# SSH account routing.
+#
+# ~/.ssh/config pins one 1Password key per host and sets IdentitiesOnly, so a
+# connection no longer authenticates with whichever key the agent offers first.
+#
+# github.com                -> "SSH Key - Ed25519"         (jonnyasmith)
+# github-work            -> "SSH Key - Ed25519 work" (jonnysmith-work)
+# ssh.dev.azure.com         -> "SSH Key - work"         (RSA; the only key
+#                                                           registered in ADO)
+#
+# The rewrite below makes the work-account routing automatic: any remote under
+# the work GitHub org resolves to the github-work alias, so existing
+# remotes and a fresh `git clone git@github.com:work/...` both pick the right
+# key with no per-repo setup. pushInsteadOf is unnecessary - insteadOf covers
+# both directions. Add another [url] block here for each new work org.
+#
+# Note: github.com/personal-org is owned by the *personal* account, so it stays on
+# the default github.com route.
+# ---------------------------------------------------------------------------
+[url "git@github-work:work/"]
+    insteadOf = git@github.com:work/
+    insteadOf = ssh://git@github.com/work/
+
+# ---------------------------------------------------------------------------
+# Commit identity per account.
+#
+# These match on the remote URL as *stored* in the repo's config, so the
+# insteadOf rewrite above does not interfere - `git@github.com:work/...`
+# still matches even though the effective URL becomes `git@github-work:...`.
+#
+# Must stay below the [user] block at the top of this file: later values win, so
+# these override the personal default (jonny.asmith@gmail.com) and anything not
+# matched keeps it. Repos with no remote yet also keep the default.
+#
+# Gotcha: `**` is only wildcard-magic directly after a `/`. A trailing
+# `...azure.com:**` matches nothing and fails silently; `...azure.com:v3/**` is
+# correct and covers both the `Platform%20Interactive` and `Platform
+# Interactive` spellings present in remotes.
+#
+# The include paths are relative, so git resolves them next to this file - no
+# absolute path, and the stow symlink works on any machine.
+#
+# Verify in any repo with:  git config user.email
+# ---------------------------------------------------------------------------
+[includeIf "hasconfig:remote.*.url:git@github.com:work/**"]
+    path = config.work
+[includeIf "hasconfig:remote.*.url:ssh://git@github.com/work/**"]
+    path = config.work
+[includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:v3/**"]
+    path = config.work
+
+# ---------------------------------------------------------------------------
+# OS-specific mergetool/difftool invocations (smerge, p4merge). Rendered from
+# home/.config/git/config.os.tmpl to ~/.config/git/config.os by `mise
+# bootstrap`. The path is relative, so git resolves it next to this file, and a
+# missing include path is silently ignored — a machine that has not bootstrapped
+# yet still gets a working git config.
+# ---------------------------------------------------------------------------
+[include]
+    path = config.os

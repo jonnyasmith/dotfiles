@@ -1,162 +1,207 @@
-# Mac Setup
+# dotfiles
 
-Dotfiles and a bootstrap script for setting up a mac. Configs are symlinked
-from this repo with GNU `stow`; packages come from a `Brewfile`; language
-runtimes and CLIs come from `mise`.
+One branch, every machine: macOS, Fedora, Debian/Ubuntu, Arch, Raspberry Pi,
+WSL, and native Windows.
 
-## Set up a new mac
+There used to be a branch per OS, and each carried a README you stepped through
+by hand. They drifted, because a fix made on the mac never made it to the other
+five. That is gone. The machine is now **declared** in `mise.toml`, and
+`mise bootstrap` converges it.
 
-Three manual prerequisites, because each needs a human:
-
-1. **Update macOS** — `sudo softwareupdate -i -a`
-2. **Install Homebrew** — needs sudo and accepts a licence prompt:
-   ```bash
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-   ```
-3. **Sign in to 1Password** and enable *Settings → Developer → Use the SSH
-   agent*. Do not test it with `ssh -T git@github.com` yet — that cannot work
-   until the `ssh` package is stowed, because the `IdentityAgent` line pointing
-   ssh at 1Password's socket lives in `ssh/.ssh/config` *in this repo*.
-
-Clone over **HTTPS**, for the same reason — SSH to GitHub does not work until
-`stow` has run:
+## Set up a machine
 
 ```bash
 git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles && git checkout mac
-./bootstrap.sh
-git remote set-url origin git@github.com:jonnyasmith/dotfiles.git   # now that ssh works
+cd ~/.dotfiles && ./bootstrap.sh
 exec zsh
 ```
 
-Verify SSH once the bootstrap has finished:
+On Windows, `.\bootstrap.ps1` instead.
+
+Clone over **HTTPS**: SSH to GitHub cannot work until the dotfiles are applied,
+because the `IdentityAgent` line pointing ssh at 1Password's socket is *in this
+repo*. Swap the remote afterwards:
 
 ```bash
-ssh -T git@github.com        # Hi jonnyasmith!
-ssh -T git@github-work    # Hi jonnysmith-work!
+git remote set-url origin git@github.com:jonnyasmith/dotfiles.git
 ```
 
-That is the whole setup. `bootstrap.sh` is **idempotent** — re-run it any time
-to pick up new packages or re-link configs; steps that are already done report
-`·` and change nothing.
+The repo **must** live at `~/.dotfiles`. `mise.toml`'s `dotfiles.root` is a
+literal path — mise does not template `[settings]` — so `bootstrap.sh` refuses
+to run anywhere else rather than silently linking everything into a directory
+that does not exist.
+
+`bootstrap.sh` is idempotent. Re-run it any time; converged steps report and
+change nothing.
 
 ```bash
-./bootstrap.sh              # everything
-./bootstrap.sh --list       # show the steps
-./bootstrap.sh stow mise    # run only these steps
+./bootstrap.sh              # converge
+./bootstrap.sh --dry-run    # show what would change, touch nothing
+./bootstrap.sh --status     # what is currently out of sync
 ```
 
-| step | does |
-|---|---|
-| `preflight` | checks macOS + Homebrew, and that `zsh/.zprofile` still puts brew on the login `PATH` |
-| `brew` | `brew bundle` from the `Brewfile` |
-| `omz` | oh-my-zsh + the four plugins `.zshrc` expects |
-| `stow` | symlinks every package into `$HOME` |
-| `tpm` | tmux plugin manager |
-| `mise` | node, .NET SDKs, pnpm, npm CLIs, `ilspycmd` |
-| `vscode` | extensions from `Brewfile.vscode` |
-| `defaults` | macOS Finder/Dock/trackpad settings |
+### The one prerequisite
 
-Two things the script cannot finish for you:
+**Sign in to 1Password** and enable *Settings → Developer → Use the SSH agent*.
+Nothing else needs a human before `bootstrap.sh`. In particular you no longer
+install Homebrew first — mise ships its own Homebrew support and does not
+require it.
+
+Two things it cannot finish for you, both reported at the end of a run:
 
 - **tmux plugins** — press `prefix + I` inside tmux once.
-- **VS Code** — if the `vscode` step says the `code` CLI is missing, run
-  *Shell Command: Install 'code' command in PATH* from the command palette,
-  then `./bootstrap.sh vscode`.
+- **VS Code** — if the `code` CLI is missing, run *Shell Command: Install 'code'
+  command in PATH* from the palette, then `mise run setup:vscode`.
 
-## What lives here
+Per-OS prerequisites that genuinely need a human — installing the OS, disk
+partitioning, GUI sign-ins, anything needing a reboot — are in `docs/`:
+[arch](docs/arch.md) · [fedora](docs/fedora.md) · [ubuntu](docs/ubuntu.md) ·
+[raspberry-pi](docs/raspberry-pi.md) · [wsl](docs/wsl.md) ·
+[windows](docs/windows.md).
 
-Each top-level directory is a stow package mirroring its path under `$HOME`:
+## How one config covers every OS
 
-| package | links to |
+```
+mise.toml           everything shared, and every OS's package list
+mise.macos.toml     ─┐
+mise.linux.toml      ├─ loaded only on that platform
+mise.windows.toml   ─┘
+.miserc.toml        auto_env = true, which is what makes the above load
+home/               mirrors $HOME — every dotfile source
+docs/               the parts of each runbook a human must still do
+packages/           winget ids and VS Code extension ids
+bootstrap.sh        installs mise, then `mise bootstrap`
+bootstrap.ps1       the same, for native Windows
+```
+
+Three mechanisms do all the work:
+
+**1. Package entries are keyed by manager, and mise skips managers the machine
+does not have.** So Debian, Fedora, Arch and macOS package lists all live
+together in `mise.toml`, and each machine takes only its own. Skipped entries
+are *reported*, not silently dropped — a run on this mac ends with:
+
+```
+bootstrap: follow-up
+  - apt: 19 package(s) skipped (only available on linux)
+  - dnf: 10 package(s) skipped (only available on linux)
+  - pacman: 28 package(s) skipped (only available on linux)
+```
+
+**2. Anything in mise's registry is a `[tools]` entry, declared once.** node,
+neovim, starship, fzf, ripgrep, lazygit, zoxide, gh, jq, terraform, uv, zig used
+to be installed six different ways across the branches — `nvm | bash`,
+`dotnet-install.sh`, `snap`, a tarball unpacked into `/opt`, `yay`, `winget`.
+Now they are one line each and every machine gets the same version. This is what
+shrank the per-distro package lists to the genuine rump: system libraries, GUI
+apps, fonts, and 1Password.
+
+**3. Config that really does differ per OS is a template.** Five files render
+`{{ os() }}` at apply time; everything else is a plain symlink. The whole
+divergence is the 1Password agent socket, git's mergetool paths, ghostty's
+mac-only key, `PNPM_HOME`, and a handful of BSD-vs-GNU aliases.
+
+What each `[bootstrap.*]` section replaced:
+
+| was | now |
 |---|---|
-| `btop`, `gh`, `ghostty`, `herdr`, `htop`, `karabiner`, `mise`, `nvim`, `starship` | `~/.config/<name>` |
-| `git` | `~/.config/git/` — `config`, `config.work`, `ignore` |
-| `ssh` | `~/.ssh/config`, `~/.ssh/1password/` |
-| `1password` | `~/.config/1Password/ssh/agent.toml` |
-| `ideavim` | `~/.ideavimrc` |
-| `tmux` | `~/.config/tmux` |
-| `zsh` | `~/.zshrc`, `~/.zshenv`, `~/.zprofile`, `~/.config/zsh` |
+| `Brewfile`, and five per-distro package arrays | `[bootstrap.packages]` |
+| four `git clone` lines in every README, plus tpm | `[bootstrap.repos]` |
+| GNU stow, and three symlink scripts hardcoded to `/home/jonny` | `[dotfiles]` |
+| `bootstrap.sh`'s `defaults` step | `[bootstrap.macos.*]` |
+| "install zsh, then remember to `chsh`" | `[bootstrap.user].login_shell` |
+| `Brewfile.vscode` + a bespoke install step | `[tasks."setup:vscode"]` |
+| the imperative rump of each README | `[tasks."setup:*"]` |
 
-Adding a package: create `<name>/` with the file at its `$HOME`-relative path,
-then `stow <name>`. `bootstrap.sh` discovers packages automatically, so nothing
-else needs updating.
+### Adding things
 
-**Keep configs free of absolute paths.** `$HOME`, not `/Users/jonny` — the
-whole point is that this clones onto any machine.
+```bash
+mise bootstrap packages use brew:ffmpeg apt:libssl-dev   # a system package
+mise use -g ripgrep@latest                               # a dev tool
+mise bootstrap dotfiles add ~/.config/foo/bar            # a new dotfile
+code --list-extensions | sort > packages/vscode.txt      # re-record extensions
+```
 
-### Shell files and tool precedence
+Commit the result. There is no separate manifest to keep in sync.
 
-The three zsh files are stowed together because between them they decide which
-`python3` and `node` you get, and they run in a fixed order:
+## Dotfiles
+
+`home/` mirrors `$HOME`, and `[dotfiles]` in `mise.toml` says how each path is
+applied. The mode matters, and is chosen by **who writes the file**:
+
+| mode | for | examples |
+|---|---|---|
+| `symlink` | we own it outright; editing `~` edits the repo | `.zshrc`, `.gitconfig`, `starship.toml` |
+| `symlink-each` | we own the files, a tool writes *siblings* into the same dir | `nvim/` (spell, netrwhist), `tmux/` (tpm plugins), `herdr/` |
+| `copy` | the tool rewrites the file *itself*, in place | `btop.conf`, `htoprc`, `karabiner.json`, `gh/config.yml` |
+| `template` | genuinely differs per OS | `ssh/config`, `git/config.os`, `zsh/os.zsh` |
+
+`symlink-each` is why the repo no longer collects machine state. Previously
+`~/.config/nvim` was one symlink to a repo directory, so everything nvim wrote
+landed *in the repo* and had to be gitignored. Now the directory is real and
+only the files we own are linked.
+
+For a `copy` or `template` target, editing `~` does **not** edit the repo — that
+is the point, since something else owns the file. Pull deliberate changes back
+with `mise bootstrap dotfiles add <path>`.
+
+**Keep configs free of absolute paths.** `$HOME`, not `/Users/jonny`.
+
+## Shell files and tool precedence
+
+Unchanged by the migration, and still the subtlest thing here. The three zsh
+files decide which `python3` and `node` you get, and run in a fixed order:
 
 | file | sourced by | does |
 |---|---|---|
-| `.zshenv` | **every** zsh, incl. `zsh -c` | PATH and env only: uv's `~/.local/bin`, rustup's `cargo/env`, `BUN_INSTALL`, mise shims |
-| `.zprofile` | login zsh | `brew shellenv`, OrbStack, then re-asserts the shims |
-| `.zshrc` | interactive zsh | oh-my-zsh, starship, aliases, `mise activate`, then demotes the shims |
-
-Anything that prints, prompts, or needs a terminal belongs in `.zshrc`; the
-other two are sourced by non-interactive shells where output breaks things.
+| `.zshenv` | **every** zsh, incl. `zsh -c` | PATH and env only: uv's `~/.local/bin`, `cargo/env`, `BUN_INSTALL`, mise shims |
+| `.zprofile` | login zsh | `brew shellenv` (Apple Silicon, Intel, then Linuxbrew), OrbStack, then re-asserts the shims |
+| `.zshrc` | interactive zsh | oh-my-zsh, `~/.config/zsh/*.zsh`, starship, `mise activate`, then demotes the shims |
 
 `mise activate` runs in `.zshrc`, so **only interactive shells** get it. Git
-hooks (husky runs `npx lint-staged` under `sh`), editor- and GUI-spawned
-shells, LaunchAgents and cron get none of it, and without the shims they see no
-`node`/`npx`/`pnpm` at all — plus the wrong `python3`, because both `/usr/bin`
-(Xcode's 3.9) and `/opt/homebrew/bin` (python@3.14, pulled in as an azure-cli /
-pipx / platformio dependency) ship one. Those are the exact interpreters
-`mise/.config/mise/config.toml` exists to keep off `PATH`.
+hooks (husky runs `npx lint-staged` under `sh`), editor- and GUI-spawned shells,
+LaunchAgents and cron get none of it — and without the shims they see no
+`node`/`npx`/`pnpm` at all, plus the wrong `python3`, because both `/usr/bin`
+(Xcode's 3.9) and `/opt/homebrew/bin` (python@3.14, a dependency of azure-cli /
+pipx / platformio) ship one.
 
-So the shims go at the **front** of `PATH`, not the back — both `/usr/bin` and
-`/opt/homebrew/bin` ship a `python3`, so an appended shim loses to them. Nothing
-in `~/.local/bin` or `~/.bun/bin` shares a name with a shim (compare against `ls
-~/.local/share/mise/shims`), so this shadows nothing.
-
-`.zshenv` defines that as a pair of functions, `mise-shims-first` and
-`mise-shims-last`, because the ordering has to be re-asserted twice more:
+So the shims go at the **front** of PATH, not the back. `.zshenv` defines
+`mise-shims-first` and `mise-shims-last` as functions because the ordering has
+to be re-asserted twice more:
 
 - **`.zprofile`** calls `mise-shims-first` again — `brew shellenv` prepends
-  `/opt/homebrew/bin` *after* `.zshenv` has run, so a one-shot prepend there
-  cannot hold.
+  `/opt/homebrew/bin` *after* `.zshenv` has run.
 - **`.zshrc`** calls `mise-shims-last` after `mise activate`, which supersedes
   the shims with the real install dirs and adds a uv project's `.venv/bin`
-  (`python.uv_venv_auto`). A shim left in front would sit ahead of that
-  `.venv/bin` too and shadow the project interpreter with the global one —
-  verified: promoting the shims inside a uv project turns `python` from
-  `.venv/bin/python` into `installs/python/3.13.14`.
+  (`python.uv_venv_auto`). A shim left in front would shadow that project
+  interpreter with the global one.
 
-Result — mise's tools in all four modes, brew's untouched:
+Verified after the migration:
 
 ```
-zsh -c   python3 → shims/python3       3.13.14    bun → shims/bun
-zsh -lc  python3 → shims/python3       3.13.14    (git/stow/gh still brew's)
+zsh -c   python3 → shims/python3       node → shims/node    bun → shims/bun
+zsh -lc  python3 → shims/python3       (git/curl still brew's)
 zsh -ic  python3 → installs/python/3.13/bin/python3
-         inside a uv project → .venv/bin/python
+                   inside a uv project → .venv/bin/python
 ```
 
-Shims respect project pins the same way `activate` does: inside a repo with
-`.nvmrc` 22 they give node 22, outside it the global default 24.
+`~/.config/zsh/os.zsh` is rendered per-OS and picked up by the
+`for config (~/.config/zsh/*.zsh)` loop, which runs *before* `mise activate`.
+It carries `SSH_AUTH_SOCK`, `PNPM_HOME`, and the BSD-vs-GNU aliases.
 
 Git config is XDG (`~/.config/git/config`), not `~/.gitconfig`. Git reads both,
 with `~/.gitconfig` last and therefore winning, so keep only one — a stray
-`~/.gitconfig` on a machine will silently override this package. `git config
---global` writes to `~/.config/git/config` as long as `~/.gitconfig` is absent.
+`~/.gitconfig` will silently override this. The per-OS mergetool paths come from
+`config.os`, pulled in by an `[include]`; git ignores a missing include, so this
+is safe before the template has rendered.
 
-`~/.config/git/ignore` is the global ignore file git reads **by default**, which
-is why no `core.excludesFile` is set. A `~/.gitignore` is *not* read by default;
-one used to be stowed here and had been inert for its whole life.
-
-`gh/.config/gh/hosts.yml` holds an OAuth token and is gitignored; run
-`gh auth login` on a new machine.
-
-The `.pub` files in `ssh/.ssh/1password/` are **public** keys and are committed
-deliberately — see *SSH keys and identities* below. No private key material is
-in this repo; 1Password holds all of it.
+`~/.config/gh/hosts.yml` holds an OAuth token, is gitignored, and is
+deliberately unmanaged — run `gh auth login` on a new machine.
 
 ## SSH keys and identities
 
-Three keys live in 1Password, and both the key *and* the commit email are picked
-automatically from the remote URL. Nothing is switched by hand.
+Three keys live in 1Password, and both the key *and* the commit email are
+picked from the remote URL. Nothing is switched by hand.
 
 | remote | key (1Password item) | commit email |
 |---|---|---|
@@ -166,92 +211,63 @@ automatically from the remote URL. Nothing is switched by hand.
 
 Azure DevOps accepts **only** the RSA key; both Ed25519 keys are rejected there.
 
-How the three pieces fit together:
-
-- **`ssh/.ssh/config`** pins one key per host with `IdentitiesOnly yes`. Without
-  it ssh offers every key in the agent and the first one the server accepts
-  wins — which silently authenticated work repos as the personal account, and
-  wasted two rejected attempts on every Azure connection.
-- **`ssh/.ssh/1password/*.pub`** are public-key stubs. `IdentityFile` needs a
-  local file to name *which* agent key to use; the private half never leaves
-  1Password. Regenerate them with `~/.ssh/1password/refresh` after adding or
-  renaming a key there — the item names in `agent.toml` are the map keys.
-- **`git/.config/git/config`** rewrites `git@github.com:work/*` to the
-  `github-work` host alias via `insteadOf`, so existing remotes and fresh
-  clones both route correctly with no per-repo setup, and selects the commit
-  email with `includeIf hasconfig:remote.*.url`.
-
-Adding a second work org means one `[url]` block and one `[includeIf]` block in
-`git/.config/git/config`; an unlisted org falls through to the personal key.
+- **`~/.ssh/config`** (rendered from `home/.ssh/config.tmpl`) pins one key per
+  host with `IdentitiesOnly yes`. Without it ssh offers every key in the agent
+  and the first one the server accepts wins — which silently authenticated work
+  repos as the personal account.
+- **`home/.ssh/1password/*.pub`** are public-key stubs, committed deliberately.
+  `IdentityFile` needs a local file to name *which* agent key to use; the
+  private half never leaves 1Password. Regenerate with
+  `~/.ssh/1password/refresh`.
+- **`home/.config/git/config`** rewrites `git@github.com:work/*` to the
+  `github-work` alias via `insteadOf`, and selects the commit email with
+  `includeIf hasconfig:remote.*.url`.
 
 Two traps worth remembering:
 
 - `hasconfig` matches the remote URL **as stored**, not as rewritten, so the
-  patterns use `git@github.com:...` even though the effective URL becomes
-  `git@github-work:...`.
+  patterns use `git@github.com:...`.
 - `**` is only wildcard-magic directly after a `/`. `...azure.com:**` matches
   nothing and fails **silently**; `...azure.com:v3/**` is correct.
 
-Check what a repo resolved to:
+The agent socket differs per OS — a Group Container path on macOS,
+`~/.1password/agent.sock` on Linux, and on WSL that same path fed by an
+npiperelay bridge to the Windows agent ([docs/wsl.md](docs/wsl.md)).
 
 ```bash
+ssh -T git@github.com          # Hi jonnyasmith!
+ssh -T git@github-work      # Hi jonnysmith-work!
 git -C <repo> config user.email
-git -C <repo> var GIT_AUTHOR_IDENT      # what a commit would stamp
-GIT_SSH_COMMAND='ssh -v' git ls-remote origin HEAD 2>&1 | grep 'Offering public key'
-```
-
-## Packages
-
-`Brewfile` is the source of truth for Homebrew, and `Brewfile.vscode` for
-editor extensions. After installing or removing something, re-record it:
-
-```bash
-brew bundle dump --file=Brewfile --force
-grep -v '^vscode ' Brewfile > t && grep '^vscode ' Brewfile > Brewfile.vscode && mv t Brewfile
-```
-
-Check for drift without changing anything:
-
-```bash
-brew bundle check --file=Brewfile    # is everything installed?
-brew bundle cleanup --file=Brewfile  # what is installed but unrecorded?
 ```
 
 ## Dev tools (mise)
 
-`mise` owns node, bun, python, the .NET SDKs, pnpm, and the CLIs that used to be
-`npm install -g`. Versions are declared in `mise/.config/mise/config.toml`, and
-`.zshrc` runs `mise activate zsh`, so `PATH` is rewritten on `cd`.
+`[tools]` in `mise.toml` owns the runtimes and every registry-backed CLI.
+`.zshrc` runs `mise activate zsh`, so PATH is rewritten on `cd`.
 
 ```bash
-mise install     # install everything the config declares
+mise install     # install everything declared
 mise ls          # what is installed
 mise outdated    # what is behind
 mise upgrade     # bump tools pinned to a moving target
 ```
 
-Do **not** `brew install` node, nvm, pnpm, bun, or the `dotnet-sdk` casks, and do
-not use a vendor's `curl | bash` installer for them — mise owns those and a
-second copy will shadow it or, worse, self-update behind mise's back. mise sets
-`DOTNET_ROOT` and `DOTNET_MULTILEVEL_LOOKUP` itself; never export them from the
-shell.
+Do **not** install node, nvm, pnpm, bun or the .NET SDKs from a distro package
+manager or a vendor's `curl | bash` — mise owns those, and a second copy will
+shadow it or self-update behind its back. mise sets `DOTNET_ROOT` and
+`DOTNET_MULTILEVEL_LOOKUP` itself; never export them.
 
-Per-project versions come from files already in your repos — `global.json`
-(`sdk.version`), `.nvmrc` / `.node-version`, and `.python-version` — because
-`idiomatic_version_file_enable_tools` is set. Entering a directory switches
-automatically. mise does *not* read `package.json`'s `packageManager` field; to
-pin pnpm per project use `mise use pnpm@10` or a `.tool-versions`.
+Per-project versions come from files already in your repos — `global.json`,
+`.nvmrc` / `.node-version`, `.python-version` — because
+`idiomatic_version_file_enable_tools` is set.
 
 ### Python
 
 Homebrew's `python@3.14` is a **dependency** of `azure-cli`, `pipx`, `pytest`
 and `platformio`, so it is upgraded whenever any of those are, and every venv
-built against it drifts. Leave it installed — those formulae each have a
-private `libexec` venv with a hardcoded shebang, so none of them consume
-`/opt/homebrew/bin/python3` and mise can own `python3` safely. Never remove
-`/usr/bin/python3` either; that is Apple's and the OS uses it.
-
-The split that keeps this stable:
+built against it drifts. Leave it installed — those formulae each have a private
+`libexec` venv, so none of them consume `/opt/homebrew/bin/python3`. Never remove
+`/usr/bin/python3` either; that is Apple's.
 
 | owns | what |
 |---|---|
@@ -259,91 +275,71 @@ The split that keeps this stable:
 | uv | per-project `.venv` and `uv tool install` |
 | brew | nothing you invoke; just a dependency of the formulae above |
 
-`python.uv_venv_auto` is on, so a project's `.venv` activates on `cd` without
-`source .venv/bin/activate`. Create one with `uv venv` and mise will enter it.
-
-Build project venvs from a mise or uv python, never a bare `python3 -m venv`
-picked up from `PATH` before `mise activate` runs — that is how venvs end up
-pinned to Homebrew or, worse, Xcode's 3.9.6.
-
-To change a version, edit `mise/.config/mise/config.toml` and commit. `mise use
--g` writes through the stow symlink and preserves comments, but it **replaces**
-a multi-version array — `mise use -g node@24` rewrites `node = ["24", "22"]`
-down to `node = "24"`. Hand-edit anything with more than one version pinned.
+`python.uv_venv_auto` is on, so a project's `.venv` activates on `cd`. Build
+venvs from a mise or uv python, never a bare `python3 -m venv` picked up before
+`mise activate` runs.
 
 ### Bun
 
-bun came from oven-sh's `curl | bash` installer originally, which left a
-self-updating 63 MB binary at `~/.bun/bin/bun` that mise could not see, exported
-its `PATH` line from `.zshrc` (so no bun in git hooks or any non-interactive
-shell), and prepended its directory unguarded — three copies of `~/.bun/bin` in
-`PATH` by the third nested shell. mise owns the binary now; the installer's copy
-is deleted.
-
-`~/.bun` stays, because it is two separate things and only one of them was the
-runtime:
+mise owns the `bun` binary. `~/.bun` stays, because it is two separate things
+and only one of them was the runtime:
 
 | path | what | owner |
 |---|---|---|
 | `~/.bun/bin/bun` | the runtime — **deleted**, comes from mise | mise |
-| `~/.bun/bin/*` | `bun install -g` binaries, e.g. `omp` | bun |
+| `~/.bun/bin/*` | `bun install -g` binaries | bun |
 | `~/.bun/install/global/` | the global `node_modules` behind them | bun |
 | `~/.bun/_bun` | completions, sourced by `.zshrc` | `bun completions` |
 
-So `BUN_INSTALL=$HOME/.bun` and `$BUN_INSTALL/bin` on `PATH` are still needed —
-they point at bun's *global package* dir, not at the runtime — and both moved to
-`.zshenv`. Check with `bun pm bin -g`.
+So `BUN_INSTALL` and `$BUN_INSTALL/bin` on PATH are still needed — they point at
+bun's *global package* dir, not the runtime. Never run `bun upgrade`; use
+`mise upgrade bun`.
 
-Never run `bun upgrade`: it rewrites the binary in place and would put a second,
-unmanaged runtime back. Use `mise upgrade bun`. Globals installed with `bun
-install -g` are **not** tracked by this repo; the mise config's `npm:` backend
-entries are the tracked equivalent for node CLIs.
+## Known rough edges
 
-### Known upstream issue: first `mise install` can drop one .NET SDK
+Things that are deliberate, or upstream, and will look like bugs otherwise:
 
-Nothing here calls Microsoft's installer directly — mise does, internally. Its
-`dotnet` backend downloads `dotnet-install.sh` into its own cache and runs it
-per version, but both jobs share one cached copy of that script, so installing
-`dotnet = ["10", "8"]` concurrently can leave one execing the file while the
-other rewrites it:
+- **`dotfiles.root` must be absolute or `~/`-prefixed.** A relative value is
+  written verbatim into the symlink target, producing dangling links that
+  `mise bootstrap dotfiles status` still reports as `applied`. `[settings]` is
+  not templated, so `{{config_root}}` does not work there either.
+- **`auto_env` must live in `.miserc.toml`.** Config discovery happens before
+  `mise.toml` is read, so setting it there has no effect and the
+  `mise.<os>.toml` files silently never load. Defaults to on in mise 2027.6.0.
+- **`[dotfiles]` has no `os` field.** An `os` key is ignored without warning.
+  Platform-only targets must go in a `mise.<os>.toml`.
+- **`[bootstrap.user].login_shell` is not templated** and must be a literal
+  absolute path — hence one per platform file.
+- **Same-named tasks across merged config files replace each other silently.**
+  There is exactly one `[tasks.bootstrap]`, in `mise.toml`; platform files
+  define `setup:<platform>` and are reached by its `depends = ["setup:*"]`
+  glob. A *literal* missing dependency is a hard error, so the glob is
+  load-bearing, not stylistic.
+- **`[bootstrap.hooks.*].run` is not templated; `[tasks.*].run` is.** Keep `{{`
+  and `{%` out of task bodies.
+- **No `winget` manager**, so Windows packages come from `packages/winget.txt`
+  via `bootstrap.ps1`.
+- **The `vscode:` package plugin in mise's docs does not exist** — that URL
+  404s, and declaring it fails the whole bootstrap at the first phase. Hence
+  `[tasks."setup:vscode"]`.
+- **Two casks are not declared**: `microsoft-teams` and `microsoft-auto-update`
+  are pkg-installer casks, which mise's built-in cask support cannot drive
+  (`pkg installer choices are not supported yet`, and a `sudo` prompt with no
+  TTY). Teams is installed by `[tasks."setup:macos"]` through real Homebrew when
+  present.
+- **`btop` is `os = ["linux"]`** — its aqua backend has no darwin build. macOS
+  takes it from brew.
 
-```
-Failed to install core:dotnet@8: dotnet-install.sh: Permission denied (os error 13)
-```
+## History
 
-It is a race in mise, not a config problem. `bootstrap.sh` retries
-automatically; by hand, run `mise install` again and the second pass installs
-the missing SDK.
-
-## Migrating an existing mac off nvm and brew dotnet
-
-Run the bootstrap first, confirm `mise ls` looks right, then remove the old
-installs:
-
-```bash
-# nvm: ~/.nvm holds the node builds AND every `npm install -g` package,
-# so let mise install those first (above) before deleting it.
-rm -rf ~/.nvm
-
-# dotnet: the casks install a root-owned pkg payload.
-brew uninstall --cask dotnet-sdk dotnet-sdk@8
-
-# Microsoft's pkg installer leaves PATH fragments the cask uninstall misses.
-# (`dotnet-cli-tools` holds a literal `~/.dotnet/tools`, which path_helper
-# never expands, so it was always dead — mise supplies that dir instead.)
-sudo rm -f /etc/paths.d/dotnet /etc/paths.d/dotnet-cli-tools
-```
-
-`mise uninstall dotnet@<version>` only removes `sdk/<version>`, so a root left
-over from an older `DOTNET_ROOT` can keep hundreds of MB of `shared/`, `packs/`
-and `templates/`. Check `du -sh ~/.dotnet` and delete those subdirectories if
-orphaned — keep `~/.dotnet/tools` and the sentinel files.
-
-Verify in a **new** shell (`exec zsh`); the old one still holds the stale
-`DOTNET_ROOT` and `PATH`:
+The old per-OS branches are deleted but preserved as tags, so nothing is lost:
 
 ```bash
-type nvm                   # -> not found
-which -a dotnet node       # -> only mise paths
-dotnet --list-sdks
+git tag -l 'archive/*'
+git show archive/debian:debian.md
 ```
+
+`archive/arch`, `archive/arch-linux`, `archive/deb`, `archive/debian`,
+`archive/wsl`, `archive/main`, `archive/master`. Their runbooks were harvested
+into `docs/` and the `mise.*.toml` files; their configs were all strictly older
+than the mac branch's.

@@ -1,0 +1,368 @@
+# ~/.dotfiles/mise.toml — the whole machine, declared once.
+#
+# This file IS the runbook. It replaces what used to be six per-OS branches,
+# each with a markdown README you stepped through by hand, plus a Brewfile, a
+# Brewfile.vscode, and a 264-line bootstrap.sh. Everything below is applied by:
+#
+#   mise bootstrap            # converge this machine
+#   mise bootstrap --dry-run  # show what would change, touch nothing
+#   mise bootstrap status     # what is out of sync
+#
+# It is also the *global* mise config: [dotfiles] links ~/.config/mise/config.toml
+# back to this file, so [tools] applies everywhere and there is exactly one file
+# to edit. The [bootstrap.*] sections are inert outside an explicit `mise
+# bootstrap` — mise never installs system packages implicitly.
+#
+# WHY ONE FILE WORKS FOR EVERY OS
+# [bootstrap.packages] entries are keyed by package manager, and mise ignores
+# entries whose manager does not exist on this machine — apt entries on a mac,
+# dnf on Arch, and so on. Skipped entries are *reported*, not silently dropped.
+# So the Debian, Fedora, Arch and macOS package lists all live here together and
+# each machine takes its own. That is the property the branches existed to fake.
+#
+# Config that genuinely differs per OS (the 1Password agent socket, git's
+# mergetool paths, ghostty's mac-only key, PNPM_HOME) is handled by
+# `mode = "template"` entries below, which render `{{ os() }}` at apply time.
+#
+# [dotfiles] entries themselves have NO os filter, so anything that must exist
+# on only one platform lives in mise.<os>.toml beside this file instead.
+
+[settings]
+# Must be absolute or ~/-prefixed. A RELATIVE value here is silently broken:
+# mise writes the relative string straight into the symlink target, so
+# `dotfiles.root = "home"` produces ~/.zshrc -> home/.zshrc, which resolves
+# against $HOME, dangles, and still reports "applied". This also means the repo
+# has to be cloned to ~/.dotfiles specifically; [settings] is not templated, so
+# {{config_root}} does not work here either. Both verified on mise 2026.7.17.
+dotfiles.root = "~/.dotfiles/home"
+
+# ---------------------------------------------------------------- dotfiles --
+#
+# Replaces GNU stow. Three modes, chosen per target by who writes the file:
+#
+#   symlink       we own it outright; edits in ~ are edits to the repo
+#   symlink-each  we own the *files*, something else writes siblings into the
+#                 same directory (nvim's spell/, tpm's plugins/, gh's
+#                 hosts.yml). Links each file individually so those writes stay
+#                 local instead of landing in the repo — this is what the six
+#                 "machine-local state" entries in .gitignore used to paper over.
+#   copy          the tool rewrites the file itself, in place, on exit. A
+#                 symlink would send that write into the repo and dirty it on
+#                 every run. Capture deliberate changes with
+#                 `mise bootstrap dotfiles add <path>`.
+#
+# `{}` means "mirror the home-relative path under dotfiles.root", so
+# "~/.zshrc" resolves to ~/.dotfiles/home/.zshrc with no source line needed.
+# Explicit `source` paths are relative to THIS file, hence the `home/` prefix.
+
+[dotfiles]
+# Shell. The .zshenv/.zprofile/.zshrc ordering is load-bearing — see README —
+# and is deliberately NOT delegated to [bootstrap.mise_shell_activate], which
+# would inject its own `mise activate` block. mise defers to [dotfiles] when
+# both target the same file, so these three stay hand-written.
+"~/.zshrc" = {}
+"~/.zshenv" = {}
+"~/.zprofile" = {}
+"~/.config/zsh/aliases.zsh" = {}
+# Everything OS-specific the shell needs. Sourced by the existing
+# `for config (~/.config/zsh/*.zsh)` loop in .zshrc.
+"~/.config/zsh/os.zsh" = { source = "home/.config/zsh/os.zsh.tmpl", mode = "template" }
+
+# git. config.os carries the mergetool paths, the only part that differs per OS.
+# git silently ignores the include when it has not rendered yet.
+"~/.config/git/config" = {}
+"~/.config/git/config.work" = {}
+"~/.config/git/ignore" = {}
+"~/.config/git/config.os" = { source = "home/.config/git/config.os.tmpl", mode = "template" }
+
+# ssh. Templated for the 1Password agent socket, which is a macOS Group
+# Container path and a plain ~/.1password/agent.sock on Linux. The .pub files
+# are public key stubs telling the agent which key to use; *.tmpl is excluded so
+# symlink-each does not link the template beside its own rendered output.
+"~/.ssh/config" = { source = "home/.ssh/config.tmpl", mode = "template" }
+"~/.ssh/1password" = { source = "home/.ssh/1password", mode = "symlink-each", exclude = ["*.tmpl"] }
+"~/.ssh/1password/refresh" = { source = "home/.ssh/1password/refresh.tmpl", mode = "template" }
+"~/.config/1Password/ssh/agent.toml" = {}
+
+# Editors and terminal. nvim writes spell/ and .netrwhist into its own config
+# dir; tmux gets plugins/ from tpm; ghostty takes its mac-only key from a
+# rendered optional include (`config-file = ?os-local`).
+"~/.config/nvim" = { source = "home/.config/nvim", mode = "symlink-each" }
+"~/.config/tmux" = { source = "home/.config/tmux", mode = "symlink-each" }
+"~/.config/ghostty/config" = {}
+"~/.config/ghostty/os-local" = { source = "home/.config/ghostty/os-local.tmpl", mode = "template" }
+"~/.ideavimrc" = {}
+"~/.config/starship.toml" = {}
+
+# Tools that rewrite their own config on exit. copy, not symlink.
+"~/.config/btop/btop.conf" = { mode = "copy" }
+"~/.config/htop/htoprc" = { mode = "copy" }
+
+# gh regenerates config.yml with defaults on *any* invocation if it is absent,
+# and rewrites it in place on `gh config set` — so this is `copy` like btop and
+# htop, not a symlink. A symlink here loses the race: mise deletes the target,
+# gh recreates a stub before the link is made, and the dotfiles phase then
+# aborts with "refusing to overwrite existing files". Content updates through
+# `copy` need no --force. hosts.yml holds the OAuth token, is gitignored, and
+# is deliberately unmanaged — run `gh auth login` on a new machine.
+"~/.config/gh/config.yml" = { mode = "copy" }
+
+# herdr writes session.json, .plugins.lock, logs and a socket beside its config,
+# so symlink-each keeps those in ~ rather than in the repo.
+"~/.config/herdr" = { source = "home/.config/herdr", mode = "symlink-each" }
+
+# This file, as the global mise config. Everything above applies from anywhere.
+"~/.config/mise/config.toml" = "mise.toml"
+
+# ------------------------------------------------------------------- repos --
+#
+# Replaces the four `git clone` lines every one of the old READMEs repeated,
+# and bootstrap.sh's omz and tpm steps. Cloned before dotfiles are applied.
+# oh-my-zsh is cloned directly rather than run through its installer: the
+# installer's only other jobs are chsh (now [bootstrap.user].login_shell) and
+# writing a default .zshrc, which we link over anyway (hence KEEP_ZSHRC=yes in
+# the old script).
+
+[bootstrap.repos]
+"~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", ref = "master" }
+# Keep in sync with the plugins=() list in home/.zshrc.
+"~/.oh-my-zsh/custom/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", ref = "master" }
+"~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" = { url = "https://github.com/zsh-users/zsh-syntax-highlighting.git", ref = "master" }
+"~/.oh-my-zsh/custom/plugins/fast-syntax-highlighting" = { url = "https://github.com/zdharma-continuum/fast-syntax-highlighting.git", ref = "master" }
+"~/.oh-my-zsh/custom/plugins/zsh-autocomplete" = { url = "https://github.com/marlonrichert/zsh-autocomplete.git", ref = "main" }
+# tmux plugin manager. Still needs `prefix + I` inside tmux once to fetch plugins.
+"~/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git", ref = "master" }
+
+# ------------------------------------------------------------------- tools --
+#
+# Versioned dev tools, shimmed, switched per directory. The rule for what lives
+# here vs [bootstrap.packages]: if it is a CLI you invoke and mise's registry
+# has it, it goes here and every OS gets the identical version. That is what
+# collapsed the old per-distro package lists — node, neovim, starship, fzf and
+# the rest used to be installed six different ways (nvm curl, dotnet-install.sh,
+# snap, a tarball into /opt, yay, winget) and are now one line each.
+
+[tools]
+# .NET SDKs install side-by-side into one shared DOTNET_ROOT, matching .NET's
+# native model, so `dotnet --list-sdks` shows both and multi-targeting works
+# without switching. First entry is the default when no global.json applies.
+dotnet = ["10", "8"]
+
+# bun. Was installed by oven-sh's curl installer into ~/.bun, which meant a
+# second self-updating runtime (`bun upgrade`) that mise could not see. mise
+# owns the binary now; ~/.bun stays as BUN_INSTALL, i.e. bun's *global package*
+# dir, so `bun install -g` bins keep working. Never run `bun upgrade`.
+bun = "1"
+
+# First entry is the default `node`; the second stays installed so a project
+# .nvmrc / .node-version can select it.
+node = ["24", "22"]
+
+# Majors, not "latest": each resolves to the newest release in that line.
+# First entry is the default; a project selects the other with a mise.toml or
+# .tool-versions. mise does NOT read package.json's `packageManager` field.
+pnpm = ["11", "10"]
+
+# Python. The point is that `python3` is never Homebrew's or Xcode's: brew's
+# python@3.14 is a *dependency* of azure-cli/pipx/pytest/platformio, so it gets
+# upgraded whenever those do and drags every venv built against it along. 3.13
+# is the default because it satisfies the most `requires-python` in ~/dev --
+# several cap below 3.14 (">=3.12,<3.13", "<3.14"), which brew's 3.14 violates.
+# 3.12 stays installed for the projects pinned to it.
+#
+# Interpreters only. uv still owns per-project venvs and `uv tool` installs.
+python = ["3.13", "3.12"]
+
+# Cross-platform CLIs, promoted out of the Brewfile so Linux and WSL get the
+# same versions from the same declaration. The brew copies of these can stay
+# installed harmlessly — .zshenv puts mise's shims ahead of /opt/homebrew/bin,
+# and `mise activate` puts the real install dirs ahead of that. Remove them
+# deliberately with `mise bootstrap packages prune --manager brew`.
+# btop's aqua backend publishes Linux binaries only — on macOS it fails with
+# `unsupported env: darwin/arm64 (supported: ["linux"])` and takes the whole
+# tools phase with it. `os` filtering keeps the declaration cross-platform;
+# macOS gets btop from brew:btop in mise.macos.toml instead.
+btop = { version = "latest", os = ["linux"] }
+fzf = "latest"
+gh = "latest"
+jq = "latest"
+just = "latest"
+lazygit = "latest"
+neovim = "latest"
+ripgrep = "latest"
+starship = "latest"
+terraform = "latest"
+uv = "latest"
+zoxide = "latest"
+# zig was installed four different ways across the old branches: `dnf install
+# zig`, `snap install zig --beta --classic`, a hand-unpacked tarball into
+# /opt/zig on WSL, and `winget install zig.zig`. core:zig covers all of them.
+zig = "latest"
+
+# CLIs that used to be `npm install -g` under nvm. The npm: backend keeps them
+# outside any single node install, so upgrading node does not orphan them.
+# (mise deprecated ~/.default-npm-packages: warns 2026.11, removed 2027.11.)
+"npm:@github/copilot" = "latest"
+"npm:@google/gemini-cli" = "latest"
+"npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:@ollama/pi-web-search" = "latest"
+# kb is a small personal package that falls under aube's weekly-download
+# threshold, so it needs an explicit opt-in. Scoped to kb itself: its
+# transitive dependencies stay supply-chain gated.
+"npm:@dustinbyrne/kb" = { version = "latest", allow_low_downloads = true }
+"npm:azure-functions-core-tools" = "latest"
+"npm:ccstatusline" = "latest"
+"npm:cline" = "latest"
+"npm:firebase-tools" = "latest"
+"npm:kanban" = "latest"
+
+[env]
+# `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is
+# independent of DOTNET_ROOT. mise does not add it, so put it on PATH here.
+_.path = ["~/.dotnet/tools"]
+
+[settings.python]
+# Activate a project's .venv on cd, so `python`/`pytest` resolve to the venv
+# without `source .venv/bin/activate`. uv creates the venv; mise just enters it.
+uv_venv_auto = true
+
+[settings.node]
+# Install the corepack shims (yarn, yarnpkg) with every node version.
+corepack = true
+
+# ---------------------------------------------------------------- packages --
+#
+# System packages for the Linux distros. These live in the SHARED file, not in
+# mise.linux.toml, precisely because they need no gating: mise acts only on
+# managers that exist on the machine, so the apt entries are inert on Fedora,
+# the dnf entries inert on Debian, and all of them inert on macOS — where they
+# are reported as "skipped (only available on linux)" rather than hidden.
+# macOS's own brew/brew-cask list is in mise.macos.toml only because it is long.
+#
+# Anything mise's registry covers is in [tools] above instead, so it is one
+# declaration and one version everywhere. A distro copy of node, fzf, neovim,
+# ripgrep or starship would sit on PATH and shadow mise's shims, which is the
+# exact failure the old per-distro runbooks kept reintroducing.
+#
+# Some entries need a third-party repo added first; that is what the
+# [bootstrap.hooks.pre-packages] hook in mise.linux.toml does.
+
+[bootstrap.packages]
+# --- Debian / Ubuntu / Raspberry Pi / WSL ---
+"apt:1password" = "latest"  # replaces `snap install 1password` - the snap build cannot use the SSH agent
+"apt:ca-certificates" = "latest"  # Docker-repo prerequisite; also what makes HTTPS apt sources work
+"apt:code" = "latest"  # VS Code; needs the MS apt repo added in pre-packages. Replaces `snap install --classic code`
+"apt:curl" = "latest"
+"apt:dbus-x11" = "latest"  # dbus-launch, needed by gnome-tweaks over SSH/X
+"apt:git" = "latest"
+"apt:gnome-tweaks" = "latest"  # exposes the settings [tasks.gnome-settings] writes
+"apt:htop" = "latest"
+"apt:nala" = "latest"  # nicer apt front-end; the WSL runbook used `nala` for every command
+"apt:python3-neovim" = "latest"  # pynvim, the :checkhealth python3 provider
+"apt:socat" = "latest"  # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
+"apt:tmux" = "latest"
+"apt:tree" = "latest"
+"apt:ubuntu-restricted-extras" = "latest"  # blocks on the msttcorefonts EULA unless preseeded in pre-packages
+"apt:unzip" = "latest"
+"apt:vlc" = "latest"
+"apt:wget" = "latest"
+"apt:xz-utils" = "latest"
+"apt:zsh" = "latest"  # pairs with [bootstrap.user].login_shell in mise.linux.toml
+
+# --- Fedora ---
+"dnf:1password" = "latest"  # repo imported in pre-packages
+"dnf:azure-cli" = "latest"
+"dnf:code" = "latest"  # VS Code; needs the MS yum repo added in pre-packages
+"dnf:curl" = "latest"
+"dnf:gnome-tweaks" = "latest"  # exposes the settings [tasks.gnome-settings] writes
+"dnf:htop" = "latest"
+"dnf:python3-neovim" = "latest"  # pynvim, the :checkhealth python3 provider
+"dnf:tree" = "latest"
+"dnf:vlc" = "latest"  # needs RPM Fusion free, added in pre-packages
+"dnf:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+
+# --- Arch ---
+# mise's pacman manager reads the official repos only. The five AUR packages the
+# Arch runbook wanted (auto-cpufreq, envycontrol, neofetch, 1password,
+# visual-studio-code-bin) go through yay in [tasks."setup:arch"] instead.
+"pacman:azure-cli" = "latest"  # in extra, no AUR needed
+"pacman:base-devel" = "latest"  # toolchain group; also a yay prerequisite
+"pacman:bind" = "latest"  # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`
+"pacman:curl" = "latest"
+"pacman:extension-manager" = "latest"  # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
+"pacman:ghostty" = "latest"  # terminal; home/.config/ghostty/config is linked for it
+"pacman:git" = "latest"
+"pacman:gnome-tweaks" = "latest"  # high-DPI font scaling step
+"pacman:less" = "latest"
+"pacman:linux-firmware-qcom" = "latest"  # Qualcomm wifi firmware for the Dell XPS
+"pacman:nano" = "latest"
+"pacman:net-tools" = "latest"
+"pacman:nvidia-open-lts" = "latest"  # runbook said `nvidia-lts`, retired from the repos; this is the current LTS-kernel module
+"pacman:nvidia-settings" = "latest"  # NVIDIA control panel
+"pacman:nvidia-utils" = "latest"  # NVIDIA userspace libs
+"pacman:powertop" = "latest"  # power diagnostics; pairs with the upower check in docs/arch.md
+"pacman:rsync" = "latest"
+"pacman:stress" = "latest"  # required by the `stress -c 4` verification in docs/arch.md
+"pacman:tlp" = "latest"  # power management; enabled by setup:arch
+"pacman:tlp-rdw" = "latest"  # TLP radio-device wizard
+"pacman:tmux" = "latest"
+"pacman:tree" = "latest"
+"pacman:unzip" = "latest"
+"pacman:vlc" = "latest"
+"pacman:wget" = "latest"
+"pacman:xz" = "latest"  # runbook said `xz-utils` (a Debian name); the Arch package is `xz`
+"pacman:zip" = "latest"
+"pacman:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+
+# ------------------------------------------------------------------- tasks --
+#
+# The imperative rump — everything with no declarative mise section.
+#
+# There is exactly ONE [tasks.bootstrap], and it lives here. mise runs a task
+# with that name at the end of every `mise bootstrap`. Platform files must NOT
+# define their own: same-named tasks across merged config files REPLACE each
+# other silently, so a [tasks.bootstrap] in mise.linux.toml would shadow this
+# one with no warning.
+#
+# The fan-out is a GLOB, deliberately. `depends = ["setup:*"]` matches only the
+# setup tasks that exist on this platform and does not error on the absent
+# ones; naming a task literally (`depends = ["setup:linux"]`) is a hard failure
+# when that file is not loaded. Both verified on 2026.7.17.
+#
+# Every setup:* task must be idempotent — this runs on every bootstrap.
+
+[tasks.bootstrap]
+description = "Platform setup that has no declarative mise equivalent"
+depends = ["setup:*"]
+run = "echo 'bootstrap tasks complete'"
+
+[tasks."setup:vscode"]
+description = "Install VS Code extensions from packages/vscode.txt"
+run = '''
+set -u
+# $MISE_CONFIG_ROOT is NOT the repo here: this task is reached through the
+# ~/.config/mise/config.toml symlink, so mise resolves config_root to $HOME
+# (it strips a trailing .config/mise). Hardcode the path, consistently with
+# dotfiles.root above — bootstrap.sh already refuses to run anywhere else.
+list="$HOME/.dotfiles/packages/vscode.txt"
+[ -f "$list" ] || { echo "  . no packages/vscode.txt"; exit 0; }
+
+# `code` is installed by the visual-studio-code cask but its CLI is only put on
+# PATH by VS Code itself, via "Shell Command: Install 'code' command in PATH".
+# Not an error — just report it and move on.
+if ! command -v code >/dev/null 2>&1; then
+  echo "  ! 'code' CLI not on PATH — run \"Shell Command: Install 'code' command in PATH\""
+  echo "    from the VS Code command palette, then: mise run setup:vscode"
+  exit 0
+fi
+
+installed="$(code --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')"
+n=0
+while IFS= read -r ext; do
+  case "$ext" in ''|\#*) continue ;; esac
+  if ! printf '%s\n' "$installed" | grep -qxF "$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')"; then
+    code --install-extension "$ext" --force >/dev/null 2>&1 && n=$((n+1))
+  fi
+done < "$list"
+if [ "$n" -gt 0 ]; then echo "  + $n extension(s)"; else echo "  . all extensions present"; fi
+'''

@@ -1,0 +1,46 @@
+# Windows-only configuration. Loaded automatically beside mise.toml because
+# .miserc.toml sets `auto_env = true`; on macOS and Linux this file is not read
+# at all. Merges with mise.toml rather than replacing it.
+#
+# These two [dotfiles] entries are the reason this file has to exist.
+# [dotfiles] has no `os` field — an `os` key there is silently ignored — so a
+# Windows target declared in the shared mise.toml would be applied on every
+# platform, creating stub ~/Documents/PowerShell and ~/AppData trees on macOS
+# and Linux, and clobbering any real file already there.
+#
+# System packages come from packages/winget.txt via bootstrap.ps1, not from
+# [bootstrap.packages]: mise has no winget manager (apk, apt, dnf, pacman, brew,
+# brew-cask, flatpak and mas are the full list).
+
+[dotfiles]
+# PowerShell 7+ profile. Imports PSFzf / Terminal-Icons / z only when present,
+# activates mise, starship and zoxide, and ports the aliases from
+# home/.config/zsh/aliases.zsh that mean anything on Windows.
+# Windows PowerShell 5.1 reads ~\Documents\WindowsPowerShell\ and is left alone.
+#
+# On Windows a file symlink needs elevation, so mise falls back to copying here
+# and uses junctions for directories. That is automatic, not something to work
+# around — but it does mean edits to the live profile do not flow back to the
+# repo. Capture them with `mise bootstrap dotfiles add`.
+"~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1" = {}
+
+# Windows Terminal. `copy` is mandatory, not a preference: Terminal rewrites
+# this file itself on every GUI settings change and whenever a new profile
+# fragment is discovered, so a symlink would push those writes into the repo.
+"~/AppData/Local/Packages/Microsoft.WindowsTerminal_8wekyb3d8bbwe/LocalState/settings.json" = { mode = "copy" }
+
+[tasks."setup:windows"]
+description = "PowerShell Gallery modules the profile imports if present"
+# mise's default inline shell on Windows is `cmd /c`, so this must be stated.
+shell = "pwsh -NoProfile -Command"
+run = """
+$modules = @(
+    @{ Name = 'PSFzf'; RequiredVersion = '2.5.16' },
+    @{ Name = 'Terminal-Icons' },
+    @{ Name = 'z' }
+)
+foreach ($m in $modules) {
+    if (Get-Module -ListAvailable -Name $m.Name) { continue }
+    Install-Module @m -Scope CurrentUser -Repository PSGallery -AllowClobber -Force
+}
+"""

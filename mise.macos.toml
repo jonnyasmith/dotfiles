@@ -1,0 +1,151 @@
+# macOS-only configuration. Loaded automatically beside mise.toml because
+# .miserc.toml sets `auto_env = true`; on Linux and Windows this file is not
+# read at all. Merges with mise.toml rather than replacing it.
+#
+# What belongs here: things mise cannot filter by package-manager prefix.
+# [bootstrap.packages] entries keyed `brew:`/`brew-cask:` would already be
+# skipped elsewhere, but the casks are a long list and keeping them beside the
+# other mac-only sections is clearer than burying them in the shared file.
+
+[bootstrap.user]
+# `login_shell` is not templated — it must be a literal absolute path, which is
+# why it is per-platform. This replaces the `chsh` step and the oh-my-zsh
+# installer's CHSH prompt.
+login_shell = "/bin/zsh"
+
+[dotfiles]
+# Karabiner-Elements rewrites karabiner.json in place whenever you change a
+# rule in its UI, so this is `copy`, not a symlink that would dirty the repo.
+# Capture deliberate changes with `mise bootstrap dotfiles add`.
+"~/.config/karabiner/karabiner.json" = { mode = "copy" }
+
+# ---------------------------------------------------------- macOS defaults --
+#
+# Replaces bootstrap.sh's `defaults` step. Written through `defaults write` and
+# checked before writing, so a second run is a no-op.
+
+[bootstrap.macos.defaults]
+"NSGlobalDomain" = { AppleShowAllExtensions = true }
+"com.apple.dock" = { autohide = true }
+"com.apple.finder" = { FXDefaultSearchScope = "SCcf", ShowStatusBar = true, FXEnableExtensionChangeWarning = false, WarnOnEmptyTrash = false }
+"com.apple.driver.AppleBluetoothMultitouch.trackpad" = { Clicking = true }
+
+[bootstrap.hooks]
+# `defaults write` does not notify the running apps; they re-read on launch.
+post-defaults = "killall Finder Dock 2>/dev/null || true"
+
+# --------------------------------------------------------------- packages --
+#
+# Formulae here are the ones that are NOT in mise's registry, are build
+# dependencies, or are machine-global services — everything you actually invoke
+# moved to [tools] in mise.toml so Linux gets the same version. mise installs
+# these with its own built-in Homebrew support; real Homebrew is not required.
+
+[bootstrap.packages]
+
+"brew:avrdude" = "latest"
+"brew:azure-cli" = "latest"
+# btop is in [tools] for Linux only (its aqua backend has no darwin build), so
+# macOS takes it from brew.
+"brew:btop" = "latest"
+"brew:caddy" = "latest"
+"brew:clang-format" = "latest"
+"brew:cmake" = "latest"
+"brew:curl" = "latest"
+"brew:expat" = "latest"
+"brew:git" = "latest"
+"brew:git-filter-repo" = "latest"
+"brew:herdr" = "latest"
+"brew:htop" = "latest"
+"brew:lcov" = "latest"
+"brew:mosquitto" = "latest"
+"brew:ninja" = "latest"
+"brew:pandoc" = "latest"
+"brew:pipx" = "latest"
+"brew:platformio" = "latest"
+"brew:poppler" = "latest"
+"brew:pytest" = "latest"
+"brew:ruff" = "latest"
+"brew:rustup" = "latest"
+"brew:tmux" = "latest"
+"brew:tree" = "latest"
+"brew:wget" = "latest"
+"brew:zsh" = "latest"
+
+# GUI applications and fonts.
+"brew-cask:1password" = "latest"
+"brew-cask:alfred" = "latest"
+"brew-cask:brave-browser" = "latest"
+"brew-cask:chatgpt" = "latest"
+"brew-cask:claude" = "latest"
+"brew-cask:codex" = "latest"
+"brew-cask:fluidvoice" = "latest"
+"brew-cask:font-fira-mono-nerd-font" = "latest"
+"brew-cask:ghostty" = "latest"
+"brew-cask:google-chrome" = "latest"
+"brew-cask:inkscape" = "latest"
+"brew-cask:karabiner-elements" = "latest"
+# microsoft-auto-update is also absent, for the same reason as microsoft-teams
+# below: it is a bare .pkg cask, so mise shells out to `sudo installer` and
+# fails with "sudo requires a password but no TTY is available" mid-bootstrap.
+# It is a dependency of the Microsoft apps and they install it themselves, so
+# declaring it buys nothing.
+"brew-cask:microsoft-azure-storage-explorer" = "latest"
+# microsoft-teams is deliberately absent from this list: it is a pkg-installer
+# cask carrying installer `choices`, which mise's built-in brew-cask
+# implementation rejects outright ("pkg installer choices are not supported
+# yet") — and it fails the WHOLE packages phase, not just its own entry.
+# Installed by [tasks."setup:macos"] at the bottom of this file instead.
+"brew-cask:miro" = "latest"
+"brew-cask:obsidian" = "latest"
+"brew-cask:openttd" = "latest"
+"brew-cask:orbstack" = "latest"
+"brew-cask:parallels" = "latest"
+"brew-cask:rectangle" = "latest"
+"brew-cask:repo-prompt" = "latest"
+"brew-cask:slack" = "latest"
+"brew-cask:todoist-app" = "latest"
+"brew-cask:visual-studio-code" = "latest"
+"brew-cask:visual-studio-code@insiders" = "latest"
+
+# VS Code extensions used to live here as `vscode:` package-plugin entries.
+# They do not: the `mise-plugins/mise-vscode-extensions` plugin the mise docs
+# name as the canonical example does not exist (that URL and every obvious
+# variant 404s), and a [bootstrap.plugins] entry pointing at it fails the whole
+# bootstrap at the very first phase. The 104 extensions live in
+# packages/vscode.txt and are applied by [tasks."setup:vscode"] in mise.toml,
+# which is cross-platform anyway — VS Code is not mac-only.
+
+# ------------------------------------------------------------ macOS extras --
+#
+# The imperative rump: things with no declarative mise section. Run via the
+# single [tasks.bootstrap] in mise.toml, which fans out with depends =
+# ["setup:*"] — a glob, so it silently matches only the platform tasks that
+# exist on this machine. Must stay idempotent: it runs on every bootstrap.
+
+[tasks."setup:macos"]
+description = "macOS-only setup that has no declarative mise equivalent"
+run = '''
+set -u
+
+# microsoft-teams: see the note in [bootstrap.packages] above. Needs real
+# Homebrew because mise's cask installer cannot drive a pkg with choices.
+if [ -d "/Applications/Microsoft Teams.app" ]; then
+  echo "  . microsoft-teams"
+elif command -v brew >/dev/null 2>&1; then
+  brew install --cask microsoft-teams && echo "  + microsoft-teams"
+else
+  echo "  ! microsoft-teams needs Homebrew (pkg-installer cask); install manually"
+fi
+
+# Global .NET tools live in ~/.dotnet/tools, outside any SDK, so mise does not
+# track them and they must be installed separately.
+if command -v dotnet >/dev/null 2>&1; then
+  if dotnet tool list --global 2>/dev/null | grep -q '^ilspycmd'; then
+    echo "  . ilspycmd"
+  else
+    dotnet tool install --global ilspycmd >/dev/null 2>&1 && echo "  + ilspycmd" \
+      || echo "  ! ilspycmd install failed"
+  fi
+fi
+'''

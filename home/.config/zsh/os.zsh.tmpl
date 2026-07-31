@@ -1,0 +1,95 @@
+# OS-specific zsh config. Rendered from home/.config/zsh/os.zsh.tmpl by
+# `mise bootstrap` — edit the template, never the rendered ~/.config/zsh/os.zsh.
+#
+# .zshrc picks this up with `for config (~/.config/zsh/*.zsh) source $config`,
+# which runs before `mise activate`, before every later PATH edit and before
+# anything that reads SSH_AUTH_SOCK or PNPM_HOME. aliases.zsh sorts before
+# os.zsh, so anything defined here wins over the shared file.
+
+# 1Password SSH agent socket.
+#
+# On Linux this is one path, but under WSL nothing listens on it until the
+# npiperelay/socat bridge to the Windows agent is running — see docs/wsl.md.
+# Exporting it unconditionally is still correct: ssh fails identically with a
+# missing socket and an unset variable, and the bridge creates the socket at
+# this exact path once started. Tera cannot branch on WSL (os() returns
+# "linux" there), so this stays a comment rather than a third branch.
+{%- if os() == "macos" %}
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+{%- elif os() == "linux" %}
+export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
+{%- endif %}
+
+# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
+# Distinct from the pnpm binary itself, which mise owns.
+{%- if os() == "macos" %}
+export PNPM_HOME="$HOME/Library/pnpm"
+{%- elif os() == "linux" %}
+export PNPM_HOME="$HOME/.local/share/pnpm"
+{%- endif %}
+{%- if os() == "macos" or os() == "linux" %}
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+{%- endif %}
+
+# Package-manager update shorthands. brew is macOS or linuxbrew; apt/nala are
+# Debian-family only, so those are probed at runtime rather than at render time
+# (Tera only knows the OS, not the distro).
+{%- if os() == "macos" %}
+alias buu="brew update && brew upgrade"
+{%- elif os() == "linux" %}
+command -v brew >/dev/null && alias buu="brew update && brew upgrade"
+command -v apt  >/dev/null && alias auu="sudo apt update && sudo apt upgrade -y"
+command -v nala >/dev/null && alias nuu="sudo nala update && sudo nala upgrade -y"
+{%- endif %}
+
+# File size
+{%- if os() == "macos" %}
+alias fs="stat -f \"%z bytes\""
+{%- elif os() == "linux" %}
+alias fs="stat -c \"%s bytes\""
+{%- endif %}
+
+# IP address of this machine on the LAN
+{%- if os() == "macos" %}
+alias localip="ipconfig getifaddr en1"
+{%- elif os() == "linux" %}
+alias localip="hostname -I"
+{%- endif %}
+
+# Flush the DNS cache
+{%- if os() == "macos" %}
+alias flush="dscacheutil -flushcache"
+{%- elif os() == "linux" %}
+alias flush="sudo resolvectl flush-caches"
+{%- endif %}
+
+# View HTTP traffic. macOS pins en1; on Linux the interface name varies, so
+# capture on all of them.
+{%- if os() == "macos" %}
+alias sniff="sudo ngrep -d 'en1' -t '^(GET|POST) ' 'tcp and port 80'"
+alias httpdump="sudo tcpdump -i en1 -n -s 0 -w - | grep -a -o -E \"Host\: .*|GET \/.*\""
+{%- elif os() == "linux" %}
+alias sniff="sudo ngrep -d any -t '^(GET|POST) ' 'tcp and port 80'"
+alias httpdump="sudo tcpdump -i any -n -s 0 -w - | grep -a -o -E \"Host\: .*|GET \/.*\""
+{%- endif %}
+
+# Empty the Trash
+{%- if os() == "macos" %}
+alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; rm -rfv ~/.Trash"
+{%- elif os() == "linux" %}
+alias emptytrash="rm -rfv ~/.local/share/Trash/files/* ~/.local/share/Trash/info/*"
+{%- endif %}
+{%- if os() == "macos" %}
+
+# Recursively delete `.DS_Store` files
+alias cleanup="find . -name '*.DS_Store' -type f -ls -delete"
+
+# Hide/show all desktop icons (useful when presenting). No portable Linux
+# equivalent — every desktop environment spells this differently — so it is
+# deliberately macOS-only rather than a broken alias.
+alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
+alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
+{%- endif %}
