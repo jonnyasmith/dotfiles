@@ -506,6 +506,9 @@ shell = "bash -c"
 run = '''
 set -u
 dir=/usr/share/glib-2.0/schemas
+# The directory existing does NOT mean a desktop is installed — glib itself
+# ships schemas into it, so on a headless box or a CI runner the directory is
+# there and every desktop schema is absent. The per-file check below decides.
 [ -d "$dir" ] || { echo "  . no glib schemas installed, skipped"; exit 0; }
 
 # Reads the schema XML rather than GSettings: `gi` is not importable from the
@@ -531,8 +534,20 @@ for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
 
 bad = 0
 for f in sorted(pathlib.Path(sys.argv[2]).glob("*.dconf")):
+    lines = f.read_text().splitlines()
+    sections = [l.strip()[1:-1].strip("/") for l in lines if l.strip().startswith("[")]
+
+    # A payload none of whose sections resolve belongs to a desktop this
+    # machine does not have — headless boxes and CI runners included. There is
+    # nothing to verify it against, so skip the file rather than report every
+    # section as a typo. If even one section resolves the desktop IS installed,
+    # and the rest failing to resolve is exactly the rot this check exists for.
+    if sections and not any(s in schemas for s in sections):
+        print(f"  . {f.name}: no schema for any of its {len(sections)} sections, skipped")
+        continue
+
     section, optional = None, False
-    for n, line in enumerate(f.read_text().splitlines(), 1):
+    for n, line in enumerate(lines, 1):
         line = line.strip()
         if line.startswith("#"):
             # A `# optional` comment marks the next section as belonging to a
