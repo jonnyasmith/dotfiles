@@ -296,6 +296,7 @@ python = ["3.13", "3.12"]
 # serves the SSH agent), and `tree` (a Rust reimplementation with different
 # flags). See the registry-skip waivers in [bootstrap.packages].
 azure-cli = "latest"
+bat = "latest"
 # btop's aqua backend publishes Linux binaries only — on macOS it fails with
 # `unsupported env: darwin/arm64 (supported: ["linux"])` and takes the whole
 # tools phase with it. `os` filtering keeps the declaration cross-platform;
