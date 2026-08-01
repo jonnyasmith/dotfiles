@@ -21,30 +21,60 @@ assume. Keep that standard — a change that needs an explanation carries one.
 
 ## Verify
 
+Run these in order before every commit. Steps 1–2 are the gate; step 3 is
+advisory and needs a real machine.
+
+### 1. Format — only when you changed a `mise*.toml`
+
 ```sh
-mise run check          # everything that does not touch the machine
-./bootstrap.sh --dry-run   # what convergence would change
-./bootstrap.sh --status    # what is currently out of sync
+mise fmt          # comment alignment, array expansion
 ```
 
-`mise run check` is what CI runs, and it is the whole of what CI runs
-(`.github/workflows/check.yml` installs zsh and calls it). Adding a check means
-adding a `[tasks."check:*"]` task, not editing the workflow — the glob picks it
-up on both sides.
+**Not enforced, and deliberately not part of `check`.** `mise fmt` has no
+`--check` mode, and it rewrites every file it loads — running it mid-change
+buries your diff in realignment. Run it on its own commit, or not at all.
+
+### 2. Lint and check — always
+
+```sh
+mise run check    # parses, lints and asserts; touches nothing
+```
+
+This is the gate. It must exit 0 before you commit. It is also **the whole of
+what CI runs** (`.github/workflows/check.yml` installs zsh plus shellcheck and
+calls it), so a green run here means a green run there.
+
+Adding a check means adding a `[tasks."check:*"]` task, never editing the
+workflow — the `check:*` glob picks it up on both sides.
 
 | task | asserts |
 |---|---|
 | `check:config` | every `mise*.toml` parses (**including the ones this OS never loads**), `dotfiles.root` is absolute, every `[dotfiles]` source exists, exactly one `[tasks.bootstrap]`, every platform config is linked into `~/.config/mise` |
-| `check:shell` | `zsh -n` / `bash -n` / shellcheck over the shell files this repo installs |
+| `check:shell` | `zsh -n` / `bash -n` over the shell files this repo installs, then `shellcheck -S warning` on `bootstrap.sh` |
 | `check:tasks` | `mise tasks validate` |
 | `check:dconf` | `desktop/*.dconf` section paths exist in installed GSettings schemas |
 
-`mise bootstrap --dry-run` is **not** in `check`: it still executes the `setup:*`
-tasks, which touch dnf/apt/systemd. Run it locally, not in CI.
+Every check must run without a converged machine, network access to a package
+manager, or sudo — that is what lets CI and your shell run the identical
+command. A check that needs any of those belongs in `setup:*`, not here.
 
-`mise fmt` reformats the config files (comment alignment, array expansion). It is
-not enforced, because it rewrites every file it loads and that makes for hostile
-diffs mid-change. Run it deliberately, on its own commit.
+**`shellcheck` is in `[tools]`.** If `check:shell` reports it missing, run
+`mise install` — do not treat the skip as a pass. It was once optional, which
+meant the lint ran in CI and silently no-opped locally.
+
+### 3. Preview convergence — before changing packages, dotfiles or tasks
+
+```sh
+./bootstrap.sh --status     # what is currently out of sync
+./bootstrap.sh --dry-run    # what convergence would change
+```
+
+Advisory, not a gate, and **never in CI**: `mise bootstrap --dry-run` still
+executes the `setup:*` tasks, which touch dnf/apt/systemd. Local only.
+
+Some things no static check can reach — that a symlink resolves, a service
+starts, a package exists in a distro's repos. Those are verified by converging
+a real machine and looking, which is why Arch and Windows are best-effort.
 
 ## Rules that are easy to get wrong
 

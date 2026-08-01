@@ -274,6 +274,12 @@ just = "latest"
 lazygit = "latest"
 neovim = "latest"
 ripgrep = "latest"
+# The linter behind check:shell. Was deliberately left out of [tools] as "a
+# nice-to-have, not a dependency" — but CI installs it from apt, so the lint
+# ran there and silently skipped on every developer machine. A check that only
+# fires in CI is the drift this repo exists to prevent, and the registry has
+# it, so the repo's own rule applies: registry-covered CLI, one declaration.
+shellcheck = "latest"
 starship = "latest"
 terraform = "latest"
 # The completion scripts mise (and any other usage-spec CLI) emits shell out to
@@ -495,11 +501,13 @@ done
 
 bash -n bootstrap.sh || { echo "  ! bootstrap.sh"; bad=1; }
 
-# shellcheck is not in [tools] — it is a nice-to-have, not a dependency.
+# Still guarded: CI runs `mise run --skip-tools check`, so mise does not
+# install [tools] there and the workflow's apt copy is what runs. A machine
+# with neither reports the skip rather than failing the task.
 if command -v shellcheck >/dev/null 2>&1; then
   shellcheck -S warning bootstrap.sh || bad=1
 else
-  echo "  . shellcheck not installed, skipped"
+  echo "  ! shellcheck missing — run 'mise install' (it is in [tools])"
 fi
 
 [ "$bad" -eq 0 ] && echo "  . shell files parse"
