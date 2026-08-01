@@ -11,11 +11,13 @@ fi
 alias vim="nvim"
 alias code="code-insiders"
 
-# bat is a drop-in cat: piped or redirected it detects the non-tty and emits
-# plain unhighlighted text. --paging=never is bat's own recommendation for this
-# alias — without it a long file opens in less, which cat never does. Bypass
-# with `command cat`. Guarded because a shell started before `mise bootstrap`
-# has no bat and must not lose cat.
+# Interactive output is styled and decorated — this is not plain cat. What
+# keeps scripts working is bat's own tty detection: with stdout not a tty it
+# emits plain undecorated text, so `cat file | …` and `$(cat file)` are
+# unchanged. Bypass with `command cat`. --paging=never is upstream's
+# recommendation for this alias — without it a long file opens in less, which
+# cat never does. Guarded because a shell started before `mise bootstrap` has
+# no bat and must not lose cat.
 command -v bat >/dev/null 2>&1 && alias cat="bat --paging=never"
 
 alias g="git"
