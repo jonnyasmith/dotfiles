@@ -79,9 +79,9 @@ if command -v dnf >/dev/null 2>&1; then
     fi
   done
 
-  # RPM Fusion (free). Not in the original runbook, but `dnf:vlc` cannot resolve
-  # without it on stock Fedora — the old packages.sh silently failed on vlc
-  # unless someone had enabled RPM Fusion by hand first.
+  # RPM Fusion (free). Not needed for vlc any more — Fedora ships vlc in its
+  # own repositories now — but the codecs behind it still are, and enabling it
+  # is idempotent and cheap.
   if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
     sudo dnf install -y \
       "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
@@ -117,11 +117,22 @@ if command -v dnf >/dev/null 2>&1; then
     sudo dnf -y copr enable scottames/ghostty
   fi
 
+  # Docker CE. Fedora's own moby-engine lags upstream and carries no compose
+  # plugin; download.docker.com is what Docker's install docs point Fedora at.
+  if [ ! -f /etc/yum.repos.d/docker-ce.repo ]; then
+    sudo dnf -y config-manager addrepo \
+      --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+  fi
+
   sudo dnf -q check-update || true
 fi
 
 # -------------------------------------------------------- Debian / Ubuntu ----
 if command -v apt-get >/dev/null 2>&1; then
+  # Sourced once for the whole branch: it names the Docker repo below and gates
+  # the Ghostty PPA at the bottom. `if` rather than `&&` because this hook runs
+  # under `set -e` and a machine without /etc/os-release must skip, not abort.
+  if [ -r /etc/os-release ]; then . /etc/os-release; fi
 
   # Accept the Microsoft core fonts EULA up front. Without this,
   # apt:ubuntu-restricted-extras raises a debconf dialog and a non-interactive
@@ -145,6 +156,45 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo mkdir -p /usr/share/debsig/keyrings/AC2D62742012EA22
     curl -sS https://downloads.1password.com/linux/keys/1password.asc \
       | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
+  fi
+
+  # Docker CE. The distribution segment of these URLs is the ONLY thing that
+  # differed between the Debian and Ubuntu runbooks, so the two collapse into
+  # one branch — but it is NOT $ID. Docker publishes repos for debian, ubuntu
+  # and raspbian only, and on a derivative (linuxmint, pop, zorin) $ID is a
+  # name download.docker.com 404s on, so $ID_LIKE decides.
+  if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
+    case " ${ID:-} ${ID_LIKE:-} " in
+      *" raspbian "*) docker_distro=raspbian ;;
+      *" ubuntu "*)   docker_distro=ubuntu ;;
+      *" debian "*)   docker_distro=debian ;;
+      *)              docker_distro= ;;
+    esac
+    # VERSION_CODENAME is absent on Debian testing/unstable and on several
+    # container images; UBUNTU_CODENAME is set on every Ubuntu derivative.
+    docker_codename="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
+
+    if [ -z "$docker_distro" ] || [ -z "$docker_codename" ]; then
+      echo "  ! no Docker repo for ID=${ID:-unset} codename=${docker_codename:-unset}; skipping"
+    else
+      sudo install -m 0755 -d /etc/apt/keyrings
+      # Dearmoured to a temp file and size-checked before anything is written
+      # to /etc. `set -e` only inspects the LAST command of a pipeline and
+      # `gpg --dearmor` exits 0 on empty stdin, so a 404 would otherwise leave
+      # an empty keyring plus a docker.list that breaks every subsequent
+      # `apt-get update` — and docker.list is the idempotency guard, so no
+      # re-run would ever repair it.
+      docker_key="$(mktemp)"
+      if curl -fsSL "https://download.docker.com/linux/${docker_distro}/gpg" \
+           | gpg --dearmor > "$docker_key" && [ -s "$docker_key" ]; then
+        sudo install -m 0644 "$docker_key" /etc/apt/keyrings/docker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${docker_distro} ${docker_codename} stable" \
+          | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+      else
+        echo "  ! could not fetch the Docker signing key; skipping the repo"
+      fi
+      rm -f "$docker_key"
+    fi
   fi
 
   # VS Code apt repo (deb822), replacing `snap install --classic code`.
@@ -171,14 +221,14 @@ if command -v apt-get >/dev/null 2>&1; then
   # Guarded to the Ubuntu family specifically, unlike the two repos above.
   # Launchpad only builds PPAs for Ubuntu suites, so on Debian or Raspberry Pi
   # OS add-apt-repository would add a suite that 404s and break `apt update`
-  # for every subsequent run. `apt:ghostty` is then unresolvable there — the
-  # same shape as the existing apt:ubuntu-restricted-extras entry.
+  # for every subsequent run. That is why ghostty is not in
+  # [bootstrap.packages] at all — setup:debian installs it behind this same
+  # guard instead.
   #
   # The guard greps for the PPA's URL rather than a filename: add-apt-repository
   # writes `<owner>-ubuntu-<ppa>-<codename>.sources` on 24.04+ but a `.list` on
   # older releases, so the name is not stable across the versions this repo has
   # to work on. The URL is.
-  . /etc/os-release
   case "${ID:-}:${ID_LIKE:-}" in
     *ubuntu*)
       if ! grep -rqs 'ppa.launchpadcontent.net/mkasberg/ghostty-ubuntu' \
@@ -212,12 +262,13 @@ command -v pacman >/dev/null 2>&1 || exit 0
 
 # mise's pacman manager reads the official repos only, so the AUR packages go
 # through yay. yay itself is a manual prerequisite — see docs/arch.md.
+# neofetch is not here any more: upstream archived it in 2024 and fastfetch
+# replaced it in [tools], where every OS gets the same version.
 if command -v yay >/dev/null 2>&1; then
   # --needed makes this idempotent: already-current packages are skipped.
   yay -S --needed --noconfirm \
     auto-cpufreq \
     envycontrol \
-    neofetch \
     1password \
     visual-studio-code-bin
 else
@@ -258,8 +309,66 @@ echo "  . fedora setup complete"
 [tasks."setup:debian"]
 description = "Debian/Ubuntu post-bootstrap setup. No-op without apt-get."
 run = '''
+set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
+
+# ghostty is deliberately absent from [bootstrap.packages]: its PPA builds for
+# Ubuntu suites only, so on pure Debian or Raspberry Pi OS apt:ghostty cannot
+# resolve and reports a failure on every bootstrap. Package lists have a
+# manager dimension but no distro-variant one, so the install sits behind the
+# same guard pre-packages uses to add the PPA — the same reasoning that keeps
+# gnome-tweaks in setup:gnome.
+if [ -r /etc/os-release ]; then . /etc/os-release; fi
+case "${ID:-}:${ID_LIKE:-}" in
+  *ubuntu*)
+    if command -v ghostty >/dev/null 2>&1; then
+      echo "  . ghostty"
+    elif sudo apt-get install -y ghostty; then
+      echo "  + ghostty"
+    else
+      echo "  ! ghostty install failed"
+    fi
+    ;;
+esac
+
 echo "  . debian/ubuntu setup complete"
+'''
+
+[tasks."setup:docker"]
+description = "Docker group membership and system service. No-op without docker."
+run = '''
+set -u
+# The engine itself is declared in [bootstrap.packages] — docker-ce on
+# Debian/Fedora, docker on Arch. What is left over is imperative because mise's
+# declarative surface does not reach it: [bootstrap.user] configures the login
+# shell only, and [bootstrap.linux.systemd.units] writes *user* units, not
+# system services or group membership.
+command -v docker >/dev/null 2>&1 || { echo "  . docker not installed, skipped"; exit 0; }
+
+# `id -un`, not $USER: this body runs under `set -u` and USER is not exported
+# by every context a task can be reached from, which would abort the task
+# non-zero — and a setup:* task may only exit 0.
+me="$(id -un)"
+if id -nG "$me" | tr ' ' '\n' | grep -qx docker; then
+  echo "  . docker group"
+elif sudo usermod -aG docker "$me"; then
+  echo "  + docker group — log out and back in, or docker still needs sudo"
+else
+  echo "  ! could not add $me to the docker group"
+fi
+
+# WSL has no systemd unless it is enabled in /etc/wsl.conf, so probe for a live
+# systemd rather than for systemctl, which exists either way. setup:wsl reports
+# the boot stanza that starts docker there instead.
+if [ -d /run/systemd/system ]; then
+  if systemctl is-enabled --quiet docker.service 2>/dev/null; then
+    echo "  . docker.service"
+  elif sudo systemctl enable --now docker.service; then
+    echo "  + docker.service"
+  else
+    echo "  ! could not enable docker.service"
+  fi
+fi
 '''
 
 [tasks."setup:wsl"]
@@ -272,9 +381,11 @@ if [ -z "${WSL_DISTRO_NAME:-}" ] && ! grep -qi microsoft /proc/version 2>/dev/nu
   exit 0
 fi
 
-# /etc/wsl.conf: start docker at distro boot. This REPORTS rather than writes —
-# `mise bootstrap` should not need sudo for this, and the original runbook's
-# `tee` truncated the whole file, destroying any [automount]/[user] stanzas.
+# /etc/wsl.conf: start docker at distro boot. WSL has no systemd by default, so
+# setup:docker cannot enable the service and this stanza is what starts it.
+# REPORTED rather than written — `mise bootstrap` should not need sudo to edit
+# a file outside $HOME, and the original runbook's `tee` truncated the whole
+# file, destroying any [automount]/[user] stanzas.
 if ! grep -q '^command="service docker start"' /etc/wsl.conf 2>/dev/null; then
   echo "  ! /etc/wsl.conf is missing the docker boot stanza — see docs/wsl.md section 4"
 fi

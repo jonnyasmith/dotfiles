@@ -2,18 +2,25 @@
 #
 # This list exists because mise's [bootstrap.packages] has no `winget:` manager
 # (apk apt dnf pacman brew brew-cask flatpak mas + plugins only), so Windows
-# GUI apps cannot live in mise.toml. Everything here is a GUI app, a shell, or
-# an installer-managed SDK — anything mise's registry can install is a [tools]
-# entry in mise.windows.toml instead.
+# GUI apps cannot live in mise.toml. Everything here is a GUI app, a font, a
+# shell, or an installer-managed SDK — anything mise's registry can install is
+# a [tools] entry in the SHARED mise.toml, which Windows loads too.
+# mise.windows.toml has no [tools] table and never had one.
+#
+# DEVCOM.JetBrainsMonoNerdFont, not a Fira Mono Nerd Font: winget has no Fira
+# Mono Nerd Font manifest under any publisher (DEVCOM is the nerd-font
+# publisher and ships JetBrainsMono only), and the Windows Terminal settings
+# in this repo referenced a face nothing installed, so it silently fell back.
+# macOS keeps font-fira-mono-nerd-font; the two platforms differ because the
+# catalogues do.
 #
 # One ID per line. Blank lines and `#` comments are ignored.
 # Harvested from archive/main: windows/README.md and windows/install/winget.ps1.
 
 AgileBits.1Password
 Git.Git
+DEVCOM.JetBrainsMonoNerdFont
 Google.Chrome
-JetBrains.Toolbox
-Microsoft.AzureCLI
 Microsoft.PowerShell
 Microsoft.PowerToys
 Microsoft.VisualStudioCode

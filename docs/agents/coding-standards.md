@@ -32,6 +32,12 @@
 - Never introduce direnv.
 - Task output: two spaces, one symbol, one space. `.` no-op, `!` problem, `+`
   changed. No emoji, no colour.
+- A `[bootstrap.packages]` entry whose name has an exact registry match needs
+  `# registry-skip: <reason>`; one declared under exactly two of
+  apt/dnf/pacman needs `# parity-skip: <reason>` on every existing entry.
+  Waivers are trailing comments, never a separate manifest.
+- A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and sees only
+  `config.toml`. Unset it before shelling out to `mise`.
 
 ## `[dotfiles]` mode
 

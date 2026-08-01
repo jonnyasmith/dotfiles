@@ -50,8 +50,11 @@ require it.
 Two things it cannot finish for you, both reported at the end of a run:
 
 - **tmux plugins** — press `prefix + I` inside tmux once.
-- **VS Code** — if the `code` CLI is missing, run *Shell Command: Install 'code'
-  command in PATH* from the palette, then `mise run setup:vscode`.
+- **Docker on Linux** — group membership only takes effect after a re-login,
+  and under WSL the `/etc/wsl.conf` boot stanza is reported, not written.
+
+VS Code extensions are not a step at all: Settings Sync owns them
+(`docs/adr/0002-vscode-extensions-are-sync-owned.md`).
 
 Per-OS prerequisites that genuinely need a human — installing the OS, disk
 partitioning, GUI sign-ins, anything needing a reboot — are in `docs/`:
@@ -123,7 +126,7 @@ What each `[bootstrap.*]` section replaced:
 mise bootstrap packages use brew:ffmpeg apt:libssl-dev   # a system package
 mise use -g ripgrep@latest                               # a dev tool
 mise bootstrap dotfiles add ~/.config/foo/bar            # a new dotfile
-code --list-extensions | sort > packages/vscode.txt      # re-record extensions
+# VS Code extensions are not here — Settings Sync owns them (docs/adr/0002).
 ```
 
 Commit the result. There is no separate manifest to keep in sync.
@@ -178,19 +181,32 @@ paths in the shortcut bindings machine-independent.
 ## Dotfiles
 
 `home/` mirrors `$HOME`, and `[dotfiles]` in `mise.toml` says how each path is
-applied. The mode matters, and is chosen by **who writes the file**:
+applied. The mode is chosen by two independent properties: is every file in the
+target one whose *content* this repo owns, and does another process create
+*new* files in the same directory.
 
 | mode | for | examples |
 |---|---|---|
-| `symlink` | we own it outright; editing `~` edits the repo | `.zshrc`, `.gitconfig`, `starship.toml` |
-| `symlink-each` | we own the files, a tool writes *siblings* into the same dir | `nvim/` (spell, netrwhist), `tmux/` (tpm plugins), `herdr/` |
+| `symlink` | every file ours, nothing foreign writes there | `.zshrc`, `.gitconfig`, `starship.toml`, `nvim/`, `tmux/` |
+| `symlink-each` | every file ours, a foreign writer that cannot be relocated | none — see below |
 | `copy` | the tool rewrites the file *itself*, in place | `btop.conf`, `htoprc`, `karabiner.json`, `gh/config.yml` |
 | `template` | genuinely differs per OS | `ssh/config`, `git/config.os`, `zsh/os.zsh` |
 
-`symlink-each` is why the repo no longer collects machine state. Previously
-`~/.config/nvim` was one symlink to a repo directory, so everything nvim wrote
-landed *in the repo* and had to be gitignored. Now the directory is real and
-only the files we own are linked.
+Whole-directory `symlink` is the default, and a foreign writer that
+configuration can point elsewhere is **relocated** rather than worked around:
+tpm now writes to `~/.local/share/tmux/plugins`, which is what lets
+`~/.config/tmux` be a single link. herdr cannot be relocated, so its entry
+names the one file we own instead of the directory.
+
+That leaves `symlink-each` with no qualifying target. It stays documented so it
+is not reintroduced as a default; a surviving entry is a mistake. See
+`docs/adr/0001-dotfiles-link-whole-directories.md`.
+
+The cost is that nvim's `spell/` and `.netrwhist` land inside the working tree.
+They are gitignored, and those two entries are now load-bearing rather than
+defensive. The gain is that a file added to the repo exists in `$HOME`
+immediately, and a file created in `$HOME` lands in the repo — neither was true
+with per-file links.
 
 For a `copy` or `template` target, editing `~` does **not** edit the repo — that
 is the point, since something else owns the file. Pull deliberate changes back
@@ -365,10 +381,12 @@ Per-project versions come from files already in your repos — `global.json`,
 
 ### Python
 
-Homebrew's `python@3.14` is a **dependency** of `azure-cli`, `pipx`, `pytest`
-and `platformio`, so it is upgraded whenever any of those are, and every venv
-built against it drifts. Leave it installed — those formulae each have a private
-`libexec` venv, so none of them consume `/opt/homebrew/bin/python3`. Never remove
+Homebrew's `python@3.14` arrives as a **dependency** of `platformio`, so it is
+upgraded whenever that is, and every venv built against it drifts. It used to
+be pulled in by `azure-cli`, `pipx` and `pytest` as well; `azure-cli` moved to
+`[tools]` and the other two were dropped in favour of uv. Leave it installed —
+platformio has a private `libexec` venv, so it does not consume
+`/opt/homebrew/bin/python3`. Never remove
 `/usr/bin/python3` either; that is Apple's.
 
 | owns | what |
@@ -422,13 +440,15 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
 - **No `winget` manager**, so Windows packages come from `packages/winget.txt`
   via `bootstrap.ps1`.
 - **The `vscode:` package plugin in mise's docs does not exist** — that URL
-  404s, and declaring it fails the whole bootstrap at the first phase. Hence
-  `[tasks."setup:vscode"]`.
-- **Two casks are not declared**: `microsoft-teams` and `microsoft-auto-update`
-  are pkg-installer casks, which mise's built-in cask support cannot drive
-  (`pkg installer choices are not supported yet`, and a `sudo` prompt with no
-  TTY). Teams is installed by `[tasks."setup:macos"]` through real Homebrew when
-  present.
+  404s, and declaring it fails the whole bootstrap at the first phase. It does
+  not matter: extensions are sync-owned, so nothing here declares them.
+- **pkg-installer casks cannot be declared.** mise's built-in cask support
+  rejects them (`pkg installer choices are not supported yet`, and a `sudo`
+  prompt with no TTY) and the failure takes the whole packages phase, not just
+  the entry. `microsoft-auto-update` was always absent for this reason;
+  `microsoft-teams` was the one exception, installed through real Homebrew by
+  `setup:macos`. Dropping Teams removed that branch and the last thing on this
+  machine that needed real Homebrew.
 - **`btop` is `os = ["linux"]`** — its aqua backend has no darwin build. macOS
   takes it from brew.
 - **The dotfiles phase is all-or-nothing on pre-existing files.** If any target

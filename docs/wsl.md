@@ -5,13 +5,15 @@ Harvested from the deleted `wsl` branch, tag `archive/debian` (`debian.md`,
 
 The Debian and Ubuntu runbooks were byte-identical apart from three lines: the
 document title and the two Docker apt URLs (`download.docker.com/linux/debian`
-vs `.../linux/ubuntu`). They are one document now; the Docker section calls out
-the single substitution.
+vs `.../linux/ubuntu`). They are one document now, and that substitution no
+longer appears here at all — the pre-packages hook derives it from `$ID` in
+`/etc/os-release`.
 
 Everything in this file needs a human: a reboot, a GUI sign-in, a sudo password,
 a Windows-side action, or a group membership that only takes effect after
 re-login. Package installs, git clones and dotfile symlinks are **not** here —
-`mise bootstrap` owns those. See `mise.toml`.
+`mise bootstrap` owns those, and as of the Docker work it owns installing and
+enabling Docker too. See `mise.toml`.
 
 ---
 
@@ -61,67 +63,42 @@ switch the remote later if you are setting up the agent after the fact.
 
 ## 4. Docker
 
-Not automatable: it adds a third-party apt repository and a GPG key, then puts
-the user in a new group. Run it once, by hand.
+`mise bootstrap` installs and configures Docker. The repository and GPG key
+are added by `[bootstrap.hooks.pre-packages]` in `mise.linux.toml`, the Docker
+CE packages are declared in `[bootstrap.packages]`, and `setup:docker` adds you
+to the `docker` group and enables the service where systemd is running. Nothing
+below needs doing by hand except the two things convergence deliberately will
+not do.
 
-**Debian:**
+The Debian/Ubuntu split the old runbook carried is gone: the distribution
+segment of the `download.docker.com` URLs was the only difference, and the hook
+now takes it from `$ID` in `/etc/os-release`.
 
-```bash
-# Update the package lists and install necessary packages
-sudo nala update
-sudo nala install ca-certificates curl
+### /etc/wsl.conf
 
-# Create the directory for the Docker GPG key
-sudo install -m 0755 -d /etc/apt/keyrings
+WSL has no systemd unless you turn it on, so `setup:docker` cannot enable the
+service there. `setup:wsl` **reports** the missing stanza rather than writing
+it — `mise bootstrap` should not need sudo to edit a file outside `$HOME`, and
+the archived runbook's `tee` truncated the whole file, destroying any existing
+`[automount]`, `[network]` or `[user]` stanzas. Add it yourself:
 
-# Download Docker's official GPG key and save it to the created directory
-sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
-
-# Set permissions for the Docker GPG key
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-
-# Add the Docker repository to the Apt sources list
-echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-
-# Update the package lists again to include the new Docker repository
-sudo nala update
-
-# Install Docker packages
-sudo nala install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Add the current user to the Docker group to allow running Docker commands without sudo
-sudo usermod -aG docker $USER
-
-# Start the Docker service automatically
-sudo tee /etc/wsl.conf > /dev/null <<EOF
+```ini
 [boot]
 command="service docker start"
-EOF
-
-# Start the Docker service manually
-sudo service docker start
 ```
 
-**Ubuntu:** identical, with `debian` replaced by `ubuntu` in the two
-`download.docker.com` URLs:
-
-```bash
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-```
-
-```bash
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-```
+That is the SysV route and it works on any WSL build. On builds that support
+systemd you can instead set `systemd=true`, which lets `setup:docker` enable
+`docker.service` on the next bootstrap. Pick one: with `systemd=true`,
+`command=` still runs but `service docker start` is redundant. Either way the
+change only takes effect after `wsl --terminate <distro>`.
 
 ### The group membership needs a re-login
 
-`usermod -aG docker $USER` does not affect the shell that ran it, and in WSL a
-plain `exec zsh` is not enough either — the login session keeps the old
-supplementary groups. Terminate the distribution from Windows and start it
-again:
+`setup:docker` prints this too. `usermod -aG docker` does not affect the shell
+that ran it, and in WSL a plain `exec zsh` is not enough either — the login
+session keeps the old supplementary groups. Terminate the distribution from
+Windows and start it again:
 
 ```powershell
 wsl --terminate Debian
@@ -132,31 +109,6 @@ Then verify without sudo:
 ```bash
 docker run --rm hello-world
 ```
-
-### /etc/wsl.conf
-
-The heredoc above writes:
-
-```ini
-[boot]
-command="service docker start"
-```
-
-That is the SysV route the archived runbook used, and it works on any WSL
-build. It **overwrites** `/etc/wsl.conf` wholesale — if the file already has
-`[automount]`, `[network]` or `[user]` stanzas, edit it instead of using the
-`tee`.
-
-On WSL builds that support systemd you can instead set:
-
-```ini
-[boot]
-systemd=true
-```
-
-and let `systemctl enable --now docker` handle it. Pick one: with
-`systemd=true`, `command=` still runs but `service docker start` is redundant.
-Either way the change only takes effect after `wsl --terminate <distro>`.
 
 ## 5. Portainer
 
