@@ -15,8 +15,10 @@
   `.miserc.toml`.
 - Task names are global across merged configs. A second `[tasks.bootstrap]`
   replaces the first with no warning.
-- Task bodies go through Tera; hook bodies do not. Keep `{{` and `{%` out of
-  `[tasks.*]`.
+- Task bodies go through Tera; hook bodies do not. Keep `{{`, `{%` and `{#`
+  out of `[tasks.*]`. The third one bites in bash, not Tera: an array length
+  ends the run body at `${` + `#`, and the error names a comment tag you never
+  wrote. Accumulate into a string instead.
 - `mise.lock` pins tools, not `[tools]`. Bump with `mise lock -g --bump` (`-g`
   required) and commit it.
 - `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is

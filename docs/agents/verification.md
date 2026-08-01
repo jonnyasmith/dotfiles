@@ -9,6 +9,7 @@
 | `mise run check:shell` | `zsh -n` / `bash -n`, then `shellcheck -S warning` on `bootstrap.sh` |
 | `mise run check:packages` | registry rule and apt/dnf/pacman parity in `[bootstrap.packages]` |
 | `mise run check:tasks` | `mise tasks validate` |
+| `mise run check:fmt` | every `mise*.toml` and `.miserc.toml` is `mise fmt`-clean |
 | `mise run check:dconf` | `desktop/*.dconf` paths exist in installed schemas |
 | `./bootstrap.sh --status` / `--dry-run` | local only, never CI |
 
@@ -23,8 +24,10 @@ gate.
 - CI is Linux, so no job ever loads `mise.macos.toml` or `mise.windows.toml`.
   `check:config` parsing them is the only signal they get.
 - CI passes `--skip-tools`; local runs do not.
-- `mise fmt` has no `--check` mode and rewrites every file it loads. Never a
-  gate; own commit or none.
+- `mise fmt --check` only inspects the configs the current OS loaded, so it is
+  green on a mangled `mise.windows.toml` from a Mac. `check:fmt` compares each
+  file against `mise fmt --stdin` instead, which needs no load. `mise fmt` does
+  not sort keys despite its `--help`; it only normalises whitespace.
 - A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and loads
   only `config.toml`, never the platform file. `check:tasks` unsets it; without
   that, `[tasks.bootstrap]`'s `setup:*` glob reports "task not found".

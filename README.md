@@ -435,8 +435,10 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   define `setup:<platform>` and are reached by its `depends = ["setup:*"]`
   glob. A *literal* missing dependency is a hard error, so the glob is
   load-bearing, not stylistic.
-- **`[bootstrap.hooks.*].run` is not templated; `[tasks.*].run` is.** Keep `{{`
-  and `{%` out of task bodies.
+- **`[bootstrap.hooks.*].run` is not templated; `[tasks.*].run` is.** Keep `{{`,
+  `{%` and `{#` out of task bodies. The last one is the one you trip over: a
+  bash array length starts `${` + `#`, and Tera then fails the task with
+  "Closing comment tag `#}` not found".
 - **`--dry-run` invents two warnings and a duplicate hook. A real run has
   neither.** To show what the config would look like *after* linking,
   `mise bootstrap --dry-run` simulates the result: for every `[dotfiles]`

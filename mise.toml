@@ -401,30 +401,30 @@ corepack = true
 
 [bootstrap.packages]
 # --- Debian / Ubuntu / Raspberry Pi / WSL ---
-"apt:1password" = "latest"  # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
-"apt:build-essential" = "latest"  # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
-"apt:ca-certificates" = "latest"  # Docker-repo prerequisite; also what makes HTTPS apt sources work
-"apt:code" = "latest"  # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
-"apt:containerd.io" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
+"apt:1password" = "latest"                # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
+"apt:build-essential" = "latest"          # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
+"apt:ca-certificates" = "latest"          # Docker-repo prerequisite; also what makes HTTPS apt sources work
+"apt:code" = "latest"                     # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
+"apt:containerd.io" = "latest"            # parity-skip: Arch ships the whole engine as `docker`
 "apt:curl" = "latest"
-"apt:dbus-x11" = "latest"  # dbus-launch, needed by gnome-tweaks over SSH/X
-"apt:docker-buildx-plugin" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-ce" = "latest"  # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-ce-cli" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-compose-plugin" = "latest"  # `docker compose`. parity-skip: Arch ships this as `docker-compose`
+"apt:dbus-x11" = "latest"                 # dbus-launch, needed by gnome-tweaks over SSH/X
+"apt:docker-buildx-plugin" = "latest"     # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce" = "latest"                # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce-cli" = "latest"            # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-compose-plugin" = "latest"    # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
 "apt:htop" = "latest"
-"apt:nala" = "latest"  # nicer apt front-end; the WSL runbook used `nala` for every command
-"apt:python3-pynvim" = "latest"  # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
-"apt:socat" = "latest"  # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
-"apt:tree" = "latest"  # registry-skip: registry `tree` is a Rust reimplementation with different flags
-"apt:ubuntu-restricted-extras" = "latest"  # blocks on the msttcorefonts EULA unless preseeded in pre-packages
+"apt:nala" = "latest"                     # nicer apt front-end; the WSL runbook used `nala` for every command
+"apt:python3-pynvim" = "latest"           # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
+"apt:socat" = "latest"                    # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
+"apt:tree" = "latest"                     # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"apt:ubuntu-restricted-extras" = "latest" # blocks on the msttcorefonts EULA unless preseeded in pre-packages
 "apt:unzip" = "latest"
 "apt:vlc" = "latest"
 "apt:wget" = "latest"
 "apt:xz-utils" = "latest"
 "apt:zip" = "latest"
-"apt:zsh" = "latest"  # pairs with [bootstrap.user].login_shell in mise.linux.toml
+"apt:zsh" = "latest"                      # pairs with [bootstrap.user].login_shell in mise.linux.toml
 #
 # ghostty is NOT declared here. Its PPA builds for Ubuntu suites only, so on
 # pure Debian or Raspberry Pi OS the package is unresolvable and every
@@ -433,60 +433,60 @@ corepack = true
 # guard the PPA uses — the same reasoning that puts gnome-tweaks in setup:gnome.
 
 # --- Fedora ---
-"dnf:1password" = "latest"  # repo imported in pre-packages. registry-skip: registry `1password` is the CLI, not the desktop app. parity-skip: Arch takes it from the AUR
-"dnf:@development-tools" = "latest"  # toolchain group, matching apt's build-essential and Arch's base-devel
-"dnf:code" = "latest"  # VS Code; needs the MS yum repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
-"dnf:containerd.io" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
+"dnf:1password" = "latest"             # repo imported in pre-packages. registry-skip: registry `1password` is the CLI, not the desktop app. parity-skip: Arch takes it from the AUR
+"dnf:@development-tools" = "latest"    # toolchain group, matching apt's build-essential and Arch's base-devel
+"dnf:code" = "latest"                  # VS Code; needs the MS yum repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
+"dnf:containerd.io" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:curl" = "latest"
 "dnf:docker-buildx-plugin" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
-"dnf:docker-ce" = "latest"  # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
-"dnf:docker-ce-cli" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
-"dnf:docker-compose-plugin" = "latest"  # `docker compose`. parity-skip: Arch ships this as `docker-compose`
-"dnf:ghostty" = "latest"  # terminal; COPR repo enabled in pre-packages. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
+"dnf:docker-ce" = "latest"             # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
+"dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
+"dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
+"dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
 "dnf:git" = "latest"
 "dnf:htop" = "latest"
-"dnf:python3-neovim" = "latest"  # the :checkhealth python3 provider; Fedora keeps the old source name
-"dnf:tree" = "latest"  # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
+"dnf:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "dnf:unzip" = "latest"
 "dnf:vlc" = "latest"
 "dnf:wget" = "latest"
-"dnf:xz" = "latest"  # parity-skip: Debian calls it xz-utils
+"dnf:xz" = "latest"                    # parity-skip: Debian calls it xz-utils
 "dnf:zip" = "latest"
-"dnf:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+"dnf:zsh" = "latest"                   # pairs with [bootstrap.user].login_shell
 
 # --- Arch ---
 # mise's pacman manager reads the official repos only. The AUR packages the
 # Arch runbook wanted (auto-cpufreq, envycontrol, 1password,
 # visual-studio-code-bin) go through yay in [tasks."setup:arch"] instead.
-"pacman:base-devel" = "latest"  # toolchain group; also a yay prerequisite
-"pacman:bind" = "latest"  # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`
+"pacman:base-devel" = "latest"          # toolchain group; also a yay prerequisite
+"pacman:bind" = "latest"                # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`
 "pacman:curl" = "latest"
-"pacman:docker" = "latest"  # parity-skip: Debian and Fedora take the Docker CE package set instead
-"pacman:docker-compose" = "latest"  # registry-skip: the registry ships a standalone binary, not the CLI plugin `docker compose` resolves. parity-skip: Debian and Fedora use docker-compose-plugin
-"pacman:extension-manager" = "latest"  # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
-"pacman:ghostty" = "latest"  # terminal. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
+"pacman:docker" = "latest"              # parity-skip: Debian and Fedora take the Docker CE package set instead
+"pacman:docker-compose" = "latest"      # registry-skip: the registry ships a standalone binary, not the CLI plugin `docker compose` resolves. parity-skip: Debian and Fedora use docker-compose-plugin
+"pacman:extension-manager" = "latest"   # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
+"pacman:ghostty" = "latest"             # terminal. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
 "pacman:git" = "latest"
-"pacman:htop" = "latest"  # the htoprc this repo links has to have the program it configures
+"pacman:htop" = "latest"                # the htoprc this repo links has to have the program it configures
 "pacman:less" = "latest"
-"pacman:linux-firmware-qcom" = "latest"  # Qualcomm wifi firmware for the Dell XPS
+"pacman:linux-firmware-qcom" = "latest" # Qualcomm wifi firmware for the Dell XPS
 "pacman:nano" = "latest"
 "pacman:net-tools" = "latest"
-"pacman:nvidia-open-lts" = "latest"  # runbook said `nvidia-lts`, retired from the repos; this is the current LTS-kernel module
-"pacman:nvidia-settings" = "latest"  # NVIDIA control panel
-"pacman:nvidia-utils" = "latest"  # NVIDIA userspace libs
-"pacman:powertop" = "latest"  # power diagnostics; pairs with the upower check in docs/arch.md
-"pacman:python-pynvim" = "latest"  # the :checkhealth python3 provider
+"pacman:nvidia-open-lts" = "latest"     # runbook said `nvidia-lts`, retired from the repos; this is the current LTS-kernel module
+"pacman:nvidia-settings" = "latest"     # NVIDIA control panel
+"pacman:nvidia-utils" = "latest"        # NVIDIA userspace libs
+"pacman:powertop" = "latest"            # power diagnostics; pairs with the upower check in docs/arch.md
+"pacman:python-pynvim" = "latest"       # the :checkhealth python3 provider
 "pacman:rsync" = "latest"
-"pacman:stress" = "latest"  # required by the `stress -c 4` verification in docs/arch.md
-"pacman:tlp" = "latest"  # power management; enabled by setup:arch
-"pacman:tlp-rdw" = "latest"  # TLP radio-device wizard
-"pacman:tree" = "latest"  # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"pacman:stress" = "latest"              # required by the `stress -c 4` verification in docs/arch.md
+"pacman:tlp" = "latest"                 # power management; enabled by setup:arch
+"pacman:tlp-rdw" = "latest"             # TLP radio-device wizard
+"pacman:tree" = "latest"                # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "pacman:unzip" = "latest"
 "pacman:vlc" = "latest"
 "pacman:wget" = "latest"
-"pacman:xz" = "latest"  # runbook said `xz-utils` (a Debian name); the Arch package is `xz`. parity-skip: Debian calls it xz-utils
+"pacman:xz" = "latest"                  # runbook said `xz-utils` (a Debian name); the Arch package is `xz`. parity-skip: Debian calls it xz-utils
 "pacman:zip" = "latest"
-"pacman:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+"pacman:zsh" = "latest"                 # pairs with [bootstrap.user].login_shell
 
 # ------------------------------------------------------------------- tasks --
 #
@@ -656,6 +656,43 @@ for b in bad:
 print(f"  ! {len(bad)} problem(s)" if bad else f"  . {len(configs)} config(s) valid")
 sys.exit(1 if bad else 0)
 PY
+'''
+
+[tasks."check:fmt"]
+description = "Assert every mise config is formatted, including ones this OS never loads"
+shell = "bash -c"
+run = '''
+set -u
+# `mise fmt --check` is read-only and would be the obvious gate, but it only
+# inspects the configs mise actually loaded — so on a Mac it never sees
+# mise.linux.toml and CI never sees mise.macos.toml, which are exactly the
+# files that rot unwatched. `--stdin` formats a file mise was not asked to
+# load, so each one is compared against its own formatted output instead.
+#
+# Despite `mise fmt --help` saying it sorts keys, it does not: it normalises
+# whitespace and leaves key order and comments alone. That is what makes this
+# safe to gate on — every declaration here is ordered and commented on purpose.
+# Verified on 2026.7.18.
+command -v mise >/dev/null 2>&1 || { echo "  ! mise is required"; exit 1; }
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
+# A string accumulator, not an array: bash's array-length syntax puts a brace
+# immediately before a hash, which Tera reads as an unterminated comment open.
+# `[tasks.*].run` is templated; this body cannot contain that pair.
+bad=""
+n=0
+for f in .miserc.toml mise*.toml; do
+  [ -f "$f" ] || continue
+  n=$((n + 1))
+  diff -q "$f" <(mise fmt --stdin < "$f" 2>/dev/null) >/dev/null 2>&1 || bad="$bad $f"
+done
+if [ -n "$bad" ]; then
+  for b in $bad; do
+    echo "  ! $b is not formatted"
+  done
+  echo "    fix each with: mise fmt --stdin < FILE > FILE.fmt && mv FILE.fmt FILE"
+  exit 1
+fi
+echo "  . $n config(s) formatted"
 '''
 
 [tasks."check:packages"]
