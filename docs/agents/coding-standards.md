@@ -1,23 +1,24 @@
 # Coding standards
 
-Read `README.md` before changing anything structural.
+- **One mechanism per job.** If mise has a declarative section for it, use that
+  rather than a shell step beside it. `[shell_alias]` is the only exception (no
+  nushell/PowerShell support).
+- **`[tools]` beats a package-manager entry** whenever mise's registry has the
+  tool. Check with `mise search -m equal <name>`, and confirm it is the *same
+  software* — `code`, `1password` and `tree` all name something else.
+- **Pick a `[dotfiles]` mode from two properties**, not one. Whole-directory
+  `symlink` is the default; no target currently needs `symlink-each`, so treat a
+  new one as a smell until you have shown the writer cannot be relocated.
 
-- One mechanism per job. If mise has a declarative section for something, use it
-  rather than adding a shell step beside it — that is the entire premise of the
-  repo. `[shell_alias]` is the documented exception (no nushell/PowerShell
-  support).
-- Prefer `[tools]` over a package-manager entry whenever mise's registry has the
-  tool, so every OS gets one version from one declaration.
-- Choose the `[dotfiles]` mode by *who writes the file*: `symlink` when we own
-  it, `symlink-each` when the tool writes siblings into the same directory,
-  `copy` when the tool rewrites the file itself.
-- Never introduce direnv. mise owns the environment; the two conflict over PATH
-  and upstream does not treat the incompatibility as a bug.
-- Commit with Conventional Commits, and say *why* in the body.
+  | every file ours | another process writes new files there | mode |
+  |---|---|---|
+  | yes | no | `symlink` (whole directory) |
+  | yes | yes, relocatable | relocate it, then `symlink` |
+  | yes | yes, not relocatable | `symlink-each` |
+  | — | the tool rewrites the file itself | `copy` |
 
-## Comments
-
-The comments in the config files are not decoration: nearly every one records a
-failure mode that was hit in practice, and several document mise behaviour that
-contradicts what you would assume. Keep that standard — a change that needs an
-explanation carries one.
+- **Never introduce direnv.** mise owns the environment; upstream does not treat
+  the PATH conflict as a bug.
+- **Comments carry the failure mode** that motivated the line, or mise behaviour
+  that contradicts what you would assume. Nothing else.
+- **Conventional Commits**, with the *why* in the body.
