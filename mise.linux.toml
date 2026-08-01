@@ -532,45 +532,43 @@ for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
         schemas[p] = s.get("id")
         keys[p] = {k.get("name") for k in s.iter("key")}
 
+# The set of path prefixes some installed schema sits under. A section whose
+# parent prefix is absent belongs to a component this machine does not have.
+installed_under = {p.rsplit("/", 1)[0] for p in schemas}
+
 bad = 0
 for f in sorted(pathlib.Path(sys.argv[2]).glob("*.dconf")):
-    lines = f.read_text().splitlines()
-    sections = [l.strip()[1:-1].strip("/") for l in lines if l.strip().startswith("[")]
-
-    # A payload none of whose sections resolve belongs to a desktop this
-    # machine does not have — headless boxes and CI runners included. There is
-    # nothing to verify it against, so skip the file rather than report every
-    # section as a typo. If even one section resolves the desktop IS installed,
-    # and the rest failing to resolve is exactly the rot this check exists for.
-    if sections and not any(s in schemas for s in sections):
-        print(f"  . {f.name}: no schema for any of its {len(sections)} sections, skipped")
-        continue
-
-    section, optional = None, False
-    for n, line in enumerate(lines, 1):
+    section, checked, skipped = None, 0, 0
+    for n, line in enumerate(f.read_text().splitlines(), 1):
         line = line.strip()
-        if line.startswith("#"):
-            # A `# optional` comment marks the next section as belonging to a
-            # component that may not be installed (nautilus on a GNOME box that
-            # uses another file manager). Without it an absent schema is a typo.
-            optional = line.startswith("# optional")
-            continue
-        if not line:
+        if not line or line.startswith("#"):
             continue
         if line.startswith("["):
             section = line[1:-1].strip("/")
-            if section not in schemas:
-                if optional:
-                    print(f"  . {f.name}: /{section}/ not installed, unchecked")
-                else:
-                    print(f"  ! {f.name}:{n} no installed schema at /{section}/")
-                    bad += 1
-            optional = False
+            if section in schemas:
+                checked += 1
+            elif section.rsplit("/", 1)[0] not in installed_under:
+                # Nothing from this component is installed at all — nautilus on
+                # a GNOME box that uses another file manager, GTK4 on a machine
+                # with only GTK3, the whole GNOME tree on a headless box or a CI
+                # runner. Nothing to check the section against, so count it and
+                # move on. What this cannot catch is a typo in the parent prefix
+                # itself; a typo in the last component still fails, because its
+                # siblings are installed.
+                skipped += 1
+                section = None
+            else:
+                print(f"  ! {f.name}:{n} no installed schema at /{section}/")
+                bad += 1
+                section = None
             continue
         key = line.split("=", 1)[0].strip()
         if section in keys and key not in keys[section]:
             print(f"  ! {f.name}:{n} {schemas[section]} has no key '{key}'")
             bad += 1
+    if skipped:
+        print(f"  . {f.name}: {checked} section(s) checked, "
+              f"{skipped} not installed here")
 
 print(f"  ! {bad} problem(s)" if bad else "  . dconf payloads valid")
 sys.exit(1 if bad else 0)
