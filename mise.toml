@@ -414,6 +414,7 @@ corepack = true
 "apt:docker-ce-cli" = "latest"            # parity-skip: Arch ships the whole engine as `docker`
 "apt:docker-compose-plugin" = "latest"    # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
+"apt:google-chrome-stable" = "latest"     # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "apt:htop" = "latest"
 "apt:nala" = "latest"                     # nicer apt front-end; the WSL runbook used `nala` for every command
 "apt:python3-pynvim" = "latest"           # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
@@ -445,6 +446,7 @@ corepack = true
 "dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
 "dnf:git" = "latest"
+"dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "dnf:htop" = "latest"
 "dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
 "dnf:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
@@ -457,7 +459,7 @@ corepack = true
 
 # --- Arch ---
 # mise's pacman manager reads the official repos only. The AUR packages the
-# Arch runbook wanted (auto-cpufreq, envycontrol, 1password,
+# Arch runbook wanted (auto-cpufreq, envycontrol, 1password, google-chrome,
 # visual-studio-code-bin) go through yay in [tasks."setup:arch"] instead.
 "pacman:base-devel" = "latest"          # toolchain group; also a yay prerequisite
 "pacman:bind" = "latest"                # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`

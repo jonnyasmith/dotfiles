@@ -110,6 +110,23 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
   fi
 
+  # Google Chrome yum repo. Chrome is in no Fedora repository and never will
+  # be — it is proprietary. The rpm's own postinst writes this exact filename,
+  # so reusing it is what stops the machine ending up with two copies of the
+  # same repo once Chrome updates itself.
+  if [ ! -f /etc/yum.repos.d/google-chrome.repo ]; then
+    sudo rpm --import https://dl.google.com/linux/linux_signing_key.pub
+    printf '%s\n' \
+      '[google-chrome]' \
+      'name=google-chrome' \
+      'baseurl=https://dl.google.com/linux/chrome/rpm/stable/$basearch' \
+      'enabled=1' \
+      'gpgcheck=1' \
+      'repo_gpgcheck=1' \
+      'gpgkey=https://dl.google.com/linux/linux_signing_key.pub' \
+      | sudo tee /etc/yum.repos.d/google-chrome.repo >/dev/null
+  fi
+
   # dnf5-plugins provides both `copr` and `config-manager`, used by the two
   # blocks below. Fedora Workstation ships it, a minimal install does not, and
   # each of those blocks is guarded by a repo file that an earlier run may
@@ -233,6 +250,27 @@ if command -v apt-get >/dev/null 2>&1; then
       | sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null
   fi
 
+  # Google Chrome apt repo. Same reasoning as the Fedora block: proprietary,
+  # so in no distribution repository, and the deb's postinst writes this exact
+  # filename itself — reusing the name avoids a duplicate source.
+  #
+  # Key handled the way the Docker block does, and for the same reason: `gpg
+  # --dearmor` exits 0 on empty stdin, so a failed fetch would otherwise write
+  # an empty keyring plus the .list that guards this block, and no re-run
+  # would ever repair it.
+  if [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
+    chrome_key="$(mktemp)"
+    if curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
+         | gpg --dearmor > "$chrome_key" && [ -s "$chrome_key" ]; then
+      sudo install -m 0644 "$chrome_key" /usr/share/keyrings/google-chrome.gpg
+      echo 'deb [signed-by=/usr/share/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main' \
+        | sudo tee /etc/apt/sources.list.d/google-chrome.list >/dev/null
+    else
+      echo "  ! could not fetch the Google Chrome signing key; skipping the repo"
+    fi
+    rm -f "$chrome_key"
+  fi
+
   # Ghostty PPA. Ghostty reached Ubuntu's own repositories in 26.04, but that
   # copy lags the upstream release; mkasberg/ghostty-ubuntu is the PPA
   # ghostty.org points Ubuntu users at and it covers 24.04 as well. Explicitly
@@ -291,6 +329,7 @@ if command -v yay >/dev/null 2>&1; then
     auto-cpufreq \
     envycontrol \
     1password \
+    google-chrome \
     visual-studio-code-bin
 else
   echo "  ! yay not installed; see docs/arch.md. Skipping AUR packages." >&2
