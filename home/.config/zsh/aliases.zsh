@@ -11,6 +11,12 @@ fi
 alias vim="nvim"
 alias code="code-insiders"
 
+# bat is a drop-in cat: piped or redirected it detects the non-tty and emits
+# plain unhighlighted text. --paging=never is bat's own recommendation for this
+# alias — without it a long file opens in less, which cat never does. Bypass
+# with `command cat`.
+alias cat="bat --paging=never"
+
 alias g="git"
 alias lg="lazygit"
 alias y="yarn"
