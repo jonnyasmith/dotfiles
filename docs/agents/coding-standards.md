@@ -19,6 +19,8 @@
   `[tasks.*]`.
 - `mise.lock` pins tools, not `[tools]`. Bump with `mise lock -g --bump` (`-g`
   required) and commit it.
+- `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is
+  a leaf and no config declares it. Uninstall named formulae instead.
 
 ## Rules
 
