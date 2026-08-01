@@ -98,7 +98,15 @@ if command -v dnf >/dev/null 2>&1; then
   # already done this by hand.
   if [ ! -f /etc/yum.repos.d/vscode.repo ]; then
     sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-    echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\nautorefresh=1\ntype=rpm-md\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" \
+    printf '%s\n' \
+      '[code]' \
+      'name=Visual Studio Code' \
+      'baseurl=https://packages.microsoft.com/yumrepos/vscode' \
+      'enabled=1' \
+      'autorefresh=1' \
+      'type=rpm-md' \
+      'gpgcheck=1' \
+      'gpgkey=https://packages.microsoft.com/keys/microsoft.asc' \
       | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
   fi
 
@@ -441,7 +449,8 @@ command -v dconf >/dev/null 2>&1 || exit 0
 # the environment; without it GIO silently falls back to the memory backend and
 # the write is lost.
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
-  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  export DBUS_SESSION_BUS_ADDRESS
 fi
 
 dconf load / < "$HOME/.dotfiles/desktop/gtk.dconf"
@@ -459,7 +468,8 @@ if ! command -v gnome-shell >/dev/null 2>&1; then
 fi
 
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
-  export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+  export DBUS_SESSION_BUS_ADDRESS
 fi
 
 dconf load / < "$HOME/.dotfiles/desktop/gnome.dconf"

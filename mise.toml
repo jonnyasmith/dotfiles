@@ -554,11 +554,11 @@ env -u MISE_CONFIG_ROOT -u MISE_TASK_FILE mise tasks validate
 '''
 
 [tasks."check:shell"]
-description = "Syntax-check the shell files this repo installs"
+description = "Syntax-check every shell this repo runs: installed files and config bodies"
 shell = "bash -c"
 run = '''
 set -u
-cd "$HOME/.dotfiles"
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
 bad=0
 
 # zsh -n parses without executing. The rendered os.zsh is checked from the
@@ -571,16 +571,76 @@ done
 
 bash -n bootstrap.sh || { echo "  ! bootstrap.sh"; bad=1; }
 
-# Still guarded: CI runs `mise run --skip-tools check`, so mise does not
-# install [tools] there and the workflow's apt copy is what runs. A machine
-# with neither reports the skip rather than failing the task.
-if command -v shellcheck >/dev/null 2>&1; then
+# Resolved once: it gates both the file pass below and the embedded pass.
+# CI runs `mise run --skip-tools check`, so mise does not install [tools]
+# there and the workflow's apt copy is what runs. A machine with neither
+# reports the skip rather than failing the task.
+have_sc=0
+command -v shellcheck >/dev/null 2>&1 && have_sc=1
+[ "$have_sc" -eq 1 ] || echo "  ! shellcheck missing — run 'mise install' (it is in [tools])"
+
+if [ "$have_sc" -eq 1 ]; then
   shellcheck -S warning bootstrap.sh || bad=1
-else
-  echo "  ! shellcheck missing — run 'mise install' (it is in [tools])"
 fi
 
-[ "$bad" -eq 0 ] && echo "  . shell files parse"
+# Every [bootstrap.hooks.*].run and [tasks.*].run in every mise*.toml, from
+# any OS — otherwise the Linux hook bodies reach a Fedora or Debian box with
+# nothing having read them as shell, and a typo there aborts the whole
+# pre-packages phase under `set -e`.
+#
+# Dialect follows what mise actually hands the body to: hook bodies and any
+# task without a `shell` key go to `sh`, a task naming bash gets bash, and
+# setup:windows is pwsh and is counted as skipped rather than mislinted.
+#
+# Task bodies are Tera-templated before they run and hook bodies are not, but
+# this repo bans the three Tera openers from task bodies, so in both cases the
+# raw text is what executes and is what gets checked.
+command -v python3 >/dev/null 2>&1 || { echo "  ! python3 (3.11+) is required"; exit 1; }
+bodies="$(mktemp -d)"
+index="$(python3 - "$HOME/.dotfiles" "$bodies" <<'PY'
+import pathlib, sys, tomllib
+
+repo, out = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+for f in sorted(repo.glob("mise*.toml")):
+    conf = tomllib.loads(f.read_text())
+    entries = []
+    for phase, hook in conf.get("bootstrap", {}).get("hooks", {}).items():
+        entries.append((f"hooks.{phase}", hook, None))
+    for name, task in conf.get("tasks", {}).items():
+        shell = task.get("shell") if isinstance(task, dict) else None
+        entries.append((f"tasks.{name}", task, shell))
+    for label, entry, shell in entries:
+        body = entry.get("run") if isinstance(entry, dict) else entry
+        if not isinstance(body, str):
+            continue
+        label = f"{f.name}:{label}"
+        stem = label.replace(".", "_").replace(":", "_").replace("/", "_")
+        (out / stem).write_text(body)
+        print(f"{stem}\t{(shell or 'sh').split()[0]}\t{label}")
+PY
+)"
+
+n=0
+skipped=0
+while IFS=$'\t' read -r stem dialect label; do
+  [ -n "$stem" ] || continue
+  case "$dialect" in
+    sh|bash) ;;
+    *) skipped=$((skipped + 1)); continue ;;
+  esac
+  n=$((n + 1))
+  "$dialect" -n "$bodies/$stem" || { echo "  ! $label"; bad=1; }
+  if [ "$have_sc" -eq 1 ]; then
+    sc="$(shellcheck -s "$dialect" -S warning "$bodies/$stem" 2>&1)" || {
+      echo "  ! $label"
+      echo "$sc" | sed "s|$bodies/$stem|$label|"
+      bad=1
+    }
+  fi
+done <<< "$index"
+rm -rf "$bodies"
+
+[ "$bad" -eq 0 ] && echo "  . shell files parse; $n embedded body(ies) checked, $skipped skipped"
 exit "$bad"
 '''
 

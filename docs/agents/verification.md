@@ -6,7 +6,7 @@
 | command | covers |
 |---|---|
 | `mise run check:config` | every `mise*.toml` parses, including ones this OS never loads |
-| `mise run check:shell` | `zsh -n` / `bash -n`, then `shellcheck -S warning` on `bootstrap.sh` |
+| `mise run check:shell` | `zsh -n` / `bash -n` and `shellcheck -S warning` on `bootstrap.sh` and the zsh files, then on every `[bootstrap.hooks.*].run` and `[tasks.*].run` in every `mise*.toml` |
 | `mise run check:packages` | registry rule and apt/dnf/pacman parity in `[bootstrap.packages]` |
 | `mise run check:tasks` | `mise tasks validate` |
 | `mise run check:fmt` | every `mise*.toml` and `.miserc.toml` is `mise fmt`-clean |
@@ -19,8 +19,15 @@ gate.
 
 ## Traps
 
-- `check:shell` exits 0 when shellcheck is absent. It is in `[tools]`; run
-  `mise install`. Tell: ~70ms when skipped, ~800ms when it lints.
+- `check:shell` exits 0 when shellcheck is absent, so both passes degrade to a
+  syntax check. It is in `[tools]`; run `mise install`.
+- `check:shell` reads the embedded bodies out of the TOML itself, so the Linux
+  hook bodies are checked from macOS and the macOS ones from CI. Dialect
+  follows what mise hands the body to: `sh` for hooks and for tasks with no
+  `shell` key, otherwise the one the task names. `setup:windows` is pwsh and is
+  reported as skipped, not checked.
+- Neither pass sees inside a nested quote. `sudo sh -c '…'` in the Fedora
+  branch is one string to shellcheck.
 - CI is Linux, so no job ever loads `mise.macos.toml` or `mise.windows.toml`.
   `check:config` parsing them is the only signal they get.
 - CI passes `--skip-tools`; local runs do not.
@@ -32,7 +39,7 @@ gate.
   only `config.toml`, never the platform file. `check:tasks` unsets it; without
   that, `[tasks.bootstrap]`'s `setup:*` glob reports "task not found".
 - `check:packages` takes ~1s because it shells out to `mise search` per entry.
-  It is the only check with a dependency beyond python and zsh.
+  It and `check:shell` are the only checks with a dependency beyond python.
 
 ## What counts as verified
 
