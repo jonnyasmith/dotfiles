@@ -437,6 +437,24 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   load-bearing, not stylistic.
 - **`[bootstrap.hooks.*].run` is not templated; `[tasks.*].run` is.** Keep `{{`
   and `{%` out of task bodies.
+- **`--dry-run` invents two warnings and a duplicate hook. A real run has
+  neither.** To show what the config would look like *after* linking,
+  `mise bootstrap --dry-run` simulates the result: for every `[dotfiles]`
+  target under `~/.config/mise`, it reads the repo source and parses it as a
+  `mise.toml` under the target's name
+  (`config_files_after_dotfiles_dry_run`, `src/cli/bootstrap.rs`). Two of
+  those targets are not `mise.toml`-shaped, so the strict field check fires on
+  keys that are correct where they live:
+  `unknown field in ~/.config/mise/miserc.toml: auto_env` and
+  `unknown field in ~/.config/mise/mise.lock: conda-packages` (the latter is
+  written by the `conda:clang-format` backend). The same simulation keys
+  `mise.macos.toml` and `~/.config/mise/config.macos.toml` separately —
+  they are one file, but the symlink does not exist yet to prove it — so
+  `[bootstrap.hooks].post-defaults` is collected twice and `killall Finder
+  Dock` prints twice. A real run reloads the config instead of simulating it,
+  dedupes by resolved path (`mise config ls --json` lists two files, not
+  four), and runs the hook once. Verified on mise 2026.7.18; nothing to fix
+  here.
 - **No `winget` manager**, so Windows packages come from `packages/winget.txt`
   via `bootstrap.ps1`.
 - **The `vscode:` package plugin in mise's docs does not exist** — that URL
