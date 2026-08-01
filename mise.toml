@@ -27,14 +27,21 @@
 # [dotfiles] entries themselves have NO os filter, so anything that must exist
 # on only one platform lives in mise.<os>.toml beside this file instead.
 
-# Everything below assumes mise features that did not always exist: [dotfiles]
-# with symlink-each, `mise bootstrap`, auto_env platform configs, and glob
-# `depends`. An older mise does not error on any of them — it ignores the
-# sections it does not know, so a stale binary would "succeed" while silently
-# skipping the whole per-OS half of this file. Hard floor, not a soft warning:
-# a partially-applied bootstrap is worse than a refusal. 2026.7.17 is the
-# version every behavioural note in this file was verified against.
-min_version = "2026.7.17"
+# Everything below assumes mise features that did not always exist: [dotfiles],
+# `mise bootstrap`, auto_env platform configs, and glob `depends`. An older
+# mise does not error on any of them — it ignores the sections it does not
+# know, so a stale binary would "succeed" while silently skipping the whole
+# per-OS half of this file. Hard floor, not a soft warning: a partially-applied
+# bootstrap is worse than a refusal.
+#
+# The floor is what winget can supply, not what this file was written against.
+# jdx.mise tops out at 2026.7.15, so a higher floor means bootstrap.ps1
+# installs a mise that every subsequent `mise` invocation then refuses — the
+# Windows box bricks itself at step two. The behavioural notes below were
+# verified on 2026.7.17 and 2026.7.18 and say so individually; none of the
+# features they rely on ([dotfiles], `mise bootstrap`, auto_env platform
+# configs, glob `depends`) arrived after 2026.7.15.
+min_version = "2026.7.15"
 
 [settings]
 # Must be absolute or ~/-prefixed. A RELATIVE value here is silently broken:
@@ -59,18 +66,29 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 
 # ---------------------------------------------------------------- dotfiles --
 #
-# Replaces GNU stow. Three modes, chosen per target by who writes the file:
+# Replaces GNU stow. The mode is chosen by two independent properties of the
+# target rather than by one overloaded notion of ownership:
 #
-#   symlink       we own it outright; edits in ~ are edits to the repo
-#   symlink-each  we own the *files*, something else writes siblings into the
-#                 same directory (nvim's spell/, tpm's plugins/, gh's
-#                 hosts.yml). Links each file individually so those writes stay
-#                 local instead of landing in the repo — this is what the six
-#                 "machine-local state" entries in .gitignore used to paper over.
+#   owned file      this repo is the source of truth for the file's content
+#   foreign writer  some other process creates NEW files in that directory
+#
+#   symlink       every file is ours, and any foreign writer has been pointed
+#                 elsewhere. THE DEFAULT. A whole directory becomes a single
+#                 link, so a file added to the repo exists in ~ immediately
+#                 instead of waiting for the next bootstrap.
+#   symlink-each  every file is ours but a foreign writer cannot be relocated.
+#                 Links each file individually, leaving the directory real.
+#                 No target qualifies today; see
+#                 docs/adr/0001-dotfiles-link-whole-directories.md.
 #   copy          the tool rewrites the file itself, in place, on exit. A
 #                 symlink would send that write into the repo and dirty it on
 #                 every run. Capture deliberate changes with
 #                 `mise bootstrap dotfiles add <path>`.
+#
+# A foreign writer that configuration can point elsewhere is RELOCATED, not
+# worked around — that is how the tmux directory became a plain symlink. Where
+# it cannot be (nvim's spell/ and .netrwhist), the writes land inside the
+# working tree and the matching .gitignore entries are load-bearing.
 #
 # `{}` means "mirror the home-relative path under dotfiles.root", so
 # "~/.zshrc" resolves to ~/.dotfiles/home/.zshrc with no source line needed.
@@ -112,14 +130,15 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 "~/.ssh/1password/refresh" = { source = "home/.ssh/1password/refresh.tmpl", mode = "template" }
 "~/.config/1Password/ssh/agent.toml" = {}
 
-# Editors and terminal. nvim writes spell/ and .netrwhist into its own config
-# dir; tmux gets plugins/ from tpm; ghostty takes its mac-only key from a
-# rendered optional include (`config-file = ?os-local`).
-"~/.config/nvim" = { source = "home/.config/nvim", mode = "symlink-each" }
-"~/.config/tmux" = { source = "home/.config/tmux", mode = "symlink-each" }
+# Editors and terminal. Whole-directory links: every file in these is ours.
+# nvim still writes spell/ and .netrwhist into its config dir, which is now
+# inside the repo — gitignored, deliberately. tpm no longer writes into the
+# tmux dir at all; see [bootstrap.repos]. ghostty takes its mac-only key from
+# a rendered optional include (`config-file = ?os-local`).
+"~/.config/nvim" = {}
+"~/.config/tmux" = {}
 "~/.config/ghostty/config" = {}
 "~/.config/ghostty/os-local" = { source = "home/.config/ghostty/os-local.tmpl", mode = "template" }
-"~/.ideavimrc" = {}
 "~/.config/starship.toml" = {}
 
 # Tools that rewrite their own config on exit. copy, not symlink.
@@ -135,9 +154,10 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # is deliberately unmanaged — run `gh auth login` on a new machine.
 "~/.config/gh/config.yml" = { mode = "copy" }
 
-# herdr writes session.json, .plugins.lock, logs and a socket beside its config,
-# so symlink-each keeps those in ~ rather than in the repo.
-"~/.config/herdr" = { source = "home/.config/herdr", mode = "symlink-each" }
+# herdr writes session.json, .plugins.lock, logs and a socket beside its
+# config and offers no way to relocate them, so name the single file we own.
+# A directory link would send every one of those writes into the repo.
+"~/.config/herdr/config.toml" = {}
 
 # This repo's mise config, as the *global* mise config.
 #
@@ -189,13 +209,17 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 
 [bootstrap.repos]
 "~/.oh-my-zsh" = { url = "https://github.com/ohmyzsh/ohmyzsh.git", ref = "master" }
-# Keep in sync with the plugins=() list in home/.zshrc.
+# Keep in sync with the plugins=() list in home/.zshrc. One syntax highlighter:
+# zsh-syntax-highlighting and fast-syntax-highlighting are both ZLE highlighters
+# competing for the same hooks, and zsh-autocomplete is documented to load first
+# but was loaded last, so both are gone.
 "~/.oh-my-zsh/custom/plugins/zsh-autosuggestions" = { url = "https://github.com/zsh-users/zsh-autosuggestions.git", ref = "master" }
-"~/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting" = { url = "https://github.com/zsh-users/zsh-syntax-highlighting.git", ref = "master" }
 "~/.oh-my-zsh/custom/plugins/fast-syntax-highlighting" = { url = "https://github.com/zdharma-continuum/fast-syntax-highlighting.git", ref = "master" }
-"~/.oh-my-zsh/custom/plugins/zsh-autocomplete" = { url = "https://github.com/marlonrichert/zsh-autocomplete.git", ref = "main" }
-# tmux plugin manager. Still needs `prefix + I` inside tmux once to fetch plugins.
-"~/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git", ref = "master" }
+# tmux plugin manager, deliberately NOT under ~/.config/tmux: plugin payloads
+# there would be a foreign writer in a directory this repo owns, which is what
+# forced symlink-each on it. tmux.conf exports TMUX_PLUGIN_MANAGER_PATH to
+# match. Still needs `prefix + I` inside tmux once to fetch plugins.
+"~/.local/share/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git", ref = "master" }
 
 # ------------------------------------------------------------------- tools --
 #
@@ -247,35 +271,70 @@ node = ["24", "22"]
 # .tool-versions. mise does NOT read package.json's `packageManager` field.
 pnpm = ["11", "10"]
 
-# Python. The point is that `python3` is never Homebrew's or Xcode's: brew's
-# python@3.14 is a *dependency* of azure-cli/pipx/pytest/platformio, so it gets
-# upgraded whenever those do and drags every venv built against it along. 3.13
-# is the default because it satisfies the most `requires-python` in ~/dev --
-# several cap below 3.14 (">=3.12,<3.13", "<3.14"), which brew's 3.14 violates.
-# 3.12 stays installed for the projects pinned to it.
+# Python. The point is that `python3` is never Homebrew's or Xcode's. brew's
+# python@3.14 arrives as a *dependency* of other formulae, so it gets upgraded
+# whenever those do and drags every venv built against it along; promoting
+# azure-cli to [tools] and dropping pipx/pytest leaves platformio as the only
+# formula still pulling it in. 3.13 is the default because it satisfies the
+# most `requires-python` in ~/dev — several cap below 3.14 (">=3.12,<3.13",
+# "<3.14"), which brew's 3.14 violates. 3.12 stays installed for the projects
+# pinned to it.
 #
 # Interpreters only. uv still owns per-project venvs and `uv tool` installs.
 python = ["3.13", "3.12"]
 
-# Cross-platform CLIs, promoted out of the Brewfile so Linux and WSL get the
-# same versions from the same declaration. The brew copies of these can stay
-# installed harmlessly — .zshenv puts mise's shims ahead of /opt/homebrew/bin,
-# and `mise activate` puts the real install dirs ahead of that. Remove them
-# deliberately with `mise bootstrap packages prune --manager brew`.
+# Cross-platform CLIs, promoted out of the Brewfile and the per-distro package
+# lists so Linux and WSL get the same versions from the same declaration. The
+# brew copies of these can stay installed harmlessly — .zshenv puts mise's
+# shims ahead of /opt/homebrew/bin, and `mise activate` puts the real install
+# dirs ahead of that. Remove them deliberately with
+# `mise bootstrap packages prune --manager brew`.
+#
+# Three registry names are deliberately NOT used, because the entry is
+# different software than the system package of the same name: `code` (a
+# coding CLI, not VS Code), `1password` (the CLI, not the desktop app that
+# serves the SSH agent), and `tree` (a Rust reimplementation with different
+# flags). See the registry-skip waivers in [bootstrap.packages].
+azure-cli = "latest"
 # btop's aqua backend publishes Linux binaries only — on macOS it fails with
 # `unsupported env: darwin/arm64 (supported: ["linux"])` and takes the whole
 # tools phase with it. `os` filtering keeps the declaration cross-platform;
 # macOS gets btop from brew:btop in mise.macos.toml instead.
 btop = { version = "latest", os = ["linux"] }
+caddy = "latest"
+# Never install this any other way: its own installer self-updates into
+# ~/.local/bin, which mise cannot see or pin.
+claude = "latest"
+# Zero shell invocations, deliberately kept: editors run it on save in every
+# project carrying a .clang-format.
+clang-format = "latest"
+cmake = "latest"
+codex = "latest"
+# neofetch's replacement — upstream archived neofetch in 2024.
+fastfetch = "latest"
 fzf = "latest"
 gh = "latest"
+herdr = "latest"
 jq = "latest"
 just = "latest"
 lazygit = "latest"
 neovim = "latest"
+ninja = "latest"
 ripgrep = "latest"
+# The linter behind check:shell. Was deliberately left out of [tools] as "a
+# nice-to-have, not a dependency" — but CI installs it from apt, so the lint
+# ran there and silently skipped on every developer machine. A check that only
+# fires in CI is the drift this repo exists to prevent, and the registry has
+# it, so the repo's own rule applies: registry-covered CLI, one declaration.
+shellcheck = "latest"
 starship = "latest"
 terraform = "latest"
+tmux = "latest"
+# nvim's :checkhealth python3 provider. Linux takes it from its distro
+# (apt:python3-pynvim, dnf:python3-neovim, pacman:python-pynvim); Homebrew has
+# no formula for it and mise's registry has no entry, so macOS goes through the
+# pipx backend. Scoped, or every Linux box would install it twice.
+"pipx:pynvim" = { version = "latest", os = ["macos"] }
 # The completion scripts mise (and any other usage-spec CLI) emits shell out to
 # `usage` at completion time — without it, tab-completing `mise ` prints an
 # error instead of completing. See the block in home/.zshrc that installs them.
@@ -330,76 +389,104 @@ corepack = true
 # Anything mise's registry covers is in [tools] above instead, so it is one
 # declaration and one version everywhere. A distro copy of node, fzf, neovim,
 # ripgrep or starship would sit on PATH and shadow mise's shims, which is the
-# exact failure the old per-distro runbooks kept reintroducing.
+# exact failure the old per-distro runbooks kept reintroducing. `check:packages`
+# enforces that: an entry whose name has an exact registry match needs a
+# `# registry-skip: <reason>` comment saying why the registry entry is wrong.
+#
+# The same check enforces parity — a name declared under two of apt/dnf/pacman
+# but not the third is drift unless a `# parity-skip: <reason>` says otherwise.
 #
 # Some entries need a third-party repo added first; that is what the
 # [bootstrap.hooks.pre-packages] hook in mise.linux.toml does.
 
 [bootstrap.packages]
 # --- Debian / Ubuntu / Raspberry Pi / WSL ---
-"apt:1password" = "latest"  # replaces `snap install 1password` - the snap build cannot use the SSH agent
-"apt:ca-certificates" = "latest"  # Docker-repo prerequisite; also what makes HTTPS apt sources work
-"apt:code" = "latest"  # VS Code; needs the MS apt repo added in pre-packages. Replaces `snap install --classic code`
+"apt:1password" = "latest"                # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
+"apt:build-essential" = "latest"          # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
+"apt:ca-certificates" = "latest"          # Docker-repo prerequisite; also what makes HTTPS apt sources work
+"apt:code" = "latest"                     # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
+"apt:containerd.io" = "latest"            # parity-skip: Arch ships the whole engine as `docker`
 "apt:curl" = "latest"
-"apt:dbus-x11" = "latest"  # dbus-launch, needed by gnome-tweaks over SSH/X
-"apt:ghostty" = "latest"  # terminal; PPA added in pre-packages. home/.config/ghostty/config is linked for it
+"apt:dbus-x11" = "latest"                 # dbus-launch, needed by gnome-tweaks over SSH/X
+"apt:docker-buildx-plugin" = "latest"     # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce" = "latest"                # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce-cli" = "latest"            # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-compose-plugin" = "latest"    # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
 "apt:htop" = "latest"
-"apt:nala" = "latest"  # nicer apt front-end; the WSL runbook used `nala` for every command
-"apt:python3-neovim" = "latest"  # pynvim, the :checkhealth python3 provider
-"apt:socat" = "latest"  # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
-"apt:tmux" = "latest"
-"apt:tree" = "latest"
-"apt:ubuntu-restricted-extras" = "latest"  # blocks on the msttcorefonts EULA unless preseeded in pre-packages
+"apt:nala" = "latest"                     # nicer apt front-end; the WSL runbook used `nala` for every command
+"apt:python3-pynvim" = "latest"           # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
+"apt:socat" = "latest"                    # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
+"apt:tree" = "latest"                     # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"apt:ubuntu-restricted-extras" = "latest" # blocks on the msttcorefonts EULA unless preseeded in pre-packages
 "apt:unzip" = "latest"
 "apt:vlc" = "latest"
 "apt:wget" = "latest"
 "apt:xz-utils" = "latest"
-"apt:zsh" = "latest"  # pairs with [bootstrap.user].login_shell in mise.linux.toml
+"apt:zip" = "latest"
+"apt:zsh" = "latest"                      # pairs with [bootstrap.user].login_shell in mise.linux.toml
+#
+# ghostty is NOT declared here. Its PPA builds for Ubuntu suites only, so on
+# pure Debian or Raspberry Pi OS the package is unresolvable and every
+# bootstrap reports a failure. [bootstrap.packages] has a manager dimension but
+# no distro-variant one, so setup:debian installs it behind the same `*ubuntu*`
+# guard the PPA uses — the same reasoning that puts gnome-tweaks in setup:gnome.
 
 # --- Fedora ---
-"dnf:1password" = "latest"  # repo imported in pre-packages
-"dnf:azure-cli" = "latest"
-"dnf:code" = "latest"  # VS Code; needs the MS yum repo added in pre-packages
+"dnf:1password" = "latest"             # repo imported in pre-packages. registry-skip: registry `1password` is the CLI, not the desktop app. parity-skip: Arch takes it from the AUR
+"dnf:@development-tools" = "latest"    # toolchain group, matching apt's build-essential and Arch's base-devel
+"dnf:code" = "latest"                  # VS Code; needs the MS yum repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
+"dnf:containerd.io" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:curl" = "latest"
-"dnf:ghostty" = "latest"  # terminal; COPR repo enabled in pre-packages
+"dnf:docker-buildx-plugin" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
+"dnf:docker-ce" = "latest"             # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
+"dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
+"dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
+"dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
+"dnf:git" = "latest"
 "dnf:htop" = "latest"
-"dnf:python3-neovim" = "latest"  # pynvim, the :checkhealth python3 provider
-"dnf:tree" = "latest"
-"dnf:vlc" = "latest"  # needs RPM Fusion free, added in pre-packages
-"dnf:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+"dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
+"dnf:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"dnf:unzip" = "latest"
+"dnf:vlc" = "latest"
+"dnf:wget" = "latest"
+"dnf:xz" = "latest"                    # parity-skip: Debian calls it xz-utils
+"dnf:zip" = "latest"
+"dnf:zsh" = "latest"                   # pairs with [bootstrap.user].login_shell
 
 # --- Arch ---
-# mise's pacman manager reads the official repos only. The five AUR packages the
-# Arch runbook wanted (auto-cpufreq, envycontrol, neofetch, 1password,
+# mise's pacman manager reads the official repos only. The AUR packages the
+# Arch runbook wanted (auto-cpufreq, envycontrol, 1password,
 # visual-studio-code-bin) go through yay in [tasks."setup:arch"] instead.
-"pacman:azure-cli" = "latest"  # in extra, no AUR needed
-"pacman:base-devel" = "latest"  # toolchain group; also a yay prerequisite
-"pacman:bind" = "latest"  # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`
+"pacman:base-devel" = "latest"          # toolchain group; also a yay prerequisite
+"pacman:bind" = "latest"                # runbook said `dnsutils` (a Debian name); Arch ships dig/nslookup in `bind`
 "pacman:curl" = "latest"
-"pacman:extension-manager" = "latest"  # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
-"pacman:ghostty" = "latest"  # terminal; home/.config/ghostty/config is linked for it
+"pacman:docker" = "latest"              # parity-skip: Debian and Fedora take the Docker CE package set instead
+"pacman:docker-compose" = "latest"      # registry-skip: the registry ships a standalone binary, not the CLI plugin `docker compose` resolves. parity-skip: Debian and Fedora use docker-compose-plugin
+"pacman:extension-manager" = "latest"   # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
+"pacman:ghostty" = "latest"             # terminal. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
 "pacman:git" = "latest"
+"pacman:htop" = "latest"                # the htoprc this repo links has to have the program it configures
 "pacman:less" = "latest"
-"pacman:linux-firmware-qcom" = "latest"  # Qualcomm wifi firmware for the Dell XPS
+"pacman:linux-firmware-qcom" = "latest" # Qualcomm wifi firmware for the Dell XPS
 "pacman:nano" = "latest"
 "pacman:net-tools" = "latest"
-"pacman:nvidia-open-lts" = "latest"  # runbook said `nvidia-lts`, retired from the repos; this is the current LTS-kernel module
-"pacman:nvidia-settings" = "latest"  # NVIDIA control panel
-"pacman:nvidia-utils" = "latest"  # NVIDIA userspace libs
-"pacman:powertop" = "latest"  # power diagnostics; pairs with the upower check in docs/arch.md
+"pacman:nvidia-open-lts" = "latest"     # runbook said `nvidia-lts`, retired from the repos; this is the current LTS-kernel module
+"pacman:nvidia-settings" = "latest"     # NVIDIA control panel
+"pacman:nvidia-utils" = "latest"        # NVIDIA userspace libs
+"pacman:powertop" = "latest"            # power diagnostics; pairs with the upower check in docs/arch.md
+"pacman:python-pynvim" = "latest"       # the :checkhealth python3 provider
 "pacman:rsync" = "latest"
-"pacman:stress" = "latest"  # required by the `stress -c 4` verification in docs/arch.md
-"pacman:tlp" = "latest"  # power management; enabled by setup:arch
-"pacman:tlp-rdw" = "latest"  # TLP radio-device wizard
-"pacman:tmux" = "latest"
-"pacman:tree" = "latest"
+"pacman:stress" = "latest"              # required by the `stress -c 4` verification in docs/arch.md
+"pacman:tlp" = "latest"                 # power management; enabled by setup:arch
+"pacman:tlp-rdw" = "latest"             # TLP radio-device wizard
+"pacman:tree" = "latest"                # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "pacman:unzip" = "latest"
 "pacman:vlc" = "latest"
 "pacman:wget" = "latest"
-"pacman:xz" = "latest"  # runbook said `xz-utils` (a Debian name); the Arch package is `xz`
+"pacman:xz" = "latest"                  # runbook said `xz-utils` (a Debian name); the Arch package is `xz`. parity-skip: Debian calls it xz-utils
 "pacman:zip" = "latest"
-"pacman:zsh" = "latest"  # pairs with [bootstrap.user].login_shell
+"pacman:zsh" = "latest"                 # pairs with [bootstrap.user].login_shell
 
 # ------------------------------------------------------------------- tasks --
 #
@@ -423,36 +510,13 @@ description = "Platform setup that has no declarative mise equivalent"
 depends = ["setup:*"]
 run = "echo 'bootstrap tasks complete'"
 
-[tasks."setup:vscode"]
-description = "Install VS Code extensions from packages/vscode.txt"
-run = '''
-set -u
-# $MISE_CONFIG_ROOT is NOT the repo here: this task is reached through the
-# ~/.config/mise/config.toml symlink, so mise resolves config_root to $HOME
-# (it strips a trailing .config/mise). Hardcode the path, consistently with
-# dotfiles.root above — bootstrap.sh already refuses to run anywhere else.
-list="$HOME/.dotfiles/packages/vscode.txt"
-[ -f "$list" ] || { echo "  . no packages/vscode.txt"; exit 0; }
-
-# `code` is installed by the visual-studio-code cask but its CLI is only put on
-# PATH by VS Code itself, via "Shell Command: Install 'code' command in PATH".
-# Not an error — just report it and move on.
-if ! command -v code >/dev/null 2>&1; then
-  echo "  ! 'code' CLI not on PATH — run \"Shell Command: Install 'code' command in PATH\""
-  echo "    from the VS Code command palette, then: mise run setup:vscode"
-  exit 0
-fi
-
-installed="$(code --list-extensions 2>/dev/null | tr '[:upper:]' '[:lower:]')"
-n=0
-while IFS= read -r ext; do
-  case "$ext" in ''|\#*) continue ;; esac
-  if ! printf '%s\n' "$installed" | grep -qxF "$(printf '%s' "$ext" | tr '[:upper:]' '[:lower:]')"; then
-    code --install-extension "$ext" --force >/dev/null 2>&1 && n=$((n+1))
-  fi
-done < "$list"
-if [ "$n" -gt 0 ]; then echo "  + $n extension(s)"; else echo "  . all extensions present"; fi
-'''
+# VS Code extensions are deliberately NOT managed here. They are sync-owned:
+# VS Code Settings Sync converges them from a GitHub gist, unattended, across
+# every machine signed into the same account. A packages/vscode.txt applied by
+# a setup task was a second owner of the same state, and the first extension
+# added from inside the editor rotted it. VS Code itself is still declared —
+# brew-cask on macOS, apt/dnf on Linux, winget on Windows. See
+# docs/adr/0002-vscode-extensions-are-sync-owned.md.
 
 # ------------------------------------------------------------------ checks --
 #
@@ -475,14 +539,26 @@ run = "echo 'all checks passed'"
 
 [tasks."check:tasks"]
 description = "Static validation of every task definition"
-run = "mise tasks validate"
-
-[tasks."check:shell"]
-description = "Syntax-check the shell files this repo installs"
 shell = "bash -c"
 run = '''
 set -u
-cd "$HOME/.dotfiles"
+# MISE_CONFIG_ROOT is unset deliberately, and it is load-bearing. mise exports
+# it to every task as $HOME, because these configs are reached through the
+# ~/.config/mise symlinks — so a nested `mise` inherits that root, loads only
+# config.toml, and never sees the platform file. [tasks.bootstrap]'s `setup:*`
+# fan-out then reports "task not found: setup:*" because the only setup task
+# on this machine lives in mise.macos.toml. Nothing is wrong with the glob;
+# `mise tasks deps bootstrap` resolves it. Verified on 2026.7.18.
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
+env -u MISE_CONFIG_ROOT -u MISE_TASK_FILE mise tasks validate
+'''
+
+[tasks."check:shell"]
+description = "Syntax-check every shell this repo runs: installed files and config bodies"
+shell = "bash -c"
+run = '''
+set -u
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
 bad=0
 
 # zsh -n parses without executing. The rendered os.zsh is checked from the
@@ -495,14 +571,76 @@ done
 
 bash -n bootstrap.sh || { echo "  ! bootstrap.sh"; bad=1; }
 
-# shellcheck is not in [tools] — it is a nice-to-have, not a dependency.
-if command -v shellcheck >/dev/null 2>&1; then
+# Resolved once: it gates both the file pass below and the embedded pass.
+# CI runs `mise run --skip-tools check`, so mise does not install [tools]
+# there and the workflow's apt copy is what runs. A machine with neither
+# reports the skip rather than failing the task.
+have_sc=0
+command -v shellcheck >/dev/null 2>&1 && have_sc=1
+[ "$have_sc" -eq 1 ] || echo "  ! shellcheck missing — run 'mise install' (it is in [tools])"
+
+if [ "$have_sc" -eq 1 ]; then
   shellcheck -S warning bootstrap.sh || bad=1
-else
-  echo "  . shellcheck not installed, skipped"
 fi
 
-[ "$bad" -eq 0 ] && echo "  . shell files parse"
+# Every [bootstrap.hooks.*].run and [tasks.*].run in every mise*.toml, from
+# any OS — otherwise the Linux hook bodies reach a Fedora or Debian box with
+# nothing having read them as shell, and a typo there aborts the whole
+# pre-packages phase under `set -e`.
+#
+# Dialect follows what mise actually hands the body to: hook bodies and any
+# task without a `shell` key go to `sh`, a task naming bash gets bash, and
+# setup:windows is pwsh and is counted as skipped rather than mislinted.
+#
+# Task bodies are Tera-templated before they run and hook bodies are not, but
+# this repo bans the three Tera openers from task bodies, so in both cases the
+# raw text is what executes and is what gets checked.
+command -v python3 >/dev/null 2>&1 || { echo "  ! python3 (3.11+) is required"; exit 1; }
+bodies="$(mktemp -d)"
+index="$(python3 - "$HOME/.dotfiles" "$bodies" <<'PY'
+import pathlib, sys, tomllib
+
+repo, out = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+for f in sorted(repo.glob("mise*.toml")):
+    conf = tomllib.loads(f.read_text())
+    entries = []
+    for phase, hook in conf.get("bootstrap", {}).get("hooks", {}).items():
+        entries.append((f"hooks.{phase}", hook, None))
+    for name, task in conf.get("tasks", {}).items():
+        shell = task.get("shell") if isinstance(task, dict) else None
+        entries.append((f"tasks.{name}", task, shell))
+    for label, entry, shell in entries:
+        body = entry.get("run") if isinstance(entry, dict) else entry
+        if not isinstance(body, str):
+            continue
+        label = f"{f.name}:{label}"
+        stem = label.replace(".", "_").replace(":", "_").replace("/", "_")
+        (out / stem).write_text(body)
+        print(f"{stem}\t{(shell or 'sh').split()[0]}\t{label}")
+PY
+)"
+
+n=0
+skipped=0
+while IFS=$'\t' read -r stem dialect label; do
+  [ -n "$stem" ] || continue
+  case "$dialect" in
+    sh|bash) ;;
+    *) skipped=$((skipped + 1)); continue ;;
+  esac
+  n=$((n + 1))
+  "$dialect" -n "$bodies/$stem" || { echo "  ! $label"; bad=1; }
+  if [ "$have_sc" -eq 1 ]; then
+    sc="$(shellcheck -s "$dialect" -S warning "$bodies/$stem" 2>&1)" || {
+      echo "  ! $label"
+      echo "$sc" | sed "s|$bodies/$stem|$label|"
+      bad=1
+    }
+  fi
+done <<< "$index"
+rm -rf "$bodies"
+
+[ "$bad" -eq 0 ] && echo "  . shell files parse; $n embedded body(ies) checked, $skipped skipped"
 exit "$bad"
 '''
 
@@ -579,3 +717,139 @@ print(f"  ! {len(bad)} problem(s)" if bad else f"  . {len(configs)} config(s) va
 sys.exit(1 if bad else 0)
 PY
 '''
+
+[tasks."check:fmt"]
+description = "Assert every mise config is formatted, including ones this OS never loads"
+shell = "bash -c"
+run = '''
+set -u
+# `mise fmt --check` is read-only and would be the obvious gate, but it only
+# inspects the configs mise actually loaded — so on a Mac it never sees
+# mise.linux.toml and CI never sees mise.macos.toml, which are exactly the
+# files that rot unwatched. `--stdin` formats a file mise was not asked to
+# load, so each one is compared against its own formatted output instead.
+#
+# Despite `mise fmt --help` saying it sorts keys, it does not: it normalises
+# whitespace and leaves key order and comments alone. That is what makes this
+# safe to gate on — every declaration here is ordered and commented on purpose.
+# Verified on 2026.7.18.
+command -v mise >/dev/null 2>&1 || { echo "  ! mise is required"; exit 1; }
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
+# A string accumulator, not an array: bash's array-length syntax puts a brace
+# immediately before a hash, which Tera reads as an unterminated comment open.
+# `[tasks.*].run` is templated; this body cannot contain that pair.
+bad=""
+n=0
+for f in .miserc.toml mise*.toml; do
+  [ -f "$f" ] || continue
+  n=$((n + 1))
+  diff -q "$f" <(mise fmt --stdin < "$f" 2>/dev/null) >/dev/null 2>&1 || bad="$bad $f"
+done
+if [ -n "$bad" ]; then
+  for b in $bad; do
+    echo "  ! $b is not formatted"
+  done
+  echo "    fix each with: mise fmt --stdin < FILE > FILE.fmt && mv FILE.fmt FILE"
+  exit 1
+fi
+echo "  . $n config(s) formatted"
+'''
+
+[tasks."check:packages"]
+description = "Assert the registry rule and Linux package parity in [bootstrap.packages]"
+shell = "bash -c"
+run = '''
+set -u
+# The only check with a runtime dependency beyond python: it shells out to
+# `mise search` for the registry half. `mise registry` is not usable here — it
+# caps its output at 1000 rows and silently truncates.
+command -v python3 >/dev/null 2>&1 || { echo "  ! python3 is required"; exit 1; }
+command -v mise >/dev/null 2>&1 || { echo "  ! mise is required (registry lookup)"; exit 1; }
+python3 - "$HOME/.dotfiles" <<'PY'
+import os, pathlib, re, subprocess, sys
+
+repo = pathlib.Path(sys.argv[1])
+DISTRO = ("apt", "dnf", "pacman")
+# brew-cask is out of scope for both halves: a cask is a GUI application, so an
+# identically named registry entry is a CLI by a different vendor every time
+# (1password, claude, codex all collide today) and parity against a Linux
+# distro is meaningless.
+ONPATH = DISTRO + ("brew",)
+
+# A nested `mise` inherits MISE_CONFIG_ROOT=$HOME from the task and would load
+# only ~/.config/mise/config.toml. `mise search` reads the registry rather than
+# a config, so it does not care today — but the rule is repo-wide and a nested
+# mise that silently sees the wrong config is exactly the failure check:tasks
+# hit, so strip it here too.
+MISE_ENV = {k: v for k, v in os.environ.items() if k != "MISE_CONFIG_ROOT"}
+
+# Waivers are trailing comments beside the entry, so the reason lives where the
+# decision is visible. Parsed from the text rather than the TOML because
+# tomllib discards comments.
+waived = {}
+entries = []
+for name in ("mise.toml", "mise.macos.toml"):
+    for line in (repo / name).read_text().splitlines():
+        m = re.match(r'"(\w[\w-]*):(@?[^"]+)"\s*=', line)
+        if not m:
+            continue
+        mgr, pkg = m.groups()
+        entries.append((mgr, pkg))
+        comment = line.split("#", 1)[1] if "#" in line else ""
+        waived[(mgr, pkg)] = {w for w in ("registry-skip", "parity-skip")
+                              if w + ":" in comment}
+
+bad = []
+
+# --- registry rule -------------------------------------------------------
+# A system package whose name has an exact registry match belongs in [tools],
+# where every OS gets one locked version — unless the registry entry is
+# different software, which is what the waiver has to say.
+for mgr, pkg in entries:
+    if mgr not in ONPATH:
+        continue
+    if "registry-skip" in waived[(mgr, pkg)]:
+        continue
+    hit = subprocess.run(["mise", "search", "-m", "equal", "--no-header", pkg],
+                         capture_output=True, text=True, env=MISE_ENV)
+    # `mise search` exits non-zero when nothing matches, which is the common
+    # case. Anything else — a registry fetch that failed, a mise too old for
+    # these flags — must not read as "no match", or the whole registry half
+    # passes vacuously.
+    out = hit.stdout.strip()
+    if hit.returncode != 0 and not re.search(r"not found in registry", hit.stderr):
+        bad.append(f"{mgr}:{pkg}: registry lookup failed: "
+                   f"{hit.stderr.strip().splitlines()[0] if hit.stderr.strip() else hit.returncode}")
+    elif out:
+        bad.append(f"{mgr}:{pkg} has an exact registry match "
+                   f"({out.split()[0]}) — promote it to [tools] or add "
+                   f"'# registry-skip: <reason>'")
+
+# --- parity --------------------------------------------------------------
+# A name declared under two of the three Linux managers but not the third is
+# almost always a package added on one distro and forgotten on another. A name
+# declared under exactly one is manager-specific by construction and not
+# checked: Arch's hardware and desktop packages would otherwise make every
+# entry a waiver, and a check that is mostly waivers catches nothing.
+by_pkg = {}
+for mgr, pkg in entries:
+    if mgr in DISTRO:
+        by_pkg.setdefault(pkg, set()).add(mgr)
+for pkg, mgrs in sorted(by_pkg.items()):
+    if len(mgrs) != 2:
+        continue
+    missing = ", ".join(sorted(set(DISTRO) - mgrs))
+    if all("parity-skip" in waived[(m, pkg)] for m in mgrs):
+        continue
+    bad.append(f"{pkg} is declared for {', '.join(sorted(mgrs))} but not "
+               f"{missing} — declare it there or add '# parity-skip: <reason>' "
+               f"to every existing entry")
+
+for b in bad:
+    print(f"  ! {b}")
+print(f"  ! {len(bad)} problem(s)" if bad
+      else f"  . {len(entries)} package declaration(s) valid")
+sys.exit(1 if bad else 0)
+PY
+'''
+

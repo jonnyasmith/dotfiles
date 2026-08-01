@@ -13,25 +13,23 @@ home/.config/gh/hosts.yml
 .env
 .env.*
 
-# Machine-local state that tools write back into their own config dirs.
+# Machine-local state written INTO this working tree.
 #
-# Most of these are now structurally prevented rather than merely ignored: the
-# directories below are linked with `mode = "symlink-each"`, which links the
-# files we own individually and leaves the directory itself real, so a tool
-# writing a sibling writes it into ~ and never into this repo. They stay listed
-# because `mise bootstrap dotfiles add` would otherwise happily capture them.
-home/.config/karabiner/automatic_backups/
+# Load-bearing. ~/.config/nvim is a whole-directory symlink, so these are real
+# files in the repo the moment nvim writes them. Removing an entry here means
+# committing editor scratch state.
 home/.config/nvim/.netrwhist
 home/.config/nvim/spell/
+
+# Defensive. These directories are not linked as directories, so nothing can
+# write into them — herdr's siblings and Karabiner's backups land in ~ beside
+# a single-file link. They stay listed because `mise bootstrap dotfiles add`
+# would otherwise happily capture them.
+home/.config/karabiner/automatic_backups/
 home/.config/herdr/session.json
 home/.config/herdr/.plugins.lock
 home/.config/herdr/*.log
 home/.config/herdr/*.sock
-
-# tmux plugin manager and everything it installs. Cloned by [bootstrap.repos]
-# into ~/.config/tmux/plugins, which is a real directory beside the
-# symlink-each'd config files.
-home/.config/tmux/plugins/
 
 # macOS noise.
 .DS_Store

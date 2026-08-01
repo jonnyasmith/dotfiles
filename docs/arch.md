@@ -88,7 +88,6 @@ cannot install from the AUR.** Several packages this machine needs are AUR-only:
 | `envycontrol` | never packaged in `extra` |
 | `1password` | proprietary; upstream ships AUR + a signed repo |
 | `visual-studio-code-bin` | proprietary MS build of the OSS `code` package |
-| `neofetch` | upstream archived, dropped from the official repos |
 
 `mise.toml` covers these with an `arch-aur` task that shells out to `yay`, but that task
 needs `yay` to already exist. Bootstrapping `yay` needs `base-devel` and a `makepkg` run

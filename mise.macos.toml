@@ -58,42 +58,36 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 # dependencies, or are machine-global services — everything you actually invoke
 # moved to [tools] in mise.toml so Linux gets the same version. mise installs
 # these with its own built-in Homebrew support; real Homebrew is not required.
+#
+# `check:packages` holds the line: a formula whose name has an exact registry
+# match needs a `# registry-skip: <reason>`. Casks are out of scope — a cask is
+# a GUI app and the same-named registry entry is always a different vendor's
+# CLI (1password, claude and codex all collide today).
 
 [bootstrap.packages]
 
 "brew:avrdude" = "latest"
-"brew:azure-cli" = "latest"
-# btop is in [tools] for Linux only (its aqua backend has no darwin build), so
-# macOS takes it from brew.
-"brew:btop" = "latest"
-"brew:caddy" = "latest"
-"brew:clang-format" = "latest"
-"brew:cmake" = "latest"
-"brew:curl" = "latest"
-"brew:expat" = "latest"
+# btop is in [tools] for Linux only — its aqua backend publishes no darwin
+# build — so macOS takes it from brew.
+"brew:btop" = "latest"       # registry-skip: the registry entry has no darwin build; see [tools] in mise.toml
 "brew:git" = "latest"
-"brew:git-filter-repo" = "latest"
-"brew:herdr" = "latest"
 "brew:htop" = "latest"
-"brew:lcov" = "latest"
 "brew:mosquitto" = "latest"
-"brew:ninja" = "latest"
-"brew:pandoc" = "latest"
-"brew:pipx" = "latest"
 "brew:platformio" = "latest"
-"brew:poppler" = "latest"
-"brew:pytest" = "latest"
-"brew:ruff" = "latest"
-"brew:rustup" = "latest"
-"brew:tmux" = "latest"
-"brew:tree" = "latest"
+"brew:rustup" = "latest"     # registry-skip: the registry entry is rustup-init, which manages its own toolchain dir outside mise
+"brew:tree" = "latest"       # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "brew:wget" = "latest"
 "brew:zsh" = "latest"
+#
+# Removed rather than promoted or kept: pipx and pytest (uv owns per-project
+# tools and venvs), ruff (projects declare their own linter), curl and its
+# keg-only siblings expat/lcov/poppler (nothing resolves to them; macOS ships
+# curl), git-filter-repo and pandoc (unused for months). azure-cli, caddy,
+# clang-format, cmake, herdr, ninja and tmux went to [tools].
 
 # GUI applications and fonts.
 "brew-cask:1password" = "latest"
 "brew-cask:alfred" = "latest"
-"brew-cask:brave-browser" = "latest"
 "brew-cask:chatgpt" = "latest"
 "brew-cask:claude" = "latest"
 "brew-cask:codex" = "latest"
@@ -101,38 +95,33 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 "brew-cask:font-fira-mono-nerd-font" = "latest"
 "brew-cask:ghostty" = "latest"
 "brew-cask:google-chrome" = "latest"
-"brew-cask:inkscape" = "latest"
 "brew-cask:karabiner-elements" = "latest"
-# microsoft-auto-update is also absent, for the same reason as microsoft-teams
-# below: it is a bare .pkg cask, so mise shells out to `sudo installer` and
-# fails with "sudo requires a password but no TTY is available" mid-bootstrap.
-# It is a dependency of the Microsoft apps and they install it themselves, so
-# declaring it buys nothing.
-"brew-cask:microsoft-azure-storage-explorer" = "latest"
-# microsoft-teams is deliberately absent from this list: it is a pkg-installer
-# cask carrying installer `choices`, which mise's built-in brew-cask
-# implementation rejects outright ("pkg installer choices are not supported
-# yet") — and it fails the WHOLE packages phase, not just its own entry.
-# Installed by [tasks."setup:macos"] at the bottom of this file instead.
 "brew-cask:miro" = "latest"
 "brew-cask:obsidian" = "latest"
-"brew-cask:openttd" = "latest"
 "brew-cask:orbstack" = "latest"
-"brew-cask:parallels" = "latest"
 "brew-cask:rectangle" = "latest"
-"brew-cask:repo-prompt" = "latest"
-"brew-cask:slack" = "latest"
 "brew-cask:todoist-app" = "latest"
 "brew-cask:visual-studio-code" = "latest"
-"brew-cask:visual-studio-code@insiders" = "latest"
-
+#
+# Dropped as cold — untouched for 3–9 months on the audited machine:
+# microsoft-azure-storage-explorer, openttd, brave-browser, slack, inkscape,
+# microsoft-teams, repo-prompt, parallels. Dropping a declaration does not
+# uninstall; the Parallels VM images are a manual deletion.
+#
+# microsoft-teams is the one that mattered structurally. It is a pkg-installer
+# cask carrying installer `choices`, which mise's built-in brew-cask support
+# rejects outright ("pkg installer choices are not supported yet") — and it
+# failed the WHOLE packages phase, not just its own entry. It was therefore
+# installed by a special case in [tasks."setup:macos"] shelling out to real
+# Homebrew. Dropping it removes the last consumer of real Homebrew, so that
+# branch and the manual "install Homebrew first" step are both gone.
+#
+# visual-studio-code@insiders is dropped too: one VS Code, and Settings Sync
+# owns its extensions.
+#
 # VS Code extensions used to live here as `vscode:` package-plugin entries.
-# They do not: the `mise-plugins/mise-vscode-extensions` plugin the mise docs
-# name as the canonical example does not exist (that URL and every obvious
-# variant 404s), and a [bootstrap.plugins] entry pointing at it fails the whole
-# bootstrap at the very first phase. The 104 extensions live in
-# packages/vscode.txt and are applied by [tasks."setup:vscode"] in mise.toml,
-# which is cross-platform anyway — VS Code is not mac-only.
+# They do not, and no longer live in packages/vscode.txt either — Settings Sync
+# owns them. See docs/adr/0002-vscode-extensions-are-sync-owned.md.
 
 # ------------------------------------------------------------ macOS extras --
 #
@@ -145,16 +134,6 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 description = "macOS-only setup that has no declarative mise equivalent"
 run = '''
 set -u
-
-# microsoft-teams: see the note in [bootstrap.packages] above. Needs real
-# Homebrew because mise's cask installer cannot drive a pkg with choices.
-if [ -d "/Applications/Microsoft Teams.app" ]; then
-  echo "  . microsoft-teams"
-elif command -v brew >/dev/null 2>&1; then
-  brew install --cask microsoft-teams && echo "  + microsoft-teams"
-else
-  echo "  ! microsoft-teams needs Homebrew (pkg-installer cask); install manually"
-fi
 
 # Global .NET tools live in ~/.dotnet/tools, outside any SDK, so mise does not
 # track them and they must be installed separately.

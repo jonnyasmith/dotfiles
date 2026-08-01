@@ -9,11 +9,14 @@ export ZSH=$HOME/.oh-my-zsh
 
 export TERM='xterm-256color'
 
-plugins=(    
+# Keep in sync with [bootstrap.repos] in ~/.dotfiles/mise.toml.
+# One syntax highlighter only — zsh-syntax-highlighting and
+# fast-syntax-highlighting are both ZLE highlighters and fight over the same
+# hooks. zsh-autocomplete is gone rather than reordered: it must be sourced
+# before compinit, which the OPENSPEC block above already ran.
+plugins=(
     zsh-autosuggestions
-    zsh-syntax-highlighting
     fast-syntax-highlighting
-    zsh-autocomplete
 )
 
 source $ZSH/oh-my-zsh.sh
