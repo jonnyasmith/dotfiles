@@ -102,6 +102,13 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
   fi
 
+  # dnf5-plugins provides both `copr` and `config-manager`, used by the two
+  # blocks below. Fedora Workstation ships it, a minimal install does not, and
+  # each of those blocks is guarded by a repo file that an earlier run may
+  # already have written — so ensuring it inside either guard leaves the other
+  # to fail under `set -e`.
+  rpm -q dnf5-plugins >/dev/null 2>&1 || sudo dnf install -y dnf5-plugins
+
   # Ghostty COPR. Ghostty is not in Fedora's own repositories — the project
   # ships official binaries for macOS only and leaves Linux to distro and
   # community packagers. scottames/ghostty is the COPR that ghostty.org itself
@@ -109,11 +116,7 @@ if command -v dnf >/dev/null 2>&1; then
   # /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo,
   # so testing for that file is the idempotency guard; -y suppresses the
   # "this repository is not part of Fedora" acknowledgement prompt.
-  #
-  # The copr subcommand lives in dnf5-plugins, which Fedora Workstation ships
-  # but a minimal install does not.
   if [ ! -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo ]; then
-    rpm -q dnf5-plugins >/dev/null 2>&1 || sudo dnf install -y dnf5-plugins
     sudo dnf -y copr enable scottames/ghostty
   fi
 
@@ -133,6 +136,16 @@ if command -v apt-get >/dev/null 2>&1; then
   # the Ghostty PPA at the bottom. `if` rather than `&&` because this hook runs
   # under `set -e` and a machine without /etc/os-release must skip, not abort.
   if [ -r /etc/os-release ]; then . /etc/os-release; fi
+
+  # curl and gpg fetch and dearmour the signing keys below, and a minimal
+  # Debian install has neither. Missing curl is worse than a hard error:
+  # `gpg --dearmor` exits 0 on empty stdin, so the 1Password pipeline would
+  # write an empty keyring and then its sources file — and that file is the
+  # idempotency guard, so no re-run would repair it.
+  if ! command -v curl >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
+    sudo apt-get update
+    sudo apt-get install -y ca-certificates curl gnupg
+  fi
 
   # Accept the Microsoft core fonts EULA up front. Without this,
   # apt:ubuntu-restricted-extras raises a debconf dialog and a non-interactive
