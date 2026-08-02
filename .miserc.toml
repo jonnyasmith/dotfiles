@@ -1,9 +1,4 @@
-# Early-init settings. MUST live here, not in mise.toml: config-file discovery
-# happens before mise.toml is read, so `auto_env` there has no effect.
-#
-# auto_env makes mise load platform-specific config files automatically —
-# mise.macos.toml, mise.linux.toml, mise.windows.toml, mise.macos-arm64.toml.
-# That is the OS gate for anything [bootstrap.packages] cannot filter by
-# manager: [dotfiles] entries, login_shell, and macOS/Linux-only sections.
-# Defaults to enabled in mise 2027.6.0; set explicitly until then.
+# MUST live here, not in mise.toml: config-file discovery happens before
+# mise.toml is read, so `auto_env` there has no effect. It is what loads
+# mise.<os>.toml. Defaults to enabled in mise 2027.6.0.
 auto_env = true
