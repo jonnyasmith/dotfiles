@@ -466,10 +466,9 @@ _.path = ["~/.dotnet/tools"]
 # Caveat: plugin auto-updates are a separate mechanism (FORCE_AUTOUPDATE_PLUGINS)
 # and the docs do not say whether DISABLE_UPDATES covers them. Unverified here.
 #
-# codex, gemini-cli and copilot have the same problem and are NOT fixed by an
-# env var — their switches live in per-tool config files that also hold auth
-# state, so linking them would clobber it. See
-# docs/adr/0004-one-updater-per-binary.md for the exact keys and the reasoning.
+# The other four self-updaters (codex, gemini-cli, copilot, omp) have config
+# keys rather than env vars, so they are copy-mode dotfiles above. See
+# docs/adr/0004-one-updater-per-binary.md.
 DISABLE_UPDATES = "1"
 
 [settings.python]
