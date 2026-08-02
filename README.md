@@ -58,8 +58,9 @@ VS Code extensions are not a step at all: Settings Sync owns them
 
 Per-OS prerequisites that genuinely need a human — installing the OS, disk
 partitioning, GUI sign-ins, anything needing a reboot — are in `docs/`:
-[arch](docs/arch.md) · [fedora](docs/fedora.md) · [ubuntu](docs/ubuntu.md) ·
-[raspberry-pi](docs/raspberry-pi.md) · [wsl](docs/wsl.md) ·
+[arch](docs/arch.md) · [debian](docs/debian.md) · [fedora](docs/fedora.md) ·
+[ubuntu](docs/ubuntu.md) · [raspberry-pi](docs/raspberry-pi.md) ·
+[wsl](docs/wsl.md) ·
 [windows](docs/windows.md).
 
 ## How one config covers every OS

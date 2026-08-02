@@ -116,8 +116,8 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get install -y ca-certificates curl gnupg
   fi
 
-  # Without this, apt:ubuntu-restricted-extras raises a debconf dialog and a
-  # non-interactive bootstrap hangs on it indefinitely.
+  # Without this, ubuntu-restricted-extras raises a debconf dialog and a
+  # non-interactive setup:debian hangs on it indefinitely.
   if command -v debconf-set-selections >/dev/null 2>&1; then
     echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
       | sudo debconf-set-selections
@@ -278,18 +278,21 @@ run = '''
 set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
 
-# ghostty is absent from [bootstrap.packages] because its PPA is Ubuntu-only,
-# so the install sits behind the same guard pre-packages uses to add the PPA.
+# Neither is in [bootstrap.packages]: ghostty's PPA is Ubuntu-only and
+# ubuntu-restricted-extras is an Ubuntu package, so on Debian or Raspberry Pi OS
+# an unresolvable name would fail the whole apt phase.
 if [ -r /etc/os-release ]; then . /etc/os-release; fi
 case "${ID:-}:${ID_LIKE:-}" in
   *ubuntu*)
-    if command -v ghostty >/dev/null 2>&1; then
-      echo "  . ghostty"
-    elif sudo apt-get install -y ghostty; then
-      echo "  + ghostty"
-    else
-      echo "  ! ghostty install failed"
-    fi
+    for pkg in ghostty ubuntu-restricted-extras; do
+      if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q '^install ok installed$'; then
+        echo "  . $pkg"
+      elif sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"; then
+        echo "  + $pkg"
+      else
+        echo "  ! $pkg install failed"
+      fi
+    done
     ;;
 esac
 

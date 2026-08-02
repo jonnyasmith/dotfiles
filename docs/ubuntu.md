@@ -45,7 +45,7 @@ cd ~/.dotfiles && ./bootstrap.sh
 
 `ubuntu-restricted-extras` pulls in `ttf-mscorefonts-installer`, which raises a
 full-screen debconf dialog for the Microsoft EULA. A non-interactive
-`mise bootstrap` run will hang there.
+`setup:debian` run would hang there, so `pre-packages` pre-seeds the answer.
 
 Accept it once, up front, before bootstrapping:
 
@@ -83,7 +83,7 @@ binary with `[tools] neovim = "latest"` instead.
 
 Ubuntu carries `ghostty` from 26.04 onwards, but that copy lags upstream and
 24.04 has nothing at all. `pre-packages` adds `ppa:mkasberg/ghostty-ubuntu` —
-the PPA ghostty.org itself points Ubuntu users at — and `apt:ghostty` installs
+the PPA ghostty.org itself points Ubuntu users at — and `setup:debian` installs
 from it, so updates arrive through apt like everything else.
 
 That PPA step is the only one in the hook gated on the distro rather than on the
@@ -91,8 +91,10 @@ package manager. Launchpad builds PPAs for Ubuntu suites only, so adding it on
 Debian or Raspberry Pi OS would register a suite that 404s and break every later
 `apt update`. The gate is `ID`/`ID_LIKE` containing `ubuntu`.
 
-The upshot is that `apt:ghostty`, like `apt:ubuntu-restricted-extras`, does not
-resolve on the non-Ubuntu members of the apt family. Ghostty ships official
+Neither `ghostty` nor `ubuntu-restricted-extras` resolves on the non-Ubuntu
+members of the apt family, which is why both are installed by `setup:debian`
+under the same guard instead of being declared in `[bootstrap.packages]`, where
+one unresolvable name fails the whole apt phase. Ghostty ships official
 binaries for macOS only; every Linux package is a distro or community build, and
 there is no Debian one worth wiring in. Do not substitute the project's
 `curl … | bash` installer — see the note in `docs/fedora.md` on third-party
