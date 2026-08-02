@@ -20,9 +20,30 @@
   ends the run body at `${` + `#`, and the error names a comment tag you never
   wrote. Accumulate into a string instead.
 - `mise.lock` pins tools, not `[tools]`. Bump with `mise lock -g --bump` (`-g`
-  required) and commit it.
+  required) and commit it. `mise upgrade` holds inside the
+  `minimum_release_age` window, but `--bump` re-resolves against the eligible
+  set and rewrites locked versions *downwards* — 13 rollbacks observed,
+  including `uv 0.12.1 -> 0.11.32` (2026.7.18). Read `--dry-run` first; see
+  docs/adr/0006-fuzzy-resolution-is-quarantined-for-seven-days.md.
+- mise names the global lockfile after the config *directory*, not the config
+  file, and writes *through* the `[dotfiles]` symlink rather than replacing it
+  (2026.7.18) — which is what makes a committed lockfile possible.
 - `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is
   a leaf and no config declares it. Uninstall named formulae instead.
+- `[dotfiles]` entries take no `os` filter; an `os` key there is ignored
+  without warning. Platform-specific targets belong in `mise.<os>.toml`.
+- There is no `mise.wsl.toml` or `mise.arch.toml`: `os()` is `linux` under WSL
+  and on Arch. Anything imperative that differs must self-guard on a probe.
+- `gpg --dearmor` exits 0 on empty stdin and `set -e` only inspects the last
+  command in a pipeline, so a failed key fetch writes an empty keyring plus the
+  sources file that guards the block — and no re-run repairs it. Dearmour to a
+  temp file and size-check it before anything lands in /etc.
+- ssh matches later `Host` patterns against the *rewritten* hostname, so a
+  `Host github.com` block also matches an alias whose `HostName` is
+  `github.com`. Use `Match originalhost`. Verified on OpenSSH 9.9.
+- The uv and rustup installers append `$HOME`-expanded absolute paths to
+  `.zshenv`. Rewrite them as `$HOME` before committing, or the file stops
+  stowing onto any machine.
 
 ## Rules
 
@@ -42,6 +63,15 @@
   Waivers are trailing comments, never a separate manifest.
 - A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and sees only
   `config.toml`. Unset it before shelling out to `mise`.
+- Never pipe a third-party install script into a shell. Add the vendor's
+  repository and install the package instead.
+- A `[bootstrap.repos]` entry under `~/.oh-my-zsh/custom/plugins` and the
+  `plugins=()` list in `home/.zshrc` are one declaration in two places; change
+  both. Exactly one ZLE syntax highlighter — two fight over the same hooks.
+- `check:*` bodies use the standard library only: CI runs the gate with
+  `--skip-tools`, so the interpreter may be the system python3.
+- Scripts under `home/.config/tmux/scripts/` must run on bash 3.2 (stock
+  macOS): no `mapfile`, no associative arrays, no `${var^^}`.
 - A comment explains non-obvious local intent and nothing else. Anything that
   binds beyond the line it sits on has a home in the table in
   docs/agents/code-comments.md — read it before writing a comment block.

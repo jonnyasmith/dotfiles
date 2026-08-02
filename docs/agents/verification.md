@@ -30,7 +30,10 @@ gate.
   branch is one string to shellcheck.
 - CI is Linux, so no job ever loads `mise.macos.toml` or `mise.windows.toml`.
   `check:config` parsing them is the only signal they get.
-- CI passes `--skip-tools`; local runs do not.
+- CI passes `--skip-tools`; local runs do not. `install: false` on
+  `jdx/mise-action` stops only the *action* installing tools — `mise run`
+  installs the active toolset before it runs a task, so without `--skip-tools`
+  the gate still pulls every entry in `[tools]`.
 - `mise fmt --check` only inspects the configs the current OS loaded, so it is
   green on a mangled `mise.windows.toml` from a Mac. `check:fmt` compares each
   file against `mise fmt --stdin` instead, which needs no load. `mise fmt` does
@@ -40,8 +43,25 @@ gate.
   that, `[tasks.bootstrap]`'s `setup:*` glob reports "task not found".
 - `check:packages` takes ~1s because it shells out to `mise search` per entry.
   It and `check:shell` are the only checks with a dependency beyond python.
+- `check:config` needs python 3.11+ for `tomllib`, and `check:shell` needs zsh,
+  which GitHub runners do not ship — the workflow apt-installs both.
+- `check:dconf` validates section *paths* against the installed schema XML and
+  key names within a matched schema. It cannot catch a typo in a parent prefix
+  whose siblings are also absent, and it says nothing about a value: `dconf
+  load` accepts any path, and a wrong value is rejected by the schema at read
+  time instead.
 
 ## What counts as verified
 
 Claim what you ran. Nothing in the gate proves a package installs, a repo is
 reachable, or a `setup:*` task works on its target distro.
+
+Proving a relative `include.path` resolved against `~/.config/git/` rather than
+inside the symlink target:
+
+```bash
+git config --show-origin --get mergetool.smerge.keepBackup
+```
+
+It reports `file:~/.config/git/config.os`, and no `config.os` exists in the
+repo.
