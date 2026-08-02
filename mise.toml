@@ -237,36 +237,37 @@ corepack = true
 # mise.linux.toml adds first.
 
 [bootstrap.packages]
-# --- Debian / Ubuntu / Raspberry Pi / WSL ---
-"apt:1password" = "latest"             # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
-"apt:build-essential" = "latest"       # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
-"apt:ca-certificates" = "latest"       # Docker-repo prerequisite; also what makes HTTPS apt sources work
-"apt:code" = "latest"                  # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
-"apt:containerd.io" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
+# --- Debian / Raspberry Pi / WSL ---
+"apt:1password" = "latest"                 # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
+"apt:build-essential" = "latest"           # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
+"apt:ca-certificates" = "latest"           # Docker-repo prerequisite; also what makes HTTPS apt sources work
+"apt:code" = "latest"                      # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
+"apt:containerd.io" = "latest"             # parity-skip: Arch ships the whole engine as `docker`
 "apt:curl" = "latest"
-"apt:dbus-x11" = "latest"              # dbus-launch, needed by gnome-tweaks over SSH/X
-"apt:docker-buildx-plugin" = "latest"  # parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-ce" = "latest"             # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
-"apt:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
+"apt:dbus-x11" = "latest"                  # dbus-launch, needed by gnome-tweaks over SSH/X
+"apt:docker-buildx-plugin" = "latest"      # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce" = "latest"                 # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-ce-cli" = "latest"             # parity-skip: Arch ships the whole engine as `docker`
+"apt:docker-compose-plugin" = "latest"     # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
-"apt:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
+"apt:google-chrome-stable" = "latest"      # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "apt:htop" = "latest"
-"apt:nala" = "latest"                  # apt front-end used throughout docs/wsl.md
-"apt:python3-pynvim" = "latest"        # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
-"apt:socat" = "latest"                 # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
-"apt:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"apt:libavcodec-extra" = "latest"          # the extra codec set; needs contrib/non-free, enabled in pre-packages
+"apt:nala" = "latest"                      # apt front-end used throughout docs/wsl.md
+"apt:python3-pynvim" = "latest"            # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
+"apt:socat" = "latest"                     # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
+"apt:ttf-mscorefonts-installer" = "latest" # EULA pre-seeded in pre-packages, or the install blocks on a debconf dialog
+"apt:tree" = "latest"                      # registry-skip: registry `tree` is a Rust reimplementation with different flags
+"apt:unrar" = "latest"                     # non-free, enabled in pre-packages
 "apt:unzip" = "latest"
 "apt:vlc" = "latest"
 "apt:wget" = "latest"
 "apt:xz-utils" = "latest"
 "apt:zip" = "latest"
-"apt:zsh" = "latest"                   # pairs with [bootstrap.user].login_shell in mise.linux.toml
+"apt:zsh" = "latest"                       # pairs with [bootstrap.user].login_shell in mise.linux.toml
 #
-# ghostty and ubuntu-restricted-extras are NOT declared here: the first's PPA
-# builds for Ubuntu suites only and the second is an Ubuntu package, so on pure
-# Debian or Raspberry Pi OS both are unresolvable and one bad name fails the
-# whole apt phase. setup:debian installs them behind an `*ubuntu*` guard.
+# ghostty is NOT declared here: no Debian package exists, and the only Linux
+# builds are distro or community ones. Use GNOME Console until that changes.
 
 # --- Fedora ---
 "dnf:1password" = "latest"             # repo imported in pre-packages. registry-skip: registry `1password` is the CLI, not the desktop app. parity-skip: Arch takes it from the AUR
@@ -278,7 +279,7 @@ corepack = true
 "dnf:docker-ce" = "latest"             # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
-"dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
+"dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian has no ghostty package
 "dnf:git" = "latest"
 "dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "dnf:htop" = "latest"
@@ -300,7 +301,7 @@ corepack = true
 "pacman:docker" = "latest"              # parity-skip: Debian and Fedora take the Docker CE package set instead
 "pacman:docker-compose" = "latest"      # registry-skip: the registry ships a standalone binary, not the CLI plugin `docker compose` resolves. parity-skip: Debian and Fedora use docker-compose-plugin
 "pacman:extension-manager" = "latest"   # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
-"pacman:ghostty" = "latest"             # terminal. parity-skip: Debian's PPA is Ubuntu-only, so setup:debian installs it there
+"pacman:ghostty" = "latest"             # terminal. parity-skip: Debian has no ghostty package
 "pacman:git" = "latest"
 "pacman:htop" = "latest"                # the htoprc this repo links has to have the program it configures
 "pacman:less" = "latest"

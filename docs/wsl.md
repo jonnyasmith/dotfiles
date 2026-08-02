@@ -1,13 +1,6 @@
-# WSL (Debian and Ubuntu)
+# WSL (Debian)
 
-Harvested from the deleted `wsl` branch, tag `archive/debian` (`debian.md`,
-`ubuntu.md`, `README.md`, `.zshrc`).
-
-The Debian and Ubuntu runbooks were byte-identical apart from three lines: the
-document title and the two Docker apt URLs (`download.docker.com/linux/debian`
-vs `.../linux/ubuntu`). They are one document now, and that substitution no
-longer appears here at all — the pre-packages hook derives it from `$ID` in
-`/etc/os-release`.
+Harvested from the deleted `wsl` branch, tag `archive/debian`.
 
 Everything in this file needs a human: a reboot, a GUI sign-in, a sudo password,
 a Windows-side action, or a group membership that only takes effect after
@@ -25,8 +18,7 @@ From an elevated PowerShell:
 wsl --install --distribution Debian
 ```
 
-For Ubuntu, `wsl --install --distribution Ubuntu`. `wsl --list --online` shows
-the available distribution names.
+`wsl --list --online` shows the available distribution names.
 
 This enables the Virtual Machine Platform and WSL features and **requires a
 reboot** on a machine that has never had WSL enabled. Reference:
@@ -69,10 +61,6 @@ CE packages are declared in `[bootstrap.packages]`, and `setup:docker` adds you
 to the `docker` group and enables the service where systemd is running. Nothing
 below needs doing by hand except the two things convergence deliberately will
 not do.
-
-The Debian/Ubuntu split the old runbook carried is gone: the distribution
-segment of the `download.docker.com` URLs was the only difference, and the hook
-now takes it from `$ID` in `/etc/os-release`.
 
 ### /etc/wsl.conf
 

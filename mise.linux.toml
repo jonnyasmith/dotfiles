@@ -103,7 +103,7 @@ if command -v dnf >/dev/null 2>&1; then
   sudo dnf -q check-update || true
 fi
 
-# -------------------------------------------------------- Debian / Ubuntu ----
+# ----------------------------------------------------------- Debian family ----
 if command -v apt-get >/dev/null 2>&1; then
   # `if` rather than `&&`: this hook runs under `set -e`, and a machine with no
   # /etc/os-release must skip rather than abort.
@@ -116,11 +116,21 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get install -y ca-certificates curl gnupg
   fi
 
-  # Without this, ubuntu-restricted-extras raises a debconf dialog and a
-  # non-interactive setup:debian hangs on it indefinitely.
+  # Without this, ttf-mscorefonts-installer raises a debconf dialog for the
+  # Microsoft EULA and any non-interactive apt run hangs on it indefinitely.
   if command -v debconf-set-selections >/dev/null 2>&1; then
     echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
       | sudo debconf-set-selections
+  fi
+
+  # Debian's installer writes `main non-free-firmware` only, which leaves
+  # ttf-mscorefonts-installer (contrib) and unrar (non-free) unresolvable. The
+  # sed rewrites the deb822 stanza the installer wrote; Raspberry Pi OS already
+  # enables all four components in a sources.list this file does not exist for.
+  deb_sources=/etc/apt/sources.list.d/debian.sources
+  if [ -f "$deb_sources" ] && ! grep -q '^Components:.* non-free\( \|$\)' "$deb_sources"; then
+    sudo sed -i 's/^Components: .*/Components: main contrib non-free non-free-firmware/' \
+      "$deb_sources"
   fi
 
   # apt, not snap: the snap build cannot use the SSH agent or system
@@ -138,18 +148,17 @@ if command -v apt-get >/dev/null 2>&1; then
       | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
   fi
 
-  # Docker publishes repos for debian, ubuntu and raspbian only, so on a
-  # derivative $ID (linuxmint, pop, zorin) is a name that 404s. $ID_LIKE decides.
+  # Docker publishes repos for debian and raspbian, so on a derivative $ID is a
+  # name that 404s. $ID_LIKE decides.
   if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
     case " ${ID:-} ${ID_LIKE:-} " in
       *" raspbian "*) docker_distro=raspbian ;;
-      *" ubuntu "*)   docker_distro=ubuntu ;;
       *" debian "*)   docker_distro=debian ;;
       *)              docker_distro= ;;
     esac
     # VERSION_CODENAME is absent on Debian testing/unstable and on several
-    # container images; UBUNTU_CODENAME is set on every Ubuntu derivative.
-    docker_codename="${VERSION_CODENAME:-${UBUNTU_CODENAME:-}}"
+    # container images.
+    docker_codename="${VERSION_CODENAME:-}"
 
     if [ -z "$docker_distro" ] || [ -z "$docker_codename" ]; then
       echo "  ! no Docker repo for ID=${ID:-unset} codename=${docker_codename:-unset}; skipping"
@@ -199,21 +208,6 @@ if command -v apt-get >/dev/null 2>&1; then
     fi
     rm -f "$chrome_key"
   fi
-
-  # Guarded to the Ubuntu family, unlike the two repos above: Launchpad only
-  # builds PPAs for Ubuntu suites, so on Debian or Raspberry Pi OS this would
-  # add a suite that 404s and break every later `apt update`. The guard greps
-  # the PPA URL, not a filename — add-apt-repository writes `.sources` on
-  # 24.04+ and a `.list` on older releases.
-  case "${ID:-}:${ID_LIKE:-}" in
-    *ubuntu*)
-      if ! grep -rqs 'ppa.launchpadcontent.net/mkasberg/ghostty-ubuntu' \
-           /etc/apt/sources.list /etc/apt/sources.list.d/; then
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository -y ppa:mkasberg/ghostty-ubuntu
-      fi
-      ;;
-  esac
 
   sudo apt-get update
 fi
@@ -273,30 +267,10 @@ echo "  . fedora setup complete"
 '''
 
 [tasks."setup:debian"]
-description = "Debian/Ubuntu post-bootstrap setup. No-op without apt-get."
+description = "Debian post-bootstrap setup. No-op without apt-get."
 run = '''
-set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
-
-# Neither is in [bootstrap.packages]: ghostty's PPA is Ubuntu-only and
-# ubuntu-restricted-extras is an Ubuntu package, so on Debian or Raspberry Pi OS
-# an unresolvable name would fail the whole apt phase.
-if [ -r /etc/os-release ]; then . /etc/os-release; fi
-case "${ID:-}:${ID_LIKE:-}" in
-  *ubuntu*)
-    for pkg in ghostty ubuntu-restricted-extras; do
-      if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q '^install ok installed$'; then
-        echo "  . $pkg"
-      elif sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$pkg"; then
-        echo "  + $pkg"
-      else
-        echo "  ! $pkg install failed"
-      fi
-    done
-    ;;
-esac
-
-echo "  . debian/ubuntu setup complete"
+echo "  . debian setup complete"
 '''
 
 [tasks."setup:docker"]
