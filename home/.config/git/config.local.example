@@ -2,10 +2,6 @@
 #
 #     cp ~/.dotfiles/home/.config/git/config.local.example ~/.config/git/config.local
 #
-# This file is NOT tracked, and neither is config.work. They exist so the work
-# org name and work email stay out of a public repo; everything about *how* the
-# routing works lives in the tracked config next to them.
-#
 # Replace ORG with the GitHub org. The host alias `github-work` is defined in
 # ~/.ssh/config and pins the work 1Password key - do not change it here without
 # changing it there.
@@ -23,11 +19,9 @@
 [includeIf "hasconfig:remote.*.url:ssh://git@github.com/ORG/**"]
     path = config.work
 
-# ---------------------------------------------------------------------------
 # And create ~/.config/git/config.work with just the work identity:
 #
 #     [user]
 #         email = you@example.com
 #
 # Azure DevOps repos pick this up too, via an [includeIf] in the tracked config.
-# ---------------------------------------------------------------------------

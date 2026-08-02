@@ -1,24 +1,14 @@
 #!/usr/bin/env bash
-#
-# Bring this machine up to what mise.toml declares.
+# Bring this machine up to what mise.toml declares.  # comment-budget-skip: the usage block below is this script's interface
 #
 #   ./bootstrap.sh              # converge everything
 #   ./bootstrap.sh --dry-run    # show what would change, touch nothing
 #   ./bootstrap.sh --status     # what is currently out of sync
 #
 # This script exists only to solve the chicken-and-egg: mise cannot install
-# itself from its own config. Everything else — system packages, git repos,
-# dotfiles, macOS defaults, systemd units, the login shell, dev tools, and the
-# per-platform setup tasks — is declared in mise.toml and the mise.<os>.toml
-# beside it, and applied by `mise bootstrap`. If you are looking for what this
-# machine installs, read those files, not this one.
+# itself from its own config. Everything else is `mise bootstrap`.
 #
 # Everything below is idempotent; re-run it any time.
-#
-# Deliberately NOT handled, because each needs a human at a GUI:
-#   - signing in to 1Password and enabling Settings -> Developer -> SSH agent
-#   - `prefix + I` inside tmux once, to fetch tmux plugins
-#   - the per-OS prerequisites in docs/<os>.md
 
 set -uo pipefail
 
@@ -45,18 +35,15 @@ case "${1:-}" in
 	*)         die "unknown flag: $1 (use --dry-run or --status)" ;;
 esac
 
-# The repo has to live at ~/.dotfiles. [settings] is not templated, so
-# `dotfiles.root` in mise.toml is the literal path ~/.dotfiles/home and a clone
-# anywhere else would link every dotfile to a directory that does not exist.
 say "Preflight"
+# A clone elsewhere links every dotfile into a directory that does not exist.
 if [[ "$DOTFILES" != "$HOME/.dotfiles" ]]; then
 	die "this repo must be cloned to ~/.dotfiles (found $DOTFILES) — mise.toml's dotfiles.root is a literal path"
 fi
 ok "repo at ~/.dotfiles"
 
-# mise itself. Its own installer is the only bootstrap dependency; on a fresh
-# machine there is no package manager we can rely on being present, and mise's
-# brew/apt/dnf/pacman support means we do not need one afterwards.
+# mise's own installer. The one place this repo pipes a script into a shell:
+# a fresh machine has no package manager we can rely on to carry mise.
 if command -v mise >/dev/null 2>&1; then
 	ok "mise $(mise --version | awk '{print $1}')"
 else
@@ -72,10 +59,8 @@ fi
 mise trust --quiet "$DOTFILES" || die "mise trust failed"
 ok "config trusted"
 
-# The work org and work email are not in this repo, which is public. Without
-# config.local, git silently ignores the missing include and work repos commit
-# under the personal identity — a wrong-identity failure with no error, which is
-# precisely what the routing exists to prevent. So say so, loudly, every run.
+# config.local is not in this public repo. Without it git silently ignores the
+# missing include and work repos commit under the personal identity.
 if [[ -f "$HOME/.config/git/config.local" ]]; then
 	ok "work git identity configured"
 else
@@ -96,8 +81,7 @@ case "$MODE" in
 esac
 
 say "Bootstrap"
-# --yes skips the per-phase confirmation prompts. Package installs on Linux
-# still prompt for sudo, which is deliberate and cannot be skipped safely.
+# --yes skips the per-phase prompts; Linux package installs still ask for sudo.
 if mise bootstrap --yes; then
 	printf '\n%s\n' "${GREEN}${BOLD}Done.${RESET} Start a new shell to pick up the environment:"
 	printf '  exec zsh\n'

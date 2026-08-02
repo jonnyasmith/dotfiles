@@ -90,9 +90,14 @@ That line is Windows-only and comes from the archived
 
 ## 5. PowerShell modules
 
-The profile in `home/Documents/PowerShell/Microsoft.PowerShell_profile.ps1`
-imports these only if they are present, so the shell works without them. They
-come from the PowerShell Gallery, not from this repo — install once per machine:
+The profile is `home/Documents/PowerShell/Microsoft.PowerShell_profile.ps1`,
+applied by mise `[dotfiles]` to `~\Documents\PowerShell\` — i.e. **pwsh 7+**
+(`Microsoft.PowerShell` from `packages/winget.txt`). Windows PowerShell 5.1
+reads `~\Documents\WindowsPowerShell\` instead and is deliberately unmanaged.
+
+It imports these only if they are present, so the shell works without them.
+They come from the PowerShell Gallery, not from this repo — install once per
+machine:
 
 ```powershell
 Install-Module -Name PSFzf -RequiredVersion 2.5.16 -Force
@@ -103,6 +108,15 @@ Install-Module z -AllowClobber -Force
 Exactly as in the archived `windows/post-install.ps1`. Add `-Scope CurrentUser`
 to each if you would rather not get an elevation prompt for `Program Files`.
 `PSFzf` also needs the `fzf` binary, which mise installs.
+
+**Aliases deliberately not ported** from `home/.config/zsh/aliases.zsh`:
+`auu` / `nuu` (apt and nala — those belong in WSL, see `docs/wsl.md`), `buu`
+(Homebrew), `code` (aliased to `code-insiders` on macOS; Windows installs
+stable), `wtc` / `wtr` / `wtl` (the `worktree` helper they call is not in this
+repo), and `flush`, `sniff`, `httpdump`, `cleanup`, `fs`, `emptytrash`,
+`hidedesktop`, `showdesktop`, the `GET`/`HEAD`/`POST` `lwp-request` loop and
+the `grep`/`df`/`du` coreutils wrappers — macOS- or GNU-only, with no Windows
+equivalent worth faking.
 
 ## 6. Nerd font
 

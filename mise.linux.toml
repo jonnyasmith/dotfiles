@@ -1,65 +1,28 @@
-# Linux-only configuration. Loaded automatically beside mise.toml because
-# .miserc.toml sets `auto_env = true`; on macOS and Windows this file is not
-# read at all. Merges with mise.toml rather than replacing it.
-#
-# IMPORTANT: this file loads on EVERY Linux — Arch, Fedora, Debian, Ubuntu,
-# Raspberry Pi and WSL alike. There is no mise.arch.toml or mise.wsl.toml, and
-# `os()` returns plain "linux" under WSL. So everything imperative in here must
-# self-guard on something that identifies the distro (`command -v pacman`,
-# `command -v dnf`, `command -v apt-get`, `grep -qi microsoft /proc/version`)
-# and no-op cleanly everywhere else.
-#
-# The declarative package lists do NOT live here — they are in mise.toml, where
-# the `apt:`/`dnf:`/`pacman:` manager prefix already scopes them correctly.
+# Linux-only, loaded beside mise.toml by auto_env. It loads on EVERY Linux, so
+# everything imperative here self-guards on a distro probe.
 
 # ------------------------------------------------------------------- env --
-#
-# Environment that differs per OS. This lives here rather than as a Tera branch
-# in home/.config/zsh/os.zsh.tmpl because the per-OS files are now linked into
-# ~/.config/mise (see [dotfiles] in mise.toml), so this file is loaded from
-# every directory rather than only inside the repo.
-#
-# What that buys over the rendered zsh: `mise x`, `mise en`, `mise run` and shim
-# invocations all see these, not just interactive zsh, and the values stop
-# needing shell quoting. What it does not change: a shell that never runs
-# `mise activate` still does not get them, exactly as before — os.zsh was
-# sourced from .zshrc only.
 
 [env]
-# 1Password SSH agent socket. Under WSL nothing listens on it until the
-# npiperelay/socat bridge to the Windows agent is running (docs/wsl.md), but
-# exporting it unconditionally is still correct: ssh fails identically with a
-# missing socket and an unset variable, and the bridge creates the socket at
-# this exact path once started.
+# Under WSL nothing listens here until the npiperelay/socat bridge is running
+# (docs/wsl.md); exporting it unconditionally is still correct.
 SSH_AUTH_SOCK = "{{env.HOME}}/.1password/agent.sock"
 
-# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
-# Distinct from the pnpm binary itself, which mise owns. The literal path is
-# repeated rather than written as {{env.PNPM_HOME}} because env entries resolve
-# in order and a var is not guaranteed visible to its own table.
+# pnpm's own global bin dir, not the pnpm binary. The path is repeated rather
+# than written as {{env.PNPM_HOME}}: a var is not visible to its own table.
 PNPM_HOME = "{{env.HOME}}/.local/share/pnpm"
 _.path = ["{{env.HOME}}/.local/share/pnpm/bin"]
 
 [bootstrap.user]
-# Every one of the old runbooks ended with "install zsh, then remember to chsh"
-# and none of them did it. This is step 8 of `mise bootstrap`.
-#
-# /usr/bin/zsh, not /bin/zsh: chsh validates against /etc/shells, and Fedora and
-# Debian/Ubuntu both list the /usr path there. `login_shell` is not templated,
-# which is exactly why it is in a per-platform file.
-#
-# Still prompts for the account password, and PAM only picks the change up at
-# the next login.
+# /usr/bin/zsh, not /bin/zsh: chsh validates against /etc/shells, and Fedora
+# and Debian both list the /usr path there. Still prompts for the account
+# password, and PAM only picks the change up at the next login.
 login_shell = "/usr/bin/zsh"
 
 # ------------------------------------------------------------ repo setup --
 #
-# Runs before [bootstrap.packages]. Its whole job is adding the third-party
-# repositories that some of those packages come from — mise can install a
-# package but cannot teach a package manager where to find it.
-#
-# Hook `run` bodies are NOT tera-templated (handed straight to sh), so shell
-# syntax here is unrestricted. Everything is guarded so re-running is free.
+# Runs before [bootstrap.packages]: mise can install a package but cannot teach
+# a package manager where to find it. Everything is guarded so a re-run is free.
 
 [bootstrap.hooks.pre-packages]
 run = '''
@@ -68,10 +31,8 @@ set -eu
 # ---------------------------------------------------------------- Fedora ----
 if command -v dnf >/dev/null 2>&1; then
 
-  # dnf tuning. The Fedora runbook used:
-  #   echo "max_parallel_downloads=10" | sudo tee /etc/dnf/dnf.conf --append
-  # which is NOT idempotent — `tee --append` re-appends on every run, so a box
-  # bootstrapped five times ends up with five copies of each key. Test first.
+  # `tee --append` is not idempotent — five bootstraps leave five copies of
+  # each key — so test before appending.
   for kv in max_parallel_downloads=10 fastestmirror=true; do
     key=${kv%%=*}
     if ! grep -qE "^[[:space:]]*${key}[[:space:]]*=" /etc/dnf/dnf.conf; then
@@ -79,23 +40,19 @@ if command -v dnf >/dev/null 2>&1; then
     fi
   done
 
-  # RPM Fusion (free). Not needed for vlc any more — Fedora ships vlc in its
-  # own repositories now — but the codecs behind it still are, and enabling it
-  # is idempotent and cheap.
+  # RPM Fusion (free). vlc is in Fedora's own repositories now, but the codecs
+  # behind this are not.
   if ! rpm -q rpmfusion-free-release >/dev/null 2>&1; then
     sudo dnf install -y \
       "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
   fi
 
-  # 1Password rpm repo, verbatim from the Fedora runbook.
   if [ ! -f /etc/yum.repos.d/1password.repo ]; then
     sudo rpm --import https://downloads.1password.com/linux/keys/1password.asc
     sudo sh -c 'echo -e "[1password]\nname=1Password Stable Channel\nbaseurl=https://downloads.1password.com/linux/rpm/stable/\$basearch\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=\"https://downloads.1password.com/linux/keys/1password.asc\"" > /etc/yum.repos.d/1password.repo'
   fi
 
-  # VS Code yum repo. The old packages.sh listed `code` in its dnf array but
-  # never added a repo, so it only ever worked on a machine where someone had
-  # already done this by hand.
+  # VS Code yum repo; dnf:code resolves only once this exists.
   if [ ! -f /etc/yum.repos.d/vscode.repo ]; then
     sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
     printf '%s\n' \
@@ -110,10 +67,8 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/vscode.repo >/dev/null
   fi
 
-  # Google Chrome yum repo. Chrome is in no Fedora repository and never will
-  # be — it is proprietary. The rpm's own postinst writes this exact filename,
-  # so reusing it is what stops the machine ending up with two copies of the
-  # same repo once Chrome updates itself.
+  # Chrome is in no Fedora repository. The rpm's own postinst writes this exact
+  # filename, so reusing it stops the machine ending up with two copies.
   if [ ! -f /etc/yum.repos.d/google-chrome.repo ]; then
     sudo rpm --import https://dl.google.com/linux/linux_signing_key.pub
     printf '%s\n' \
@@ -127,26 +82,19 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/google-chrome.repo >/dev/null
   fi
 
-  # dnf5-plugins provides both `copr` and `config-manager`, used by the two
-  # blocks below. Fedora Workstation ships it, a minimal install does not, and
-  # each of those blocks is guarded by a repo file that an earlier run may
-  # already have written — so ensuring it inside either guard leaves the other
-  # to fail under `set -e`.
+  # Provides `copr` and `config-manager` for the two blocks below. Ensured out
+  # here because each of those is guarded by a repo file an earlier run may
+  # already have written, which would leave the other to fail under `set -e`.
   rpm -q dnf5-plugins >/dev/null 2>&1 || sudo dnf install -y dnf5-plugins
 
-  # Ghostty COPR. Ghostty is not in Fedora's own repositories — the project
-  # ships official binaries for macOS only and leaves Linux to distro and
-  # community packagers. scottames/ghostty is the COPR that ghostty.org itself
-  # points Fedora users at. `copr enable` writes
-  # /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo,
-  # so testing for that file is the idempotency guard; -y suppresses the
-  # "this repository is not part of Fedora" acknowledgement prompt.
+  # Ghostty is not in Fedora's repositories; scottames/ghostty is the COPR
+  # ghostty.org points Fedora users at. `copr enable` writes the repo file
+  # tested here; -y suppresses the "not part of Fedora" prompt.
   if [ ! -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo ]; then
     sudo dnf -y copr enable scottames/ghostty
   fi
 
-  # Docker CE. Fedora's own moby-engine lags upstream and carries no compose
-  # plugin; download.docker.com is what Docker's install docs point Fedora at.
+  # Fedora's own moby-engine lags upstream and carries no compose plugin.
   if [ ! -f /etc/yum.repos.d/docker-ce.repo ]; then
     sudo dnf -y config-manager addrepo \
       --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
@@ -157,32 +105,26 @@ fi
 
 # -------------------------------------------------------- Debian / Ubuntu ----
 if command -v apt-get >/dev/null 2>&1; then
-  # Sourced once for the whole branch: it names the Docker repo below and gates
-  # the Ghostty PPA at the bottom. `if` rather than `&&` because this hook runs
-  # under `set -e` and a machine without /etc/os-release must skip, not abort.
+  # `if` rather than `&&`: this hook runs under `set -e`, and a machine with no
+  # /etc/os-release must skip rather than abort.
   if [ -r /etc/os-release ]; then . /etc/os-release; fi
 
-  # curl and gpg fetch and dearmour the signing keys below, and a minimal
-  # Debian install has neither. Missing curl is worse than a hard error:
-  # `gpg --dearmor` exits 0 on empty stdin, so the 1Password pipeline would
-  # write an empty keyring and then its sources file — and that file is the
-  # idempotency guard, so no re-run would repair it.
+  # The key fetches below need curl and gpg, and a minimal Debian has neither.
+  # A failed fetch here is unrepairable — see docs/agents/coding-standards.md.
   if ! command -v curl >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
     sudo apt-get update
     sudo apt-get install -y ca-certificates curl gnupg
   fi
 
-  # Accept the Microsoft core fonts EULA up front. Without this,
-  # apt:ubuntu-restricted-extras raises a debconf dialog and a non-interactive
-  # bootstrap hangs on it indefinitely.
+  # Without this, apt:ubuntu-restricted-extras raises a debconf dialog and a
+  # non-interactive bootstrap hangs on it indefinitely.
   if command -v debconf-set-selections >/dev/null 2>&1; then
     echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" \
       | sudo debconf-set-selections
   fi
 
-  # 1Password apt repo, replacing `snap install 1password`. The snap build
-  # cannot use the SSH agent or system authentication, and the SSH agent is the
-  # entire reason 1Password is on these machines.
+  # apt, not snap: the snap build cannot use the SSH agent or system
+  # authentication, which is the entire reason 1Password is on these machines.
   if [ ! -f /etc/apt/sources.list.d/1password.list ]; then
     curl -sS https://downloads.1password.com/linux/keys/1password.asc \
       | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
@@ -196,11 +138,8 @@ if command -v apt-get >/dev/null 2>&1; then
       | sudo gpg --dearmor --output /usr/share/debsig/keyrings/AC2D62742012EA22/debsig.gpg
   fi
 
-  # Docker CE. The distribution segment of these URLs is the ONLY thing that
-  # differed between the Debian and Ubuntu runbooks, so the two collapse into
-  # one branch — but it is NOT $ID. Docker publishes repos for debian, ubuntu
-  # and raspbian only, and on a derivative (linuxmint, pop, zorin) $ID is a
-  # name download.docker.com 404s on, so $ID_LIKE decides.
+  # Docker publishes repos for debian, ubuntu and raspbian only, so on a
+  # derivative $ID (linuxmint, pop, zorin) is a name that 404s. $ID_LIKE decides.
   if [ ! -f /etc/apt/sources.list.d/docker.list ]; then
     case " ${ID:-} ${ID_LIKE:-} " in
       *" raspbian "*) docker_distro=raspbian ;;
@@ -216,12 +155,9 @@ if command -v apt-get >/dev/null 2>&1; then
       echo "  ! no Docker repo for ID=${ID:-unset} codename=${docker_codename:-unset}; skipping"
     else
       sudo install -m 0755 -d /etc/apt/keyrings
-      # Dearmoured to a temp file and size-checked before anything is written
-      # to /etc. `set -e` only inspects the LAST command of a pipeline and
-      # `gpg --dearmor` exits 0 on empty stdin, so a 404 would otherwise leave
-      # an empty keyring plus a docker.list that breaks every subsequent
-      # `apt-get update` — and docker.list is the idempotency guard, so no
-      # re-run would ever repair it.
+      # Dearmoured to a temp file and size-checked before anything reaches
+      # /etc: docker.list is the idempotency guard, so an empty keyring written
+      # beside it is unrepairable.
       docker_key="$(mktemp)"
       if curl -fsSL "https://download.docker.com/linux/${docker_distro}/gpg" \
            | gpg --dearmor > "$docker_key" && [ -s "$docker_key" ]; then
@@ -235,7 +171,6 @@ if command -v apt-get >/dev/null 2>&1; then
     fi
   fi
 
-  # VS Code apt repo (deb822), replacing `snap install --classic code`.
   if [ ! -f /etc/apt/sources.list.d/vscode.sources ]; then
     sudo apt-get install -y wget gpg
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
@@ -250,14 +185,8 @@ if command -v apt-get >/dev/null 2>&1; then
       | sudo tee /etc/apt/sources.list.d/vscode.sources >/dev/null
   fi
 
-  # Google Chrome apt repo. Same reasoning as the Fedora block: proprietary,
-  # so in no distribution repository, and the deb's postinst writes this exact
-  # filename itself — reusing the name avoids a duplicate source.
-  #
-  # Key handled the way the Docker block does, and for the same reason: `gpg
-  # --dearmor` exits 0 on empty stdin, so a failed fetch would otherwise write
-  # an empty keyring plus the .list that guards this block, and no re-run
-  # would ever repair it.
+  # Proprietary, so in no distribution repository. The deb's own postinst
+  # writes this exact filename, so reusing the name avoids a duplicate source.
   if [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
     chrome_key="$(mktemp)"
     if curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
@@ -271,23 +200,11 @@ if command -v apt-get >/dev/null 2>&1; then
     rm -f "$chrome_key"
   fi
 
-  # Ghostty PPA. Ghostty reached Ubuntu's own repositories in 26.04, but that
-  # copy lags the upstream release; mkasberg/ghostty-ubuntu is the PPA
-  # ghostty.org points Ubuntu users at and it covers 24.04 as well. Explicitly
-  # NOT the `curl … | bash` installer from the same project — see docs/fedora.md
-  # on why third-party install scripts are not piped into a shell here.
-  #
-  # Guarded to the Ubuntu family specifically, unlike the two repos above.
-  # Launchpad only builds PPAs for Ubuntu suites, so on Debian or Raspberry Pi
-  # OS add-apt-repository would add a suite that 404s and break `apt update`
-  # for every subsequent run. That is why ghostty is not in
-  # [bootstrap.packages] at all — setup:debian installs it behind this same
-  # guard instead.
-  #
-  # The guard greps for the PPA's URL rather than a filename: add-apt-repository
-  # writes `<owner>-ubuntu-<ppa>-<codename>.sources` on 24.04+ but a `.list` on
-  # older releases, so the name is not stable across the versions this repo has
-  # to work on. The URL is.
+  # Guarded to the Ubuntu family, unlike the two repos above: Launchpad only
+  # builds PPAs for Ubuntu suites, so on Debian or Raspberry Pi OS this would
+  # add a suite that 404s and break every later `apt update`. The guard greps
+  # the PPA URL, not a filename — add-apt-repository writes `.sources` on
+  # 24.04+ and a `.list` on older releases.
   case "${ID:-}:${ID_LIKE:-}" in
     *ubuntu*)
       if ! grep -rqs 'ppa.launchpadcontent.net/mkasberg/ghostty-ubuntu' \
@@ -304,25 +221,16 @@ fi
 
 # ------------------------------------------------------------------- tasks --
 #
-# One task per platform, all reached by the single [tasks.bootstrap] in
-# mise.toml via `depends = ["setup:*"]`. Each must be idempotent (it runs on
-# every bootstrap) and self-guarding (this file loads on all Linux).
-#
-# Do NOT define [tasks.bootstrap] here: same-named tasks across merged configs
-# replace each other silently, so it would shadow the shared one.
-#
-# Note task `run` bodies ARE tera-templated, unlike hook bodies — keep `{{` and
-# `{%` out of them.
+# Each must be idempotent (it runs on every bootstrap) and self-guarding (this
+# file loads on all Linux). Task bodies ARE tera-templated, unlike hook bodies.
 
 [tasks."setup:arch"]
 description = "Arch: AUR packages, TLP/auto-cpufreq/fstrim, pacman colour, swappiness"
 run = '''
 command -v pacman >/dev/null 2>&1 || exit 0
 
-# mise's pacman manager reads the official repos only, so the AUR packages go
-# through yay. yay itself is a manual prerequisite — see docs/arch.md.
-# neofetch is not here any more: upstream archived it in 2024 and fastfetch
-# replaced it in [tools], where every OS gets the same version.
+# mise's pacman manager reads the official repos only; yay covers the AUR and
+# is itself a manual prerequisite (docs/arch.md).
 if command -v yay >/dev/null 2>&1; then
   # --needed makes this idempotent: already-current packages are skipped.
   yay -S --needed --noconfirm \
@@ -335,9 +243,8 @@ else
   echo "  ! yay not installed; see docs/arch.md. Skipping AUR packages." >&2
 fi
 
-# Power management. [bootstrap.linux.systemd.units] is deliberately NOT used
-# here: that section *creates* unit files, and tlp/NetworkManager-dispatcher/
-# fstrim/auto-cpufreq all ship their own. They only need enabling.
+# [bootstrap.linux.systemd.units] is deliberately not used: it *creates* unit
+# files, and all of these ship their own. They only need enabling.
 sudo systemctl enable --now tlp.service
 sudo systemctl enable --now NetworkManager-dispatcher.service
 # TLP owns radio-device state; systemd-rfkill fights it over wifi/bt blocks.
@@ -349,8 +256,7 @@ if command -v auto-cpufreq >/dev/null 2>&1 \
 fi
 sudo systemctl enable --now fstrim.timer
 
-# Uncomment `#Color` in pacman.conf. Naturally idempotent: once the line reads
-# `Color`, the ^#Color$ pattern no longer matches.
+# Naturally idempotent: once the line reads `Color`, the pattern stops matching.
 sudo sed -i 's/^#Color$/Color/' /etc/pacman.conf
 
 # Prioritise RAM over swap. Guarded so the file is written once, not appended to.
@@ -372,12 +278,8 @@ run = '''
 set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
 
-# ghostty is deliberately absent from [bootstrap.packages]: its PPA builds for
-# Ubuntu suites only, so on pure Debian or Raspberry Pi OS apt:ghostty cannot
-# resolve and reports a failure on every bootstrap. Package lists have a
-# manager dimension but no distro-variant one, so the install sits behind the
-# same guard pre-packages uses to add the PPA — the same reasoning that keeps
-# gnome-tweaks in setup:gnome.
+# ghostty is absent from [bootstrap.packages] because its PPA is Ubuntu-only,
+# so the install sits behind the same guard pre-packages uses to add the PPA.
 if [ -r /etc/os-release ]; then . /etc/os-release; fi
 case "${ID:-}:${ID_LIKE:-}" in
   *ubuntu*)
@@ -398,16 +300,13 @@ echo "  . debian/ubuntu setup complete"
 description = "Docker group membership and system service. No-op without docker."
 run = '''
 set -u
-# The engine itself is declared in [bootstrap.packages] — docker-ce on
-# Debian/Fedora, docker on Arch. What is left over is imperative because mise's
-# declarative surface does not reach it: [bootstrap.user] configures the login
-# shell only, and [bootstrap.linux.systemd.units] writes *user* units, not
-# system services or group membership.
+# The engine itself is declared in [bootstrap.packages]. What is left is
+# imperative: [bootstrap.linux.systemd.units] writes *user* units, not system
+# services or group membership.
 command -v docker >/dev/null 2>&1 || { echo "  . docker not installed, skipped"; exit 0; }
 
-# `id -un`, not $USER: this body runs under `set -u` and USER is not exported
-# by every context a task can be reached from, which would abort the task
-# non-zero — and a setup:* task may only exit 0.
+# `id -un`, not $USER: this runs under `set -u` and USER is not exported by
+# every context, which would abort the task — and a setup:* task may only exit 0.
 me="$(id -un)"
 if id -nG "$me" | tr ' ' '\n' | grep -qx docker; then
   echo "  . docker group"
@@ -418,8 +317,7 @@ else
 fi
 
 # WSL has no systemd unless it is enabled in /etc/wsl.conf, so probe for a live
-# systemd rather than for systemctl, which exists either way. setup:wsl reports
-# the boot stanza that starts docker there instead.
+# systemd rather than for systemctl, which exists either way.
 if [ -d /run/systemd/system ]; then
   if systemctl is-enabled --quiet docker.service 2>/dev/null; then
     echo "  . docker.service"
@@ -435,17 +333,14 @@ fi
 description = "WSL-only setup. No-op outside WSL."
 run = '''
 set -u
-# There is no mise.wsl.toml and os() returns "linux" under WSL, so this is the
-# only reliable probe.
+# os() is "linux" under WSL, so this is the only reliable probe.
 if [ -z "${WSL_DISTRO_NAME:-}" ] && ! grep -qi microsoft /proc/version 2>/dev/null; then
   exit 0
 fi
 
-# /etc/wsl.conf: start docker at distro boot. WSL has no systemd by default, so
-# setup:docker cannot enable the service and this stanza is what starts it.
-# REPORTED rather than written — `mise bootstrap` should not need sudo to edit
-# a file outside $HOME, and the original runbook's `tee` truncated the whole
-# file, destroying any [automount]/[user] stanzas.
+# Reported rather than written: `mise bootstrap` should not need sudo to edit a
+# file outside $HOME, and a `tee` here would truncate any existing
+# [automount]/[user] stanzas.
 if ! grep -q '^command="service docker start"' /etc/wsl.conf 2>/dev/null; then
   echo "  ! /etc/wsl.conf is missing the docker boot stanza — see docs/wsl.md section 4"
 fi
@@ -457,25 +352,9 @@ echo "  . wsl setup complete"
 
 # --- Desktop axis -----------------------------------------------------------
 #
-# Distribution and desktop are independent: GNOME on Debian and Arch, GNOME or
-# COSMIC on Fedora, and both installed side by side on the same machine. So the
-# desktop tasks are siblings of setup:fedora/debian/arch, not dependencies of
-# them, and each guards on the same kind of thing its distro counterpart does —
-# is the software there.
-#
-# Detection is on what is INSTALLED, never on what is running.
-# $XDG_CURRENT_DESKTOP only describes the session that happens to be live: it
-# is unset over SSH and on a tty, and on a dual-desktop machine it would leave
-# the other desktop unconfigured until you logged into it and re-bootstrapped.
-# Configuring every desktop that is present is both idempotent and complete.
-#
-# `gsettings` is not a GNOME probe either. It ships with glib2, so it exists on
-# any machine with GTK; `gnome-shell` is the thing that reads GNOME's keys.
-#
-# GNOME state is dconf, COSMIC state is RON files under ~/.config/cosmic, so
-# each task applies a payload from desktop/ in the repo rather than carrying a
-# wall of `gsettings set` lines. `dconf load` is idempotent, needs no installed
-# schema, and merges — it writes the listed keys and touches nothing else.
+# Siblings of setup:fedora/debian/arch, not dependencies: both desktops can be
+# installed on one machine, and detection is on what is installed rather than
+# on what is running. See README.md.
 
 [tasks."setup:gtk"]
 description = "GTK settings for any desktop. No-op without dconf."
@@ -484,9 +363,8 @@ run = '''
 set -u
 command -v dconf >/dev/null 2>&1 || exit 0
 
-# Over SSH or from a tty unit the session bus is usually still there but not in
-# the environment; without it GIO silently falls back to the memory backend and
-# the write is lost.
+# Over SSH or from a tty the session bus is usually there but not in the
+# environment; without it GIO silently falls back to the memory backend.
 if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
   DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
   export DBUS_SESSION_BUS_ADDRESS
@@ -513,9 +391,8 @@ fi
 
 dconf load / < "$HOME/.dotfiles/desktop/gnome.dconf"
 
-# gnome-tweaks exposes what this writes. It is installed here rather than
-# declared in mise.toml because package lists have an `os` dimension but no
-# desktop one, and a GNOME-only GUI has no business on a COSMIC or headless box.
+# Installed here rather than declared: package lists have an `os` dimension but
+# no desktop one, and a GNOME-only GUI has no business on a COSMIC box.
 if ! command -v gnome-tweaks >/dev/null 2>&1; then
   if command -v dnf >/dev/null 2>&1; then sudo dnf install -y gnome-tweaks
   elif command -v apt-get >/dev/null 2>&1; then sudo apt-get install -y gnome-tweaks
@@ -539,10 +416,8 @@ fi
 src="$HOME/.dotfiles/desktop/cosmic"
 dst="$HOME/.config/cosmic"
 
-# Copy, not symlink: cosmic-config owns these files at runtime and rewrites them
-# whenever a setting changes in the GUI, so a symlink would either be replaced
-# behind our back or turn every GUI tweak into a dirty working tree. The repo is
-# the seed for a new machine; to capture a change made in Settings, copy it back.
+# Copy, not symlink: cosmic-config owns these at runtime and rewrites them on
+# every GUI change. The repo is the seed; copy a change in Settings back.
 n=0
 while IFS= read -r rel; do
   out="$dst/$rel"
@@ -557,11 +432,7 @@ if [ "$n" -gt 0 ]; then echo "  + cosmic: $n key(s) written"; else echo "  . cos
 '''
 
 # Not part of bootstrap — `check:*` is outside the `setup:*` glob. Run it after
-# editing desktop/*.dconf, because `dconf load` accepts any path at all and a
-# section header that does not match an installed schema's path is written to
-# dconf and then read by nobody. That is the one way these payloads can rot
-# silently; a wrong *value* is rejected by the schema at read time and a missing
-# component (nautilus on a GNOME box without it) is reported, not failed.
+# editing desktop/*.dconf.
 [tasks."check:dconf"]
 description = "Verify desktop/*.dconf section paths against installed schemas"
 shell = "bash -c"
@@ -569,13 +440,11 @@ run = '''
 set -u
 dir=/usr/share/glib-2.0/schemas
 # The directory existing does NOT mean a desktop is installed — glib itself
-# ships schemas into it, so on a headless box or a CI runner the directory is
-# there and every desktop schema is absent. The per-file check below decides.
+# ships schemas into it. The per-file check below decides.
 [ -d "$dir" ] || { echo "  . no glib schemas installed, skipped"; exit 0; }
 
 # Reads the schema XML rather than GSettings: `gi` is not importable from the
-# mise-managed python3, and PyGObject is a separate distro package on Debian
-# and Arch. The XML is always there — glib-compile-schemas needs it.
+# mise-managed python3 and PyGObject is a separate distro package.
 python3 - "$dir" "$HOME/.dotfiles/desktop" <<'PY'
 import pathlib, sys
 import xml.etree.ElementTree as ET
@@ -594,8 +463,7 @@ for x in pathlib.Path(sys.argv[1]).glob("*.gschema.xml"):
         schemas[p] = s.get("id")
         keys[p] = {k.get("name") for k in s.iter("key")}
 
-# The set of path prefixes some installed schema sits under. A section whose
-# parent prefix is absent belongs to a component this machine does not have.
+# Path prefixes some installed schema sits under.
 installed_under = {p.rsplit("/", 1)[0] for p in schemas}
 
 bad = 0
@@ -610,13 +478,10 @@ for f in sorted(pathlib.Path(sys.argv[2]).glob("*.dconf")):
             if section in schemas:
                 checked += 1
             elif section.rsplit("/", 1)[0] not in installed_under:
-                # Nothing from this component is installed at all — nautilus on
-                # a GNOME box that uses another file manager, GTK4 on a machine
-                # with only GTK3, the whole GNOME tree on a headless box or a CI
-                # runner. Nothing to check the section against, so count it and
-                # move on. What this cannot catch is a typo in the parent prefix
-                # itself; a typo in the last component still fails, because its
-                # siblings are installed.
+                # Nothing from this component is installed at all, so there is
+                # nothing to check the section against. This cannot catch a
+                # typo in the parent prefix itself; one in the last component
+                # still fails, because its siblings are installed.
                 skipped += 1
                 section = None
             else:

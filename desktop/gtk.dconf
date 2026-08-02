@@ -1,14 +1,6 @@
-# Applied by [tasks."setup:gtk"] with `dconf load /`.
-#
-# Only keys that GTK3/GTK4 apps read for themselves, through xdg-desktop-portal
-# or the settings daemon of whatever desktop is running. These are correct on
-# GNOME, COSMIC, KDE and a bare window manager alike, so this file is applied
-# wherever dconf exists. Anything a *shell* interprets belongs in gnome.dconf.
-#
-# Section headers are dconf PATHS, not schema ids, and the two differ: the
-# schema `org.gtk.Settings.FileChooser` lives at /org/gtk/settings/file-chooser.
-# `dconf load` does not validate against installed schemas, so a wrong path is
-# written silently and simply never read. `mise run check:dconf` catches that.
+# Applied by [tasks."setup:gtk"] with `dconf load /`. Keys that GTK apps read
+# for themselves, so this file applies wherever dconf exists; anything a
+# *shell* interprets belongs in gnome.dconf.
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'

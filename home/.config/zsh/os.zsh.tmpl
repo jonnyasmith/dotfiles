@@ -1,22 +1,11 @@
-# OS-specific zsh *aliases*. Rendered from home/.config/zsh/os.zsh.tmpl by
-# `mise bootstrap` — edit the template, never the rendered ~/.config/zsh/os.zsh.
+# OS-specific zsh aliases, rendered by `mise bootstrap` — edit this template,
+# never the rendered ~/.config/zsh/os.zsh. Sourced after aliases.zsh, so
+# anything here overrides the shared file.
 #
-# .zshrc picks this up with `for config (~/.config/zsh/*.zsh) source $config`.
-# aliases.zsh sorts before os.zsh, so anything defined here wins over the
-# shared file.
-#
-# Environment used to live here too — SSH_AUTH_SOCK and PNPM_HOME. It is now in
-# [env] in mise.linux.toml / mise.macos.toml, which mise applies from every
-# directory and for `mise x`/`mise en`/tasks/shims, not just interactive zsh.
-# What is left is aliases, which mise cannot carry: [shell_alias] is
-# unsupported in nushell and PowerShell, and half of these are probed at
-# runtime rather than at render time because Tera knows the OS but not the
-# distro.
+# [shell_alias] cannot replace this file: it is unsupported in nushell and
+# PowerShell, and half of these are probed at runtime because Tera knows the
+# OS but not the distro.
 
-# Package-manager update shorthands. brew is macOS or linuxbrew; apt/nala are
-# Debian-family only and dnf is Fedora-family, so those are probed at runtime
-# rather than at render time (Tera only knows the OS, not the distro).
-#
 # dnf has no separate metadata step: dnf5 `upgrade` refreshes repos itself, so
 # `duu` is one command where `auu` and `nuu` are two.
 {%- if os() == "macos" %}
@@ -28,29 +17,25 @@ command -v nala >/dev/null && alias nuu="sudo nala update && sudo nala upgrade -
 command -v dnf  >/dev/null && alias duu="sudo dnf upgrade -y"
 {%- endif %}
 
-# File size
 {%- if os() == "macos" %}
 alias fs="stat -f \"%z bytes\""
 {%- elif os() == "linux" %}
 alias fs="stat -c \"%s bytes\""
 {%- endif %}
 
-# IP address of this machine on the LAN
 {%- if os() == "macos" %}
 alias localip="ipconfig getifaddr en1"
 {%- elif os() == "linux" %}
 alias localip="hostname -I"
 {%- endif %}
 
-# Flush the DNS cache
 {%- if os() == "macos" %}
 alias flush="dscacheutil -flushcache"
 {%- elif os() == "linux" %}
 alias flush="sudo resolvectl flush-caches"
 {%- endif %}
 
-# View HTTP traffic. macOS pins en1; on Linux the interface name varies, so
-# capture on all of them.
+# macOS pins en1; on Linux the interface name varies, so capture on all.
 {%- if os() == "macos" %}
 alias sniff="sudo ngrep -d 'en1' -t '^(GET|POST) ' 'tcp and port 80'"
 alias httpdump="sudo tcpdump -i en1 -n -s 0 -w - | grep -a -o -E \"Host\: .*|GET \/.*\""
@@ -59,7 +44,6 @@ alias sniff="sudo ngrep -d any -t '^(GET|POST) ' 'tcp and port 80'"
 alias httpdump="sudo tcpdump -i any -n -s 0 -w - | grep -a -o -E \"Host\: .*|GET \/.*\""
 {%- endif %}
 
-# Empty the Trash
 {%- if os() == "macos" %}
 alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; rm -rfv ~/.Trash"
 {%- elif os() == "linux" %}
@@ -67,12 +51,9 @@ alias emptytrash="rm -rfv ~/.local/share/Trash/files/* ~/.local/share/Trash/info
 {%- endif %}
 {%- if os() == "macos" %}
 
-# Recursively delete `.DS_Store` files
 alias cleanup="find . -name '*.DS_Store' -type f -ls -delete"
 
-# Hide/show all desktop icons (useful when presenting). No portable Linux
-# equivalent — every desktop environment spells this differently — so it is
-# deliberately macOS-only rather than a broken alias.
+# macOS-only: no portable Linux equivalent worth faking.
 alias hidedesktop="defaults write com.apple.finder CreateDesktop -bool false && killall Finder"
 alias showdesktop="defaults write com.apple.finder CreateDesktop -bool true && killall Finder"
 {%- endif %}

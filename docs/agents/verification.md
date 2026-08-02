@@ -11,6 +11,7 @@
 | `mise run check:tasks` | `mise tasks validate` |
 | `mise run check:fmt` | every `mise*.toml` and `.miserc.toml` is `mise fmt`-clean |
 | `mise run check:dconf` | `desktop/*.dconf` paths exist in installed schemas |
+| `mise run check:comments` | no comment block in a config or script is longer than the budget |
 | `./bootstrap.sh --status` / `--dry-run` | local only, never CI |
 
 A check may not require a converged machine, sudo, or a package manager.
@@ -30,7 +31,10 @@ gate.
   branch is one string to shellcheck.
 - CI is Linux, so no job ever loads `mise.macos.toml` or `mise.windows.toml`.
   `check:config` parsing them is the only signal they get.
-- CI passes `--skip-tools`; local runs do not.
+- CI passes `--skip-tools`; local runs do not. `install: false` on
+  `jdx/mise-action` stops only the *action* installing tools — `mise run`
+  installs the active toolset before it runs a task, so without `--skip-tools`
+  the gate still pulls every entry in `[tools]`.
 - `mise fmt --check` only inspects the configs the current OS loaded, so it is
   green on a mangled `mise.windows.toml` from a Mac. `check:fmt` compares each
   file against `mise fmt --stdin` instead, which needs no load. `mise fmt` does
@@ -39,9 +43,32 @@ gate.
   only `config.toml`, never the platform file. `check:tasks` unsets it; without
   that, `[tasks.bootstrap]`'s `setup:*` glob reports "task not found".
 - `check:packages` takes ~1s because it shells out to `mise search` per entry.
-  It and `check:shell` are the only checks with a dependency beyond python.
+  It, `check:shell` and `check:comments` are the only checks with a dependency
+  beyond python — `mise`, `shellcheck` and `git` respectively.
+- `check:config` needs python 3.11+ for `tomllib`, and `check:shell` needs zsh,
+  which GitHub runners do not ship — the workflow apt-installs both.
+- `check:dconf` validates section *paths* against the installed schema XML and
+  key names within a matched schema. It cannot catch a typo in a parent prefix
+  whose siblings are also absent, and it says nothing about a value: `dconf
+  load` accepts any path, and a wrong value is rejected by the schema at read
+  time instead.
+- `check:comments` measures block length and nothing else. A three-line
+  restatement of the declaration passes it. Waive a block that needs the
+  length with `# comment-budget-skip: <reason>` on its first line; see
+  docs/adr/0009-comment-budget-is-a-static-check.md for the scope and the
+  vendored exclusions.
 
 ## What counts as verified
 
 Claim what you ran. Nothing in the gate proves a package installs, a repo is
 reachable, or a `setup:*` task works on its target distro.
+
+Proving a relative `include.path` resolved against `~/.config/git/` rather than
+inside the symlink target:
+
+```bash
+git config --show-origin --get mergetool.smerge.keepBackup
+```
+
+It reports `file:~/.config/git/config.os`, and no `config.os` exists in the
+repo.

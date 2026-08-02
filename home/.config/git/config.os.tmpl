@@ -1,10 +1,6 @@
-# OS-specific git config. Rendered from home/.config/git/config.os.tmpl by
-# `mise bootstrap` and pulled in by the `[include] path = config.os` at the
-# bottom of ~/.config/git/config. merge.tool = smerge lives in that shared file;
-# only the tool *invocations* differ per OS.
-#
-# macOS runs the GUIs out of their app bundles; on Linux the same tools ship a
-# CLI entry point on PATH.
+# macOS runs these GUIs out of their app bundles; on Linux the same tools ship
+# a CLI entry point on PATH. merge.tool = smerge itself lives in the shared
+# ~/.config/git/config; only the invocations differ.
 {%- if os() == "macos" %}
 [mergetool "smerge"]
     cmd = /Applications/Sublime Merge.app/Contents/SharedSupport/bin/smerge "\"$BASE\"" "\"$LOCAL\"" "\"$REMOTE\"" -o "\"$MERGED\""
@@ -35,11 +31,7 @@
 [core]
     # Git for Windows bundles its own ssh, which cannot reach 1Password's
     # \\.\pipe\openssh-ssh-agent named pipe. Windows' own OpenSSH client can.
-    # This replaces the old wsl branch's `git config --global core.sshCommand
-    # ssh.exe`, which wrote into ~/.gitconfig — now a managed dotfile, so that
-    # write would have landed in the repo and followed the config to macOS.
     sshCommand = C:/Windows/System32/OpenSSH/ssh.exe
-    # Normalise CRLF to LF on commit; leave the working tree alone on checkout.
     autocrlf = input
 [mergetool "smerge"]
     # Sublime Merge's installer puts smerge on PATH.

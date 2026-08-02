@@ -16,8 +16,8 @@ again.
 ## Consequences
 
 - No target requires `symlink-each` any more. The mode stays documented in
-  `mise.toml` so it is not reintroduced as a default; a surviving entry is a
-  mistake.
+  `docs/agents/coding-standards.md` so it is not reintroduced as a default; a
+  surviving entry is a mistake.
 - tpm moved to `~/.local/share/tmux/plugins` via `TMUX_PLUGIN_MANAGER_PATH`,
   which is what let `~/.config/tmux` become one link.
 - herdr cannot be relocated, so its entry names the single file we own rather

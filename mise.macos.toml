@@ -1,46 +1,25 @@
-# macOS-only configuration. Loaded automatically beside mise.toml because
-# .miserc.toml sets `auto_env = true`; on Linux and Windows this file is not
-# read at all. Merges with mise.toml rather than replacing it.
-#
-# What belongs here: things mise cannot filter by package-manager prefix.
-# [bootstrap.packages] entries keyed `brew:`/`brew-cask:` would already be
-# skipped elsewhere, but the casks are a long list and keeping them beside the
-# other mac-only sections is clearer than burying them in the shared file.
+# macOS-only, loaded beside mise.toml by auto_env. The casks live here rather
+# than in the shared file only because the list is long.
 
 # ------------------------------------------------------------------- env --
-#
-# The macOS half of what used to be Tera branches in
-# home/.config/zsh/os.zsh.tmpl. See the matching block in mise.linux.toml for
-# why this moved; in short, the per-OS files are linked into ~/.config/mise now
-# and so are loaded everywhere, not only inside the repo.
 
 [env]
-# 1Password SSH agent socket. A Group Container path on macOS. The space in it
-# needed a backslash escape while this was shell source; mise exports the value
-# directly, so it is written literally here.
+# A Group Container path on macOS; the space is literal, not shell-escaped.
 SSH_AUTH_SOCK = "{{env.HOME}}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
-# pnpm's own global bin dir (`pnpm add -g` installs shims here: wt, pn, pnpx).
-# Distinct from the pnpm binary itself, which mise owns.
+# pnpm's own global bin dir (`pnpm add -g` shims), not the pnpm binary.
 PNPM_HOME = "{{env.HOME}}/Library/pnpm"
 _.path = ["{{env.HOME}}/Library/pnpm/bin"]
 
 [bootstrap.user]
-# `login_shell` is not templated — it must be a literal absolute path, which is
-# why it is per-platform. This replaces the `chsh` step and the oh-my-zsh
-# installer's CHSH prompt.
 login_shell = "/bin/zsh"
 
 [dotfiles]
-# Karabiner-Elements rewrites karabiner.json in place whenever you change a
-# rule in its UI, so this is `copy`, not a symlink that would dirty the repo.
-# Capture deliberate changes with `mise bootstrap dotfiles add`.
+# Karabiner-Elements rewrites karabiner.json in place on every UI change, so
+# `copy`, not a symlink that would dirty the repo.
 "~/.config/karabiner/karabiner.json" = { mode = "copy" }
 
 # ---------------------------------------------------------- macOS defaults --
-#
-# Replaces bootstrap.sh's `defaults` step. Written through `defaults write` and
-# checked before writing, so a second run is a no-op.
 
 [bootstrap.macos.defaults]
 "NSGlobalDomain" = { AppleShowAllExtensions = true }
@@ -54,21 +33,13 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 
 # --------------------------------------------------------------- packages --
 #
-# Formulae here are the ones that are NOT in mise's registry, are build
-# dependencies, or are machine-global services — everything you actually invoke
-# moved to [tools] in mise.toml so Linux gets the same version. mise installs
-# these with its own built-in Homebrew support; real Homebrew is not required.
-#
-# `check:packages` holds the line: a formula whose name has an exact registry
-# match needs a `# registry-skip: <reason>`. Casks are out of scope — a cask is
-# a GUI app and the same-named registry entry is always a different vendor's
-# CLI (1password, claude and codex all collide today).
+# Formulae that are NOT in mise's registry, are build dependencies, or are
+# machine-global services. mise installs these with its own built-in Homebrew
+# support; real Homebrew is not required.
 
 [bootstrap.packages]
 
 "brew:avrdude" = "latest"
-# btop is in [tools] for Linux only — its aqua backend publishes no darwin
-# build — so macOS takes it from brew.
 "brew:btop" = "latest"       # registry-skip: the registry entry has no darwin build; see [tools] in mise.toml
 "brew:git" = "latest"
 "brew:htop" = "latest"
@@ -78,14 +49,7 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 "brew:tree" = "latest"       # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "brew:wget" = "latest"
 "brew:zsh" = "latest"
-#
-# Removed rather than promoted or kept: pipx and pytest (uv owns per-project
-# tools and venvs), ruff (projects declare their own linter), curl and its
-# keg-only siblings expat/lcov/poppler (nothing resolves to them; macOS ships
-# curl), git-filter-repo and pandoc (unused for months). azure-cli, caddy,
-# clang-format, cmake, herdr, ninja and tmux went to [tools].
 
-# GUI applications and fonts.
 "brew-cask:1password" = "latest"
 "brew-cask:alfred" = "latest"
 "brew-cask:chatgpt" = "latest"
@@ -102,33 +66,8 @@ post-defaults = "killall Finder Dock 2>/dev/null || true"
 "brew-cask:rectangle" = "latest"
 "brew-cask:todoist-app" = "latest"
 "brew-cask:visual-studio-code" = "latest"
-#
-# Dropped as cold — untouched for 3–9 months on the audited machine:
-# microsoft-azure-storage-explorer, openttd, brave-browser, slack, inkscape,
-# microsoft-teams, repo-prompt, parallels. Dropping a declaration does not
-# uninstall; the Parallels VM images are a manual deletion.
-#
-# microsoft-teams is the one that mattered structurally. It is a pkg-installer
-# cask carrying installer `choices`, which mise's built-in brew-cask support
-# rejects outright ("pkg installer choices are not supported yet") — and it
-# failed the WHOLE packages phase, not just its own entry. It was therefore
-# installed by a special case in [tasks."setup:macos"] shelling out to real
-# Homebrew. Dropping it removes the last consumer of real Homebrew, so that
-# branch and the manual "install Homebrew first" step are both gone.
-#
-# visual-studio-code@insiders is dropped too: one VS Code, and Settings Sync
-# owns its extensions.
-#
-# VS Code extensions used to live here as `vscode:` package-plugin entries.
-# They do not, and no longer live in packages/vscode.txt either — Settings Sync
-# owns them. See docs/adr/0002-vscode-extensions-are-sync-owned.md.
 
 # ------------------------------------------------------------ macOS extras --
-#
-# The imperative rump: things with no declarative mise section. Run via the
-# single [tasks.bootstrap] in mise.toml, which fans out with depends =
-# ["setup:*"] — a glob, so it silently matches only the platform tasks that
-# exist on this machine. Must stay idempotent: it runs on every bootstrap.
 
 [tasks."setup:macos"]
 description = "macOS-only setup that has no declarative mise equivalent"

@@ -42,6 +42,12 @@ a better cooldown. The choice is per tool, and it gets written down.
   background path and leaves `claude update` able to fork the install. Anthropic
   documents `DISABLE_UPDATES` for distributing "through your own channels",
   which is what mise is here.
+- `DISABLE_UPDATES` covers Claude Code's own binary. Plugin auto-updates are a
+  separate mechanism (`FORCE_AUTOUPDATE_PLUGINS`) and the docs do not say
+  whether `DISABLE_UPDATES` reaches them. Unverified.
+- Codex's `check_for_update_on_startup` is undocumented but real: it is present
+  in the source and in the MDM `managed_config.toml` layer. It is not a typo
+  and must not be "corrected" out of `~/.codex/config.toml`.
 - The other four switches are config keys, so `~/.codex/config.toml`,
   `~/.gemini/settings.json`, `~/.copilot/settings.json` and
   `~/.omp/agent/config.yml` are `copy`-mode dotfiles — copy because each is the

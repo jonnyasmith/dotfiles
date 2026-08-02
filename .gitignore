@@ -1,11 +1,9 @@
-# Work identity. This repo is public; the employer's GitHub org and email
-# address live only on the machine, in ~/.config/git/{config.local,config.work}.
-# These patterns are belt-and-braces — those files are outside the repo — but
-# `mise bootstrap dotfiles add` would otherwise capture them happily.
+# These files live outside the repo; the patterns exist because
+# `mise bootstrap dotfiles add` would otherwise capture them.
 home/.config/git/config.local
 home/.config/git/config.work
 
-# Secrets — never commit these, even if a dotfiles entry would otherwise carry them.
+# Secrets — never commit these
 home/.config/gh/hosts.yml
 **/*.token
 **/*_rsa
@@ -13,32 +11,23 @@ home/.config/gh/hosts.yml
 .env
 .env.*
 
-# Machine-local state written INTO this working tree.
-#
-# Load-bearing. ~/.config/nvim is a whole-directory symlink, so these are real
-# files in the repo the moment nvim writes them. Removing an entry here means
-# committing editor scratch state.
+# Load-bearing: ~/.config/nvim is a whole-directory symlink.
 home/.config/nvim/.netrwhist
 home/.config/nvim/spell/
 
-# Defensive. These directories are not linked as directories, so nothing can
-# write into them — herdr's siblings and Karabiner's backups land in ~ beside
-# a single-file link. They stay listed because `mise bootstrap dotfiles add`
-# would otherwise happily capture them.
+# Nothing writes here — these are single-file links — but
+# `mise bootstrap dotfiles add` would otherwise capture them.
 home/.config/karabiner/automatic_backups/
 home/.config/herdr/session.json
 home/.config/herdr/.plugins.lock
 home/.config/herdr/*.log
 home/.config/herdr/*.sock
 
-# omp. Only ~/.omp/agent/config.yml is linked, but agent.db is a credential
-# store (OAuth tokens and API keys) sitting in the same directory, so the
-# whole of ~/.omp is denied except that one file. This is the one entry here
-# whose absence would leak a secret rather than just noise.
+# agent.db is a credential store in the same directory as the one file we
+# link, so the whole tree is denied except ~/.omp/agent/config.yml.
 home/.omp/*
 !home/.omp/agent/
 home/.omp/agent/*
 !home/.omp/agent/config.yml
 
-# macOS noise.
 .DS_Store

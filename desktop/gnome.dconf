@@ -1,12 +1,6 @@
-# Applied by [tasks."setup:gnome"] with `dconf load /`.
-#
-# Every key here is interpreted by GNOME Shell, mutter or gnome-settings-daemon
-# and is dead weight anywhere else — which is why the task is gated on
-# gnome-shell being installed, not on `gsettings` existing. Cross-desktop GTK
-# keys live in gtk.dconf; the COSMIC equivalents of these live in cosmic/.
-#
-# `dconf load` needs no schema, so keys for a component that is not installed
-# (nautilus, say) are written silently instead of erroring.
+# Applied by [tasks."setup:gnome"] with `dconf load /`. Keys interpreted by
+# GNOME Shell, mutter or gnome-settings-daemon; cross-desktop GTK keys belong
+# in gtk.dconf, and the COSMIC equivalents in cosmic/.
 
 [org/gnome/desktop/peripherals/touchpad]
 tap-to-click=true

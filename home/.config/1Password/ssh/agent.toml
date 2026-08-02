@@ -28,20 +28,9 @@
 #
 # More examples can be found here:
 #  https://developer.1password.com/docs/ssh/agent/config
-# ---------------------------------------------------------------------------
-# Which key gets used is NOT decided here - the order below only affects the
-# order the agent offers keys when a client asks for "any". ~/.ssh/config now
-# pins one key per host with IdentitiesOnly, so exactly one key is offered:
-#
-#   github.com         -> SSH Key - Ed25519       (personal)
-#   github-work        -> SSH Key - Ed25519 Work
-#   ssh.dev.azure.com  -> SSH Key - Work          (RSA)
-#
-# The `item` strings below are load-bearing: they are the comments ssh-add
-# reports, and ~/.ssh/1password/refresh maps them to the public-key stubs that
-# ~/.ssh/config references. Rename an item here -> re-run that script and update
-# its map().
-# ---------------------------------------------------------------------------
+
+# The `item` strings are load-bearing: ~/.ssh/1password/refresh maps them to
+# the stub filenames ~/.ssh/config pins, so renaming one means editing map().
 
 [[ssh-keys]]
 item = "SSH Key - Ed25519"

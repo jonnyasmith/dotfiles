@@ -276,6 +276,37 @@ added still need one `git branch --set-upstream-to=origin/<name>`.
 `~/.config/gh/hosts.yml` holds an OAuth token, is gitignored, and is
 deliberately unmanaged — run `gh auth login` on a new machine.
 
+## tmux dev layout
+
+`prefix + D` builds the standard layout in the current window:
+
+```
+┌──────────────────────────────┐
+│              ai              │  top pane
+├────────┬─────────┬───────────┤
+│  nvim  │ lazygit │ terminal  │  bottom row, exact thirds
+└────────┴─────────┴───────────┘
+```
+
+`BOTTOM_PCT` in `home/.config/tmux/scripts/dev-layout.sh` is the share of the
+window height the bottom row takes; the ai pane gets the rest.
+
+Panes are addressed by a **`@role` pane option, not by index**, so the bindings
+survive splits and renumbering. `dev-layout.sh` writes `@role`; `jump-pane.sh`
+reads it, `unwrap-layout.sh` keeps the pane tagged `ai` and kills the others,
+and `tmux.conf` binds:
+
+| binding | does |
+|---|---|
+| `prefix + D` | build the layout (`dev-layout.sh`) |
+| `prefix + =` | re-balance the bottom row (`even-bottom.sh`) |
+| `prefix + o` | collapse to the ai pane (`unwrap-layout.sh`) |
+| `prefix + a` `e` `g` `t` | jump to `ai` / `editor` / `git` / `terminal` |
+
+The pane border shows `@role` (`pane-border-format`). A window not built by
+`dev-layout.sh` has no tagged panes, and `jump-pane.sh` reports that on the
+status line rather than erroring.
+
 ## SSH keys and identities
 
 Three keys live in 1Password, and both the key *and* the commit email are
@@ -322,7 +353,9 @@ cannot be committed by accident.
   stays tracked. Each block is `Match originalhost`, **not** `Host`: the alias
   sets `HostName github.com`, and a `Host github.com` block matches it too, so
   both identities load and agent order picks the account — the same bug
-  `IdentitiesOnly` was meant to close.
+  `IdentitiesOnly` was meant to close. Above six keys in the agent it stops
+  being a correctness problem and becomes a hard failure — ssh exhausts the
+  server's `MaxAuthTries` and gives up with `Too many authentication failures`.
 - **`home/.ssh/1password/*.pub`** are public-key stubs, committed deliberately.
   `IdentityFile` needs a local file to name *which* agent key to use; the
   private half never leaves 1Password. ssh matches on the key blob, not the
