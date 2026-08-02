@@ -28,18 +28,7 @@ sudo apt update && sudo apt upgrade -y && sudo apt install -y git
 
 Reboot if that pulled a new kernel.
 
-## 3. SSH key and GitHub
-
-```shell
-ssh-keygen -t ed25519 -C "your@email"
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/id_ed25519
-cat ~/.ssh/id_ed25519.pub
-```
-
-Paste the key into GitHub → Settings → SSH and GPG keys.
-
-## 4. Bootstrap
+## 3. Bootstrap
 
 Clone over **HTTPS** — SSH to GitHub cannot work until the dotfiles are applied,
 because the `IdentityAgent` line pointing ssh at 1Password's socket is in this
@@ -49,6 +38,11 @@ repo. The path must be `~/.dotfiles`.
 git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles && ./bootstrap.sh
 exec zsh
+```
+
+Switching the remote to SSH waits until 1Password is signed in — step 4.
+
+```shell
 git remote set-url origin git@github.com:jonnyasmith/dotfiles.git
 ```
 
@@ -60,7 +54,7 @@ as the login shell, and puts you in the `docker` group.
 `./bootstrap.sh --dry-run` first if you want to see it before it runs;
 `--status` shows what is out of sync. It is idempotent — re-run it any time.
 
-## 5. 1Password — GUI sign-in and SSH agent
+## 4. 1Password — sign-in, SSH agent, and your keys
 
 1. Launch **1Password** and sign in. If the browser hand-off does not fire,
    choose **Set up another device** on 1password.com → **Add your account
@@ -69,10 +63,22 @@ as the login shell, and puts you in the `docker` group.
 3. Settings → **Browser** → enable **Connect with 1Password in the browser**,
    then install the browser extension and approve the pairing dialog.
 
-`~/.ssh/config` already points `IdentityAgent` at `~/.1password/agent.sock`;
-that file comes from this repo.
+There is no key to generate. The private keys stay in 1Password; the agent
+serves them, `~/.ssh/config` (from this repo) points `IdentityAgent` at
+`~/.1password/agent.sock`, and the public-key stubs each `Match` block pins are
+committed under `home/.ssh/1password/`. Check all three accounts:
 
-## 6. GNOME extensions
+```shell
+ssh -T git@github.com        # personal
+ssh -T git@github-work       # work alias, rewritten by ~/.config/git/config.local
+ssh -T git@ssh.dev.azure.com # azure
+```
+
+`Permission denied` with the agent running usually means the key set changed:
+`~/.ssh/1password/refresh` rewrites the stubs from whatever the agent now
+returns, and the result is a git diff to commit.
+
+## 5. GNOME extensions
 
 ```shell
 sudo apt install -y gnome-shell-extension-appindicator gnome-browser-connector
@@ -85,7 +91,7 @@ into a running session.
 `gnome-tweaks` is installed by `setup:gnome`, and the settings it exposes are
 already written from `desktop/gnome.dconf`.
 
-## 7. No ghostty
+## 6. No ghostty
 
 Debian has no ghostty package and the project ships official binaries for macOS
 only, so on this machine the terminal is GNOME Console (`kgx`). The ghostty
@@ -93,7 +99,7 @@ config in this repo is still linked, harmlessly, for the machines that have it.
 Do not use the project's `curl … | bash` installer — see the note in
 `docs/fedora.md` on third-party install scripts.
 
-## 8. Things that need a logout or reboot
+## 7. Things that need a logout or reboot
 
 | Change | Why |
 | --- | --- |
@@ -102,7 +108,7 @@ Do not use the project's `curl … | bash` installer — see the note in
 | Login shell → zsh | `chsh` is read by PAM at login |
 | Kernel upgrade | Reboot |
 
-## 9. tmux plugins
+## 8. tmux plugins
 
 Once, inside tmux: `prefix + I`. `mise bootstrap` clones tpm but cannot press
 the key for you.
