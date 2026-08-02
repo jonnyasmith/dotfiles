@@ -197,6 +197,21 @@ minimum_release_age = "7d"
 # A directory link would send every one of those writes into the repo.
 "~/.config/herdr/config.toml" = {}
 
+# omp (oh-my-pi). One file out of a directory that is almost entirely state:
+# ~/.omp/agent also holds agent.db (the OAuth and API-key store), history.db,
+# models.db, sessions/ and blobs/, and ~/.omp holds logs/, caches and the
+# version-keyed natives/. config.yml is the only part that is ours, and it is
+# the settings file `/settings`, `omp config set` and onboarding all write —
+# hence `copy`, like gh and btop. Capture deliberate changes with
+# `mise bootstrap dotfiles add ~/.omp/agent/config.yml`.
+#
+# omp does NOT walk parent directories for settings: it reads ~/.omp/agent/config.yml
+# and, if the cwd has one, ./.omp/config.yml. So this file is the whole of the
+# machine-wide configuration. Credentials never belong in it — omp keeps those
+# in agent.db and in the provider env vars (ANTHROPIC_API_KEY and friends).
+"~/.omp/agent/config.yml" = { mode = "copy" }
+
+
 # This repo's mise config, as the *global* mise config.
 #
 # All five files, not just this one. Linking config.toml alone made mise.toml
@@ -362,6 +377,15 @@ just = "latest"
 lazygit = "latest"
 neovim = "latest"
 ninja = "latest"
+# omp, the oh-my-pi coding agent. Registry name is the repo (`oh-my-pi`), the
+# binary is `omp`. Same story as claude and bun: it arrived via a curl|sh
+# installer that dropped a 175MB self-updating binary into ~/.local/bin, where
+# mise could neither see nor pin it, and `omp update` rewrote it in place. The
+# github backend takes the release asset directly and mise verifies its GitHub
+# artifact attestation and SLSA provenance on install, which the installer did
+# not. startup.checkUpdate is set to false in the config below so the binary
+# never tries to update out from under mise — refresh it with `mise upgrade`.
+oh-my-pi = "latest"
 ripgrep = "latest"
 # The linter behind check:shell. Was deliberately left out of [tools] as "a
 # nice-to-have, not a dependency" — but CI installs it from apt, so the lint
@@ -409,6 +433,7 @@ zig = "latest"
 # `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is
 # independent of DOTNET_ROOT. mise does not add it, so put it on PATH here.
 _.path = ["~/.dotnet/tools"]
+
 
 [settings.python]
 # Activate a project's .venv on cd, so `python`/`pytest` resolve to the venv
