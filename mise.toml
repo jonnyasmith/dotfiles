@@ -64,6 +64,44 @@ dotfiles.root = "~/.dotfiles/home"
 # installed is auto-installed on first use (not_found_auto_install).
 idiomatic_version_file_enable_tools = ["node", "python"]
 
+# Quarantine every fuzzy resolution for a week. mise defaults this to 24h; the
+# reason to raise it is that the dangerous window for a package ecosystem is
+# the first hours after publication, when a hijacked or backdoored release is
+# live and not yet yanked. Since ~half of [tools] below is `latest`, a login
+# that runs `mise upgrade` would otherwise pull artifacts that are hours old.
+#
+# This is a SECURITY setting, not a stability one, and it is deliberately
+# global rather than per-tool: an exception list is a list of tools nobody is
+# waiting a week to vet.
+#
+# Scope: it filters *fuzzy* requests (`latest`, `24`, `3.13`) for backends that
+# publish release timestamps — aqua, cargo, github, gitlab, go, npm, pipx and
+# most core tools. Explicit pins bypass it entirely and versions with no
+# timestamp are included anyway. Only npm: and pipx: apply it to transitive
+# dependencies.
+#
+# IT CAN MOVE VERSIONS BACKWARDS, and the two refresh commands differ. Both
+# verified on 2026.7.18 against this config with the floor at 7d:
+#
+#   mise upgrade      holds. Reports "All tools are up to date" and warns per
+#                     tool, e.g. "newer npm:cline release 3.0.49 (released
+#                     2026-08-02, eligible 2026-08-09) ignored by
+#                     minimum_release_age (7d)". Nothing is downgraded.
+#   mise lock --bump  re-resolves every selector from scratch against the
+#                     *eligible* set, so anything locked inside the window is
+#                     rewritten DOWN to the newest release older than it — it
+#                     proposed 13 rollbacks here, including uv 0.12.1 ->
+#                     0.11.32 and cmake 4.4.2 -> 4.4.0.
+#
+# So `--bump` is no longer the safe refresh it is in the [tools] note below;
+# always read `mise lock -g --bump --dry-run` before letting it write.
+#
+# The cost falls hardest on the AI CLIs (claude, codex, gemini-cli, copilot),
+# which ship most days — they now land a week late. If one of them ever needs
+# to be current, exempt that tool by name with `minimum_release_age_excludes`,
+# rather than lowering the floor for everything.
+minimum_release_age = "7d"
+
 # ---------------------------------------------------------------- dotfiles --
 #
 # Replaces GNU stow. The mode is chosen by two independent properties of the
@@ -241,8 +279,11 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # this repo; see the note there. Refresh it deliberately:
 #
 #   mise lock -g --dry-run   # what would move
-#   mise lock -g --bump      # re-resolve `latest`/majors, touch no config
 #   mise upgrade             # bump, install, and update the lockfile
+#   mise lock -g --bump      # re-resolve `latest`/majors, touch no config
+#                            # — CAN ROLL VERSIONS BACK; see
+#                            # minimum_release_age in [settings]. Always
+#                            # --dry-run this one first.
 #
 # `-g` is required: without it mise locks the active *project* config, and from
 # inside this repo that resolves to a root with no tools and reports "No tools
