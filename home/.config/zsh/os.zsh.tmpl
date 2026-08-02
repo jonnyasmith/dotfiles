@@ -14,14 +14,18 @@
 # distro.
 
 # Package-manager update shorthands. brew is macOS or linuxbrew; apt/nala are
-# Debian-family only, so those are probed at runtime rather than at render time
-# (Tera only knows the OS, not the distro).
+# Debian-family only and dnf is Fedora-family, so those are probed at runtime
+# rather than at render time (Tera only knows the OS, not the distro).
+#
+# dnf has no separate metadata step: dnf5 `upgrade` refreshes repos itself, so
+# `duu` is one command where `auu` and `nuu` are two.
 {%- if os() == "macos" %}
 alias buu="brew update && brew upgrade"
 {%- elif os() == "linux" %}
 command -v brew >/dev/null && alias buu="brew update && brew upgrade"
 command -v apt  >/dev/null && alias auu="sudo apt update && sudo apt upgrade -y"
 command -v nala >/dev/null && alias nuu="sudo nala update && sudo nala upgrade -y"
+command -v dnf  >/dev/null && alias duu="sudo dnf upgrade -y"
 {%- endif %}
 
 # File size
