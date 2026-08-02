@@ -1,7 +1,7 @@
 # dotfiles
 
-One branch, every machine: macOS, Fedora, Debian/Ubuntu, Arch, Raspberry Pi,
-WSL, and native Windows.
+One branch, every machine: macOS, Debian, Fedora, Arch, Raspberry Pi, WSL, and
+native Windows.
 
 There used to be a branch per OS, and each carried a README you stepped through
 by hand. They drifted, because a fix made on the mac never made it to the other
@@ -9,6 +9,21 @@ five. That is gone. The machine is now **declared** in `mise.toml`, and
 `mise bootstrap` converges it.
 
 ## Set up a machine
+
+Follow the runbook for the machine you are building. Each is the whole
+sequence — install media to first login — and nothing in it is optional:
+
+| Machine | Runbook |
+| --- | --- |
+| Debian laptop or desktop | [docs/debian.md](docs/debian.md) |
+| Fedora | [docs/fedora.md](docs/fedora.md) |
+| Arch | [docs/arch.md](docs/arch.md) |
+| Raspberry Pi | [docs/raspberry-pi.md](docs/raspberry-pi.md) |
+| Debian under WSL | [docs/wsl.md](docs/wsl.md) |
+| Native Windows | [docs/windows.md](docs/windows.md) |
+| macOS | the three lines below; there is nothing else |
+
+All of them end in the same three lines:
 
 ```bash
 git clone https://github.com/jonnyasmith/dotfiles.git ~/.dotfiles
@@ -56,11 +71,8 @@ Two things it cannot finish for you, both reported at the end of a run:
 VS Code extensions are not a step at all: Settings Sync owns them
 (`docs/adr/0002-vscode-extensions-are-sync-owned.md`).
 
-Per-OS prerequisites that genuinely need a human — installing the OS, disk
-partitioning, GUI sign-ins, anything needing a reboot — are in `docs/`:
-[arch](docs/arch.md) · [fedora](docs/fedora.md) · [ubuntu](docs/ubuntu.md) ·
-[raspberry-pi](docs/raspberry-pi.md) · [wsl](docs/wsl.md) ·
-[windows](docs/windows.md).
+What the runbooks add on top is only what a human must do: install media, disk
+partitioning, GUI sign-ins, and the steps that need a reboot.
 
 ## How one config covers every OS
 
