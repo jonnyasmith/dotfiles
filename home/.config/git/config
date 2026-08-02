@@ -1,35 +1,34 @@
-# gitconfig
 [user]
     name = Jonny Smith
     email = jonny.asmith@gmail.com
 [github]
     user = jonnyasmith
 [alias]
-    a    = add -A                                                   # Add all changes
-    b    = branch                                                   # List branches
-    c    = commit                                                   # Commit changes
-    ca   = commit --amend                                           # Amend last commit
-    caa  = commit --amend -a                                        # Amend last commit and add all changes
-    caan = commit --amend -a --no-edit                              # Amend last commit, add all changes, and don't edit message
-    cam  = commit -a -m                                             # Commit all changes with a message
-    cm   = commit -m                                                # Commit with a message
-    co   = checkout                                                 # Checkout a branch
-    cob  = checkout -b                                              # Checkout a new branch
-    cp   = cherry-pick -x                                           # Cherry pick a commit
-    d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines    # Show diff ignoring whitespace and blank lines
-    f    = !git fetch --prune                                       # Fetch and prune branches
-    m    = merge                                                    # Merge a branch
-    mt   = mergetool                                                # Open merge tool
-    p    = !git pull                                                # Pull changes
-    r    = rebase                                                   # Rebase
-    i    = init                                                     # Initialize a new repository
-    rl   = reflog                                                   # Show reflog
-    s    = status -s -b                                             # Show short and branch status
-    sb   = show-branch                                              # Show branches
-    t    = tag                                                      # List tags
-    l    = log --pretty=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative                      # Show a pretty log
+    a    = add -A
+    b    = branch
+    c    = commit
+    ca   = commit --amend
+    caa  = commit --amend -a
+    caan = commit --amend -a --no-edit
+    cam  = commit -a -m
+    cm   = commit -m
+    co   = checkout
+    cob  = checkout -b
+    cp   = cherry-pick -x
+    d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines
+    f    = !git fetch --prune
+    m    = merge
+    mt   = mergetool
+    p    = !git pull
+    r    = rebase
+    i    = init
+    rl   = reflog
+    s    = status -s -b
+    sb   = show-branch
+    t    = tag
+    l    = log --pretty=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)' --abbrev-commit --date=relative
     ll   = l -10
-    lg   = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)'   # Show a pretty log graph
+    lg   = log --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) %C(reset)%s%C(reset) %C(bold red)%an%C(reset) %C(bold green)(%ar)%C(reset)%C(bold yellow)%d%C(reset)'
 
 [color]
     diff = auto
@@ -53,15 +52,9 @@
 [color "sh"]
     branch = yellow
 [push]
-    # push will only do the current branch, not all branches
     default = current
-    # `default = current` pushes to a same-named remote branch but does NOT
-    # record an upstream, so the branch stays untracked and `git pull` fails
-    # with "There is no tracking information for the current branch". This sets
-    # the upstream on the first push, which is what `git push -u` does by hand.
     autoSetupRemote = true
 [branch]
-    # set up 'git pull' to rebase instead of merge
     autosetuprebase = always
 [diff]
     renames = copies
@@ -69,7 +62,6 @@
 [difftool]
     prompt = false
 [apply]
-    # do not warn about missing whitespace at EOF
     whitespace = nowarn
 [core]
   pager = less -FXRS -x2
@@ -88,66 +80,18 @@
 [init]
 	defaultBranch = main
 
-# ---------------------------------------------------------------------------
-# SSH account routing.
-#
-# ~/.ssh/config pins one 1Password key per host and sets IdentitiesOnly, so a
-# connection no longer authenticates with whichever key the agent offers first.
-#
-# github.com          -> "SSH Key - Ed25519"      (personal)
-# github-work         -> "SSH Key - Ed25519 Work"
-# ssh.dev.azure.com   -> "SSH Key - Work"         (RSA; the only key ADO accepts)
-#
-# The work org name and the work email address are deliberately NOT in this
-# repo, which is public. They live in two untracked files alongside this one:
-#
-#   ~/.config/git/config.local   the work org, and its URL rewrite
-#   ~/.config/git/config.work    [user] email for work repos
-#
-# See home/.config/git/config.local.example for the shape, and README.md
-# "SSH keys and identities". A missing include is silently ignored by git, so
-# a machine without them still gets a working personal config - but work repos
-# will quietly commit as the personal identity, so bootstrap.sh warns when
-# config.local is absent.
-#
-# Relative include paths resolve next to *this* file as it was opened - that is
-# ~/.config/git/, not the symlink target inside ~/.dotfiles - which is what
-# keeps the untracked files outside the repo. Verified: `git config
-# --show-origin --get mergetool.smerge.keepBackup` reports
-# file:~/.config/git/config.os, and no config.os exists in the repo.
-# ---------------------------------------------------------------------------
+# A missing include is silently ignored by git, so a machine without
+# config.local still gets a working personal config — and quietly commits work
+# repos under the personal identity, which is why bootstrap.sh warns for it.
 [include]
     path = config.local
 
-# ---------------------------------------------------------------------------
-# Commit identity for Azure DevOps.
-#
-# The GitHub equivalents live in config.local because their match patterns
-# contain the org name; this one is generic, so it stays here.
-#
-# Matches on the remote URL as *stored* in the repo's config, so the insteadOf
-# rewrite in config.local does not interfere.
-#
-# Must stay below the [user] block at the top of this file: later values win, so
-# this overrides the personal default and anything unmatched keeps it. Repos
-# with no remote yet also keep the default.
-#
-# Gotcha: `**` is only wildcard-magic directly after a `/`. A trailing
-# `...azure.com:**` matches nothing and fails silently; `...azure.com:v3/**` is
-# correct and covers both the `Platform%20Interactive` and `Platform
-# Interactive` spellings present in remotes.
-#
-# Verify in any repo with:  git config user.email
-# ---------------------------------------------------------------------------
+# Must stay below [user]: later values win. The `v3/` prefix is required
+# because `**` is only wildcard-magic directly after a `/` — `...azure.com:**`
+# matches nothing and fails silently.
 [includeIf "hasconfig:remote.*.url:git@ssh.dev.azure.com:v3/**"]
     path = config.work
 
-# ---------------------------------------------------------------------------
-# OS-specific mergetool/difftool invocations (smerge, p4merge). Rendered from
-# home/.config/git/config.os.tmpl to ~/.config/git/config.os by `mise
-# bootstrap`. The path is relative, so git resolves it next to this file, and a
-# missing include path is silently ignored — a machine that has not bootstrapped
-# yet still gets a working git config.
-# ---------------------------------------------------------------------------
+# Rendered by `mise bootstrap`; git ignores the include until it exists.
 [include]
     path = config.os

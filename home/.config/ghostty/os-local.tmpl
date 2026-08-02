@@ -1,6 +1,4 @@
-# OS-specific ghostty config. Rendered from home/.config/ghostty/os-local.tmpl
-# by `mise bootstrap` and pulled in by `config-file = ?os-local` in the shared
-# config. The `?` prefix means ghostty ignores it when it has not rendered yet.
+# The `?` in `config-file = ?os-local` means ghostty ignores this when absent.
 {%- if os() == "macos" %}
 macos-option-as-alt = left
 {%- endif %}
