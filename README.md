@@ -355,8 +355,7 @@ cannot be committed by accident.
   both identities load and agent order picks the account — the same bug
   `IdentitiesOnly` was meant to close. Above six keys in the agent it stops
   being a correctness problem and becomes a hard failure — ssh exhausts the
-  server's `MaxAuthTries` and gives up with `Too many authentication
-  failures`.
+  server's `MaxAuthTries` and gives up with `Too many authentication failures`.
 - **`home/.ssh/1password/*.pub`** are public-key stubs, committed deliberately.
   `IdentityFile` needs a local file to name *which* agent key to use; the
   private half never leaves 1Password. ssh matches on the key blob, not the
