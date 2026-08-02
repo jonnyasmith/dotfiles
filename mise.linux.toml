@@ -124,14 +124,38 @@ if command -v apt-get >/dev/null 2>&1; then
   fi
 
   # Debian's installer writes `main non-free-firmware` only, which leaves
-  # ttf-mscorefonts-installer (contrib) and unrar (non-free) unresolvable. The
-  # sed rewrites the deb822 stanza the installer wrote; Raspberry Pi OS already
-  # enables all four components in a sources.list this file does not exist for.
-  deb_sources=/etc/apt/sources.list.d/debian.sources
-  if [ -f "$deb_sources" ] && ! grep -q '^Components:.* non-free\( \|$\)' "$deb_sources"; then
-    sudo sed -i 's/^Components: .*/Components: main contrib non-free non-free-firmware/' \
-      "$deb_sources"
-  fi
+  # ttf-mscorefonts-installer (contrib) and unrar (non-free) unresolvable.
+  # Both layouts are live: trixie's installer writes the deb822 .sources,
+  # bookworm and anything upgraded or debootstrapped writes the one-line
+  # sources.list. Only debian.org entries are touched, so a derivative's own
+  # repos (and Ubuntu's component names) are left alone; Raspberry Pi OS
+  # already ships all four components.
+  apt_add_components() {
+    apt_src="$1"; apt_prog="$2"
+    [ -f "$apt_src" ] || return 0
+    grep -q 'debian\.org' "$apt_src" || return 0
+    apt_tmp="$(mktemp)"
+    if awk "$apt_prog" "$apt_src" > "$apt_tmp" && [ -s "$apt_tmp" ] \
+       && ! cmp -s "$apt_tmp" "$apt_src"; then
+      sudo install -m 0644 "$apt_tmp" "$apt_src"
+    fi
+    rm -f "$apt_tmp"
+  }
+
+  # `non-free-firmware` must not satisfy the `non-free` test, hence the
+  # trailing space-or-end on every match.
+  apt_add_components /etc/apt/sources.list.d/debian.sources '
+    /^Components:/ {
+      if ($0 !~ /[ \t]contrib([ \t]|$)/)  $0 = $0 " contrib"
+      if ($0 !~ /[ \t]non-free([ \t]|$)/) $0 = $0 " non-free"
+    }
+    { print }'
+  apt_add_components /etc/apt/sources.list '
+    /^[ \t]*deb(-src)?[ \t]/ && /debian\.org/ {
+      if ($0 !~ /[ \t]contrib([ \t]|$)/)  $0 = $0 " contrib"
+      if ($0 !~ /[ \t]non-free([ \t]|$)/) $0 = $0 " non-free"
+    }
+    { print }'
 
   # apt, not snap: the snap build cannot use the SSH agent or system
   # authentication, which is the entire reason 1Password is on these machines.
