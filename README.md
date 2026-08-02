@@ -396,6 +396,33 @@ Per-project versions come from files already in your repos — `global.json`,
 `.nvmrc` / `.node-version`, `.python-version` — because
 `idiomatic_version_file_enable_tools` is set.
 
+### GitHub rate limits
+
+Unauthenticated GitHub allows **60 API requests an hour**, per IP. Everyday mise
+is nowhere near it — `mise upgrade --dry-run` costs 3 calls, because
+`use_versions_host` pulls version lists from `mise-versions.jdx.dev` rather than
+the API.
+
+A real `mise lock -g --bump` is the exception. It resolves every platform entry
+and needs release-asset metadata for each; `mise.lock` holds 242
+`api.github.com/.../releases/assets/N` URLs. That exhausts 60 partway through
+and leaves a lockfile built from partial version lists. So pass a token:
+
+```bash
+GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump --dry-run   # what would move
+GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump             # write it
+GITHUB_TOKEN="$(gh auth token)" mise install                    # install the result
+```
+
+`gh auth token` reads the token `gh auth login` already put in your keyring.
+mise cannot see it on its own — mise reads `GITHUB_TOKEN` or `MISE_GITHUB_TOKEN`
+from the environment, and neither is set. **No scopes are needed**; this is
+public read metadata. The limit becomes 5,000/hour.
+
+It is deliberately not exported from `.zshenv`: `gh auth token` hits the
+keyring, and paying that on every shell start to fix something you meet once a
+month is the wrong trade.
+
 ### Python
 
 Homebrew's `python@3.14` arrives as a **dependency** of `platformio`, so it is
