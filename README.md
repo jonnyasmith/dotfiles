@@ -368,6 +368,7 @@ mise install     # install everything declared
 mise ls          # what is installed
 mise outdated    # what is behind
 mise upgrade     # bump tools pinned to a moving target
+mise run bump    # re-resolve the lockfile itself — see below
 ```
 
 Do **not** install node, nvm, pnpm, bun or the .NET SDKs from a distro package
@@ -379,13 +380,19 @@ shadow it or self-update behind its back. mise sets `DOTNET_ROOT` and
 (`minimum_release_age` in `[settings]`), so a brand-new release is held back
 with a warning naming the date it becomes eligible. That is a supply-chain
 quarantine, not a stability preference — most malicious releases are caught
-within hours. Two consequences worth knowing:
+within hours. Three consequences worth knowing:
 
-- `mise upgrade` holds. `mise lock -g --bump` **rolls versions backwards** to
-  the newest eligible release. Always `--dry-run` that one.
+- `mise upgrade` holds a too-new release back. **`mise lock -g --bump` rolls it
+  backwards** — it re-resolves against what the floor currently permits and
+  ignores what is locked. Use `mise run bump` instead: it lists the version
+  changes, warns that they may go down, waits for a `y`, and passes a GitHub
+  token. Without the token a real bump exhausts the unauthenticated 60/hour
+  limit partway through and writes a lockfile built from partial version lists.
 - A tool that must be current is exempted by name — a per-tool
   `minimum_release_age = "0s"`, or `minimum_release_age_excludes`. Do not lower
   the floor for everything.
+- To make the *installed* set comply after raising the floor, `mise run bump`
+  and accept the rollbacks. That is the one time downgrades are the point.
 
 Tools that ship their own updater have it switched off — claude, codex,
 gemini-cli, copilot and omp — because mise owns the binary and two owners means

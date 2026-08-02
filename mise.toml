@@ -623,6 +623,73 @@ run = "echo 'bootstrap tasks complete'"
 # brew-cask on macOS, apt/dnf on Linux, winget on Windows. See
 # docs/adr/0002-vscode-extensions-are-sync-owned.md.
 
+# ------------------------------------------------------------------- bump --
+#
+# `mise run bump` — the only sanctioned way to move the lockfile forward.
+#
+# It exists because the raw command has two traps that are easy to walk into
+# months from now, when the reasoning has been forgotten:
+#
+#   1. `mise lock -g --bump` re-resolves every selector against the *eligible*
+#      set, so under minimum_release_age it rewrites versions DOWNWARDS. That
+#      is occasionally what you want — after raising the floor, to make the
+#      installed set comply with it — and never what you want by accident.
+#      Hence dry-run first, always, and an explicit confirmation.
+#   2. Unauthenticated GitHub allows 60 API requests an hour. A real bump
+#      resolves every platform entry in mise.lock and needs release-asset
+#      metadata for each, which is hundreds of calls — it will exhaust the
+#      limit partway through and write a lockfile built from partial version
+#      lists. gh's token is in the keyring and mise cannot see it, so it is
+#      passed explicitly. No scopes are needed; this is public read metadata.
+#
+# The token is fetched here rather than exported from .zshenv on purpose:
+# `gh auth token` hits the keyring, and paying that on every shell start to
+# fix something you hit monthly is the wrong trade.
+
+[tasks.bump]
+description = "Re-resolve the global lockfile, with a token and a diff to approve"
+shell = "bash -c"
+run = '''
+set -u
+command -v gh >/dev/null 2>&1 || { echo "  ! gh is required; run: gh auth login"; exit 1; }
+token="$(gh auth token 2>/dev/null)" || token=""
+if [ -z "$token" ]; then
+  echo "  ! gh is not authenticated; run: gh auth login"
+  exit 1
+fi
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
+
+# --json reports version-level changes only, and prints `[]` when a bump would
+# do nothing but refresh checksums. That is the difference between "nothing to
+# do" and "13 rollbacks", and it is worth knowing before the prompt: without
+# it, the plain dry-run buries the answer under one ✓ line per tool per
+# platform — 353 of them here.
+changes="$(GITHUB_TOKEN="$token" mise lock -g --bump --dry-run --json 2>/dev/null)"
+if [ -z "$changes" ] || [ "$changes" = "[]" ]; then
+  echo "  . every selector already resolves to its locked version; nothing to do"
+  exit 0
+fi
+
+echo "  . version changes:"
+echo "$changes" | jq -r '.[] | "    \(.name)\t\(.old_versions | join(",")) -> \(.new_versions | join(","))"' | expand -t 4,40
+echo
+echo "  . these may move DOWN: --bump re-resolves against what minimum_release_age"
+echo "    ($(mise settings get minimum_release_age)) currently permits, ignoring what is locked."
+printf '    apply? [y/N] '
+read -r reply
+case "$reply" in
+  y | Y) ;;
+  *)
+    echo "  . nothing written"
+    exit 0
+    ;;
+esac
+
+GITHUB_TOKEN="$token" mise lock -g --bump || exit 1
+GITHUB_TOKEN="$token" mise install || exit 1
+echo "  . lockfile and tools updated — review 'git diff mise.lock' and commit"
+'''
+
 # ------------------------------------------------------------------ checks --
 #
 # `mise run check` — everything that can be verified without converging a
