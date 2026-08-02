@@ -70,6 +70,9 @@
 - A `[bootstrap.repos]` entry under `~/.oh-my-zsh/custom/plugins` and the
   `plugins=()` list in `home/.zshrc` are one declaration in two places; change
   both. Exactly one ZLE syntax highlighter — two fight over the same hooks.
+  zsh-autocomplete is absent for a different reason: it has to be sourced
+  before `compinit`, which the OPENSPEC region at the top of `.zshrc` has
+  already run.
 - `check:*` bodies use the standard library only: CI runs the gate with
   `--skip-tools`, so the interpreter may be the system python3.
 - Scripts under `home/.config/tmux/scripts/` must run on bash 3.2 (stock

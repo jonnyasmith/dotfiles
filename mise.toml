@@ -202,7 +202,7 @@ zig = "latest"
 "npm:@google/gemini-cli" = "latest"
 "npm:@earendil-works/pi-coding-agent" = "latest"
 "npm:@ollama/pi-web-search" = "latest"
-# Falls under aqua's weekly-download threshold, so it needs an explicit opt-in.
+# Falls under aube's weekly-download threshold, so it needs an explicit opt-in.
 # Scoped to kb itself: its transitive dependencies stay supply-chain gated.
 "npm:@dustinbyrne/kb" = { version = "latest", allow_low_downloads = true }
 "npm:azure-functions-core-tools" = "latest"
@@ -635,24 +635,22 @@ WAIVER = "comment-budget-skip:"
 # docs/ is for.
 BY_NAME = {
     ".gitignore": "#", ".zprofile": "#", ".zshenv": "#", ".zshrc": "#",
-    "config": "#", "config.local.example": "#", "htoprc": "#", "ignore": "#",
+    "config": "#", "config.local.example": "#", "ignore": "#",
 }
 BY_EXT = {
-    ".conf": "#", ".dconf": "#", ".lua": "--", ".ps1": "#", ".sh": "#",
-    ".tmpl": "#", ".toml": "#", ".txt": "#", ".yaml": "#", ".yml": "#",
-    ".zsh": "#",
+    ".conf": "#", ".dconf": "#", ".ps1": "#", ".sh": "#", ".tmpl": "#",
+    ".toml": "#", ".txt": "#", ".yml": "#", ".zsh": "#",
 }
 
 # Vendored or tool-written, so not ours to measure. desktop/cosmic stays
-# byte-comparable to its upstream (ADR 0008); the first thirty lines of
-# agent.toml are 1Password's own generated header.
+# byte-comparable to its upstream (ADR 0008); agent.toml opens with thirty
+# lines of 1Password's own generated header, which cannot carry a waiver.
 SKIP = (
     "desktop/cosmic/",
     "home/.config/1Password/ssh/agent.toml",
     "home/.config/btop/btop.conf",
     "home/.config/gh/config.yml",
     "home/.config/herdr/config.toml",
-    "home/.config/htop/htoprc",
     "home/.config/nvim/",
 )
 
