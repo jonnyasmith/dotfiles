@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-#
-# Bring this machine up to what mise.toml declares.
+# Bring this machine up to what mise.toml declares.  # comment-budget-skip: the usage block below is this script's interface
 #
 #   ./bootstrap.sh              # converge everything
 #   ./bootstrap.sh --dry-run    # show what would change, touch nothing

@@ -614,3 +614,95 @@ sys.exit(1 if bad else 0)
 PY
 '''
 
+[tasks."check:comments"]
+description = "Assert no comment block exceeds the budget in docs/adr/0009"
+shell = "bash -c"
+run = '''
+set -u
+# Stdlib python only; git enumerates the tracked files. See
+# docs/adr/0009-comment-budget-is-a-static-check.md.
+command -v python3 >/dev/null 2>&1 || { echo "  ! python3 is required"; exit 1; }
+command -v git >/dev/null 2>&1 || { echo "  ! git is required"; exit 1; }
+cd "$HOME/.dotfiles" || { echo "  ! ~/.dotfiles is missing"; exit 1; }
+python3 - "$HOME/.dotfiles" <<'PY'
+import pathlib, subprocess, sys
+
+MAX = 9
+WAIVER = "comment-budget-skip:"
+
+# Filename or extension -> line-comment token. Anything absent is not measured;
+# markdown is out of scope because `#` is a heading there and prose is what
+# docs/ is for.
+BY_NAME = {
+    ".gitignore": "#", ".zprofile": "#", ".zshenv": "#", ".zshrc": "#",
+    "config": "#", "config.local.example": "#", "htoprc": "#", "ignore": "#",
+}
+BY_EXT = {
+    ".conf": "#", ".dconf": "#", ".lua": "--", ".ps1": "#", ".sh": "#",
+    ".tmpl": "#", ".toml": "#", ".txt": "#", ".yaml": "#", ".yml": "#",
+    ".zsh": "#",
+}
+
+# Vendored or tool-written, so not ours to measure. desktop/cosmic stays
+# byte-comparable to its upstream (ADR 0008); the first thirty lines of
+# agent.toml are 1Password's own generated header.
+SKIP = (
+    "desktop/cosmic/",
+    "home/.config/1Password/ssh/agent.toml",
+    "home/.config/btop/btop.conf",
+    "home/.config/gh/config.yml",
+    "home/.config/herdr/config.toml",
+    "home/.config/htop/htoprc",
+    "home/.config/nvim/",
+)
+
+repo = pathlib.Path(sys.argv[1])
+bad = []
+checked = 0
+longest = 0
+
+# Tracked files only. Read here rather than piped in, because the heredoc that
+# carries this script is already this process's stdin.
+listing = subprocess.run(["git", "ls-files"], cwd=repo, text=True,
+                         capture_output=True)
+if listing.returncode != 0:
+    print("  ! git ls-files failed")
+    sys.exit(1)
+
+for rel in listing.stdout.splitlines():
+    if not rel or rel.startswith(SKIP):
+        continue
+    name = pathlib.PurePosixPath(rel)
+    token = BY_NAME.get(name.name) or BY_EXT.get(name.suffix)
+    f = repo / rel
+    if not token or not f.is_file():
+        continue
+    checked += 1
+    # A sentinel blank line so a block running to EOF is still closed.
+    lines = f.read_text(errors="replace").splitlines() + [""]
+    run, start, waived = 0, 0, False
+    for n, line in enumerate(lines, 1):
+        text = line.strip()
+        # A shebang is not a comment, and must not merge with the block under it.
+        if text.startswith(token) and not (n == 1 and text.startswith("#!")):
+            if run == 0:
+                start, waived = n, WAIVER in text
+            run += 1
+            continue
+        if run and not waived:
+            longest = max(longest, run)
+            if run > MAX:
+                bad.append(f"{rel}:{start} comment block of {run} lines over "
+                           f"the {MAX}-line budget — shorten it, move the "
+                           f"durable part into docs/, or put "
+                           f"'{WAIVER} <reason>' on its first line")
+        run = 0
+
+for b in bad:
+    print(f"  ! {b}")
+print(f"  ! {len(bad)} problem(s)" if bad
+      else f"  . {checked} file(s) measured, longest block {longest} line(s)")
+sys.exit(1 if bad else 0)
+PY
+'''
+

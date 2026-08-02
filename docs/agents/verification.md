@@ -11,6 +11,7 @@
 | `mise run check:tasks` | `mise tasks validate` |
 | `mise run check:fmt` | every `mise*.toml` and `.miserc.toml` is `mise fmt`-clean |
 | `mise run check:dconf` | `desktop/*.dconf` paths exist in installed schemas |
+| `mise run check:comments` | no comment block in a config or script is longer than the budget |
 | `./bootstrap.sh --status` / `--dry-run` | local only, never CI |
 
 A check may not require a converged machine, sudo, or a package manager.
@@ -42,7 +43,8 @@ gate.
   only `config.toml`, never the platform file. `check:tasks` unsets it; without
   that, `[tasks.bootstrap]`'s `setup:*` glob reports "task not found".
 - `check:packages` takes ~1s because it shells out to `mise search` per entry.
-  It and `check:shell` are the only checks with a dependency beyond python.
+  It, `check:shell` and `check:comments` are the only checks with a dependency
+  beyond python — `mise`, `shellcheck` and `git` respectively.
 - `check:config` needs python 3.11+ for `tomllib`, and `check:shell` needs zsh,
   which GitHub runners do not ship — the workflow apt-installs both.
 - `check:dconf` validates section *paths* against the installed schema XML and
@@ -50,6 +52,11 @@ gate.
   whose siblings are also absent, and it says nothing about a value: `dconf
   load` accepts any path, and a wrong value is rejected by the schema at read
   time instead.
+- `check:comments` measures block length and nothing else. A three-line
+  restatement of the declaration passes it. Waive a block that needs the
+  length with `# comment-budget-skip: <reason>` on its first line; see
+  docs/adr/0009-comment-budget-is-a-static-check.md for the scope and the
+  vendored exclusions.
 
 ## What counts as verified
 
