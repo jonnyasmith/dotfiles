@@ -31,5 +31,14 @@ home/.config/herdr/.plugins.lock
 home/.config/herdr/*.log
 home/.config/herdr/*.sock
 
+# omp. Only ~/.omp/agent/config.yml is linked, but agent.db is a credential
+# store (OAuth tokens and API keys) sitting in the same directory, so the
+# whole of ~/.omp is denied except that one file. This is the one entry here
+# whose absence would leak a secret rather than just noise.
+home/.omp/*
+!home/.omp/agent/
+home/.omp/agent/*
+!home/.omp/agent/config.yml
+
 # macOS noise.
 .DS_Store

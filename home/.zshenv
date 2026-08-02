@@ -21,8 +21,8 @@ export PATH="$HOME/.local/bin:$PATH"
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # bun. BUN_INSTALL is bun's *global package* dir, not the runtime: `bun install
-# -g` links binaries into $BUN_INSTALL/bin (omp lives there), so this stays on
-# PATH even though mise owns the `bun` binary itself. Was in .zshrc, which meant
+# -g` links binaries into $BUN_INSTALL/bin, so this stays on PATH even though
+# mise owns the `bun` binary itself. Was in .zshrc, which meant
 # no bun in git hooks or any non-interactive shell, and the installer's
 # unguarded prepend put this dir on PATH three times per nested shell.
 export BUN_INSTALL="$HOME/.bun"
