@@ -9,17 +9,9 @@
     running it again. Per item: `+` did something, `.` was already done,
     `!` needs a human, `x` failed (and the run continues).
 
-    This script only does what mise cannot:
-
-      1. winget packages   — mise has no `winget` manager, so [bootstrap.packages]
-                             cannot express them. IDs live in packages/winget.txt.
-      2. mise itself       — chicken and egg.
-
-    Everything else is mise's: dotfiles come from [dotfiles] in mise.toml /
-    mise.windows.toml, and dev tools from [tools]. This script deliberately
-    creates no symlinks. Without Developer Mode or elevation mise falls back to
-    copying files and to junctions for directories, which is why the Windows
-    Terminal settings entry is mode = "copy" anyway.
+    It does only what mise cannot: install the winget packages listed in
+    packages/winget.txt, and install mise itself. Everything else — dotfiles
+    and dev tools — comes from mise.toml and mise.windows.toml.
 
 .PARAMETER Steps
     Run only the named steps, in the order given. Default: all of them.
@@ -35,10 +27,8 @@
     .\bootstrap.ps1 -List
 
 .NOTES
-    Deliberately NOT handled here, because they need a human — see
-    docs/windows.md: Windows Update, `wsl --install` (elevated, reboots),
-    signing in to 1Password so the SSH agent can auth to GitHub, PowerToys
-    keyboard remaps, and the power/lid settings in powercfg.cpl.
+    The steps that need a human — Windows Update, `wsl --install`, signing in
+    to 1Password, PowerToys remaps, power settings — are in docs/windows.md.
 #>
 [CmdletBinding()]
 param(
@@ -77,8 +67,7 @@ function Have {
     [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue)
 }
 
-# Run a native tool, indent its output under the step, and hand back its exit
-# code. $ErrorActionPreference drops to Continue for the call: with 2>&1 under
+# $ErrorActionPreference drops to Continue for the call: with 2>&1 under
 # 'Stop', anything a tool writes to stderr surfaces as a terminating
 # NativeCommandError and would abort the whole bootstrap over a warning.
 function Invoke-Native {
@@ -105,9 +94,8 @@ function Invoke-Native {
 }
 
 function Update-PathFromEnvironment {
-    # winget drops its shims in a directory that a running shell may not have
-    # on PATH yet. Re-read the machine and user PATH so a freshly installed
-    # mise is callable without opening a new window.
+    # winget drops its shims in a directory a running shell may not have on
+    # PATH yet, so a freshly installed mise is not callable without this.
     $machine = [Environment]::GetEnvironmentVariable('Path', 'Machine')
     $user    = [Environment]::GetEnvironmentVariable('Path', 'User')
     $env:Path = (@($machine, $user) | Where-Object { $_ }) -join ';'
@@ -230,8 +218,7 @@ function Step-Preflight {
         Warn 'packages/winget.txt missing — the winget step will be skipped'
     }
 
-    # Not a gate, just so copy-instead-of-symlink is not a surprise when mise
-    # applies [dotfiles] later in this run.
+    # Not a gate — just so copy-instead-of-symlink is not a surprise later.
     $unlock = Get-ItemProperty `
         -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' `
         -Name 'AllowDevelopmentWithoutDevLicense' -ErrorAction SilentlyContinue
@@ -308,8 +295,6 @@ function Step-Bootstrap {
             else { Fail "mise trust exited $code"; return }
         }
 
-        # Converges: dotfiles, repos, tools and the `bootstrap` task all skip
-        # whatever is already in its desired state.
         $code = Invoke-Native -Exe $script:Mise -Arguments @('bootstrap', '--yes')
         if ($code -eq 0) { Ok 'mise bootstrap complete' }
         else { Fail "mise bootstrap exited $code" }

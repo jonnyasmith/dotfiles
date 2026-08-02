@@ -64,7 +64,9 @@
 - A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and sees only
   `config.toml`. Unset it before shelling out to `mise`.
 - Never pipe a third-party install script into a shell. Add the vendor's
-  repository and install the package instead.
+  repository and install the package instead. The single exception is mise's
+  own installer in `bootstrap.sh`: a fresh machine has no package manager that
+  can be relied on to carry mise, which is the whole reason that script exists.
 - A `[bootstrap.repos]` entry under `~/.oh-my-zsh/custom/plugins` and the
   `plugins=()` list in `home/.zshrc` are one declaration in two places; change
   both. Exactly one ZLE syntax highlighter — two fight over the same hooks.
@@ -75,6 +77,8 @@
 - A comment explains non-obvious local intent and nothing else. Anything that
   binds beyond the line it sits on has a home in the table in
   docs/agents/code-comments.md — read it before writing a comment block.
+  `check:comments` enforces the volume half of that; see
+  docs/adr/0009-comment-budget-is-a-static-check.md.
 
 ## `[dotfiles]` mode
 

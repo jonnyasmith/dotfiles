@@ -1,4 +1,3 @@
-# reload zsh config
 alias reload='source ~/.zshrc'
 
 # Detect which `ls` flavor is in use
@@ -11,13 +10,9 @@ fi
 alias vim="nvim"
 alias code="code-insiders"
 
-# Interactive output is styled and decorated — this is not plain cat. What
-# keeps scripts working is bat's own tty detection: with stdout not a tty it
-# emits plain undecorated text, so `cat file | …` and `$(cat file)` are
-# unchanged. Bypass with `command cat`. --paging=never is upstream's
-# recommendation for this alias — without it a long file opens in less, which
-# cat never does. Guarded because a shell started before `mise bootstrap` has
-# no bat and must not lose cat.
+# bat detects a non-tty and emits plain undecorated text, so `cat file | …`
+# and `$(cat file)` are unchanged; `command cat` bypasses. Guarded because a
+# shell started before `mise bootstrap` has no bat and must not lose cat.
 command -v bat >/dev/null 2>&1 && alias cat="bat --paging=never"
 
 alias g="git"
@@ -66,7 +61,6 @@ alias d='docker'
 alias dc='docker-compose'
 alias k='kubectl'
 
-# Filesystem aliases
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....="cd ../../.."
@@ -80,12 +74,10 @@ alias rmf="rm -rf"
 
 alias weather='curl v2.wttr.in'
 
-# Helpers
 alias grep='grep --color=auto'
-alias df='df -h' # disk free, in Gigabytes, not bytes
-alias du='du -h -c' # calculate disk usage for a folder
+alias df='df -h'
+alias du='du -h -c'
 
-# IP addresses
 alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
 alias ips="ifconfig -a | perl -nle'/(\d+\.\d+\.\d+\.\d+)/ && print $1'"
 

@@ -1,14 +1,4 @@
 # PowerShell profile — managed by ~/.dotfiles, applied by mise [dotfiles].
-#
-# Target: ~\Documents\PowerShell\Microsoft.PowerShell_profile.ps1, i.e. pwsh 7+
-# (Microsoft.PowerShell from packages/winget.txt). Windows PowerShell 5.1 reads
-# ~\Documents\WindowsPowerShell\ instead and is deliberately left alone.
-#
-# The zsh equivalent is home/.config/zsh/aliases.zsh + home/.zshrc; this file
-# mirrors the parts of it that mean anything on Windows. Modules come from the
-# PowerShell Gallery, not from this repo, so every import is guarded — a
-# machine that has not run the Install-Module lines in docs/windows.md still
-# gets a working shell, just without the extras.
 
 # ------------------------------------------------------------------ helpers --
 function Import-IfAvailable {
@@ -26,14 +16,11 @@ function Test-Command {
 }
 
 # ----------------------------------------------------------------- runtimes --
-# mise owns node/python/dotnet/neovim/starship/fzf and rewrites PATH per
-# directory, exactly as `eval "$(mise activate zsh)"` does in home/.zshrc.
 # Each of these is the idiom the tool's own docs give for PowerShell.
 if (Test-Command 'mise') {
     (& mise activate pwsh) | Out-String | Invoke-Expression
 }
 
-# Prompt. home/.config/starship.toml is shared with macOS and Linux.
 if (Test-Command 'starship') {
     Invoke-Expression (& starship init powershell)
 }
@@ -43,19 +30,15 @@ if (Test-Command 'zoxide') {
 }
 
 # ------------------------------------------------------------------ modules --
-# The three from windows/post-install.ps1 in the old repo. PSFzf only earns its
-# keep when the fzf binary is actually there (mise installs it). Ctrl+f rather
-# than PSFzf's default Ctrl+t, matching the profile that was on this machine
-# before mise.
+# PSFzf only earns its keep when the fzf binary is there (mise installs it).
+# Ctrl+f rather than PSFzf's default Ctrl+t, deliberately.
 if ((Test-Command 'fzf') -and (Import-IfAvailable 'PSFzf')) {
     Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+f' -PSReadlineChordReverseHistory 'Ctrl+r'
 }
 $null = Import-IfAvailable 'Terminal-Icons'
 $null = Import-IfAvailable 'z'
 
-# PSReadLine ships with pwsh. Carried over from the profile that was on this
-# machine before mise (vi editing, history prediction, menu completion); zsh is
-# on the default emacs bindings, so this one deliberately differs.
+# Vi editing here is deliberate: zsh is on the default emacs bindings.
 if (Import-IfAvailable 'PSReadLine') {
     Set-PSReadLineOption -EditMode Vi
     Set-PSReadLineOption -PredictionSource History
@@ -88,9 +71,8 @@ function d  { docker @args }
 # zsh has `dc=docker-compose`; compose v1 is gone, so this is the v2 subcommand.
 function dc { docker compose @args }
 
-# git shortcuts. The single letters are git aliases from home/.config/git/config
-# (a = add -A, cm = commit -m, f = fetch --prune, ...), so they stay in sync
-# with macOS and Linux.
+# The single letters are git aliases from home/.config/git/config (a = add
+# -A, cm = commit -m, f = fetch --prune, ...).
 function ga   { git a . @args }
 function gcm  { git cm @args }
 function gf   { git f @args }
@@ -126,7 +108,6 @@ function clean-orig {
     Get-ChildItem -Recurse -File -Filter '*.orig' | Remove-Item -Force
 }
 
-# Filesystem
 function ..    { Set-Location '..' }
 function ...   { Set-Location '../..' }
 function ....  { Set-Location '../../..' }
@@ -140,8 +121,7 @@ function rmf { Remove-Item -Recurse -Force @args }
 
 function weather { curl.exe -s 'v2.wttr.in' }
 
-# IP addresses. Same opendns trick as the zsh `ip` alias, via the DnsClient
-# module instead of dig.
+# Same opendns trick as the zsh `ip` alias, via DnsClient instead of dig.
 function ip {
     (Resolve-DnsName -Name 'myip.opendns.com' -Server 'resolver1.opendns.com' -Type A).IPAddress
 }
@@ -152,12 +132,3 @@ function localip {
 function ips {
     (Get-NetIPAddress -AddressFamily IPv4).IPAddress
 }
-
-# Not ported from aliases.zsh, on purpose:
-#   auu / nuu       apt + nala — those belong in WSL, see docs/wsl.md
-#   buu             Homebrew
-#   code            aliased to code-insiders on macOS; Windows installs stable
-#   wtc / wtr / wtl  the `worktree` helper they call is not in this repo
-#   flush, sniff, httpdump, cleanup, fs, emptytrash, hidedesktop, showdesktop,
-#   the GET/HEAD/POST lwp-request loop, and the grep/df/du coreutils wrappers
-#                   macOS- or GNU-only, no Windows equivalent worth faking
