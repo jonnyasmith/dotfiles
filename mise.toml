@@ -64,6 +64,44 @@ dotfiles.root = "~/.dotfiles/home"
 # installed is auto-installed on first use (not_found_auto_install).
 idiomatic_version_file_enable_tools = ["node", "python"]
 
+# Quarantine every fuzzy resolution for a week. mise defaults this to 24h; the
+# reason to raise it is that the dangerous window for a package ecosystem is
+# the first hours after publication, when a hijacked or backdoored release is
+# live and not yet yanked. Since ~half of [tools] below is `latest`, a login
+# that runs `mise upgrade` would otherwise pull artifacts that are hours old.
+#
+# This is a SECURITY setting, not a stability one, and it is deliberately
+# global rather than per-tool: an exception list is a list of tools nobody is
+# waiting a week to vet.
+#
+# Scope: it filters *fuzzy* requests (`latest`, `24`, `3.13`) for backends that
+# publish release timestamps — aqua, cargo, github, gitlab, go, npm, pipx and
+# most core tools. Explicit pins bypass it entirely and versions with no
+# timestamp are included anyway. Only npm: and pipx: apply it to transitive
+# dependencies.
+#
+# IT CAN MOVE VERSIONS BACKWARDS, and the two refresh commands differ. Both
+# verified on 2026.7.18 against this config with the floor at 7d:
+#
+#   mise upgrade      holds. Reports "All tools are up to date" and warns per
+#                     tool, e.g. "newer npm:cline release 3.0.49 (released
+#                     2026-08-02, eligible 2026-08-09) ignored by
+#                     minimum_release_age (7d)". Nothing is downgraded.
+#   mise lock --bump  re-resolves every selector from scratch against the
+#                     *eligible* set, so anything locked inside the window is
+#                     rewritten DOWN to the newest release older than it — it
+#                     proposed 13 rollbacks here, including uv 0.12.1 ->
+#                     0.11.32 and cmake 4.4.2 -> 4.4.0.
+#
+# So `--bump` is no longer the safe refresh it is in the [tools] note below;
+# always read `mise lock -g --bump --dry-run` before letting it write.
+#
+# The cost falls hardest on the AI CLIs (claude, codex, gemini-cli, copilot),
+# which ship most days — they now land a week late. If one of them ever needs
+# to be current, exempt that tool by name with `minimum_release_age_excludes`,
+# rather than lowering the floor for everything.
+minimum_release_age = "7d"
+
 # ---------------------------------------------------------------- dotfiles --
 #
 # Replaces GNU stow. The mode is chosen by two independent properties of the
@@ -159,6 +197,37 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # A directory link would send every one of those writes into the repo.
 "~/.config/herdr/config.toml" = {}
 
+# omp (oh-my-pi). One file out of a directory that is almost entirely state:
+# ~/.omp/agent also holds agent.db (the OAuth and API-key store), history.db,
+# models.db, sessions/ and blobs/, and ~/.omp holds logs/, caches and the
+# version-keyed natives/. config.yml is the only part that is ours, and it is
+# the settings file `/settings`, `omp config set` and onboarding all write —
+# hence `copy`, like gh and btop. Capture deliberate changes with
+# `mise bootstrap dotfiles add ~/.omp/agent/config.yml`.
+#
+# omp does NOT walk parent directories for settings: it reads ~/.omp/agent/config.yml
+# and, if the cwd has one, ./.omp/config.yml. So this file is the whole of the
+# machine-wide configuration. Credentials never belong in it — omp keeps those
+# in agent.db and in the provider env vars (ANTHROPIC_API_KEY and friends).
+"~/.omp/agent/config.yml" = { mode = "copy" }
+
+# The three AI CLIs whose auto-update switch is a config key rather than an
+# env var. mise owns all three binaries, so each vendor updater is turned off;
+# see docs/adr/0004-one-updater-per-binary.md. claude is not here because its
+# switch IS an env var — DISABLE_UPDATES in [env] below.
+#
+# `copy`, not symlink: each of these is the file its own tool rewrites when you
+# change a setting from inside the CLI. Same reasoning as gh and btop above.
+#
+# None of them holds credentials, and none of them existed before this entry —
+# checked on 2026-08-02. Codex keeps its state in ~/.codex/*.sqlite, gemini in
+# ~/.gemini/oauth_creds.json, and copilot writes ~/.copilot/config.json, whose
+# own header reads "User settings belong in settings.json. This file is managed
+# automatically." So settings.json is ours and config.json is theirs.
+"~/.codex/config.toml" = { mode = "copy" }
+"~/.gemini/settings.json" = { mode = "copy" }
+"~/.copilot/settings.json" = { mode = "copy" }
+
 # This repo's mise config, as the *global* mise config.
 #
 # All five files, not just this one. Linking config.toml alone made mise.toml
@@ -241,8 +310,11 @@ idiomatic_version_file_enable_tools = ["node", "python"]
 # this repo; see the note there. Refresh it deliberately:
 #
 #   mise lock -g --dry-run   # what would move
-#   mise lock -g --bump      # re-resolve `latest`/majors, touch no config
 #   mise upgrade             # bump, install, and update the lockfile
+#   mise lock -g --bump      # re-resolve `latest`/majors, touch no config
+#                            # — CAN ROLL VERSIONS BACK; see
+#                            # minimum_release_age in [settings]. Always
+#                            # --dry-run this one first.
 #
 # `-g` is required: without it mise locks the active *project* config, and from
 # inside this repo that resolves to a root with no tools and reports "No tools
@@ -321,6 +393,15 @@ just = "latest"
 lazygit = "latest"
 neovim = "latest"
 ninja = "latest"
+# omp, the oh-my-pi coding agent. Registry name is the repo (`oh-my-pi`), the
+# binary is `omp`. Same story as claude and bun: it arrived via a curl|sh
+# installer that dropped a 175MB self-updating binary into ~/.local/bin, where
+# mise could neither see nor pin it, and `omp update` rewrote it in place. The
+# github backend takes the release asset directly and mise verifies its GitHub
+# artifact attestation and SLSA provenance on install, which the installer did
+# not. startup.checkUpdate is set to false in the config below so the binary
+# never tries to update out from under mise — refresh it with `mise upgrade`.
+oh-my-pi = "latest"
 ripgrep = "latest"
 # The linter behind check:shell. Was deliberately left out of [tools] as "a
 # nice-to-have, not a dependency" — but CI installs it from apt, so the lint
@@ -368,6 +449,27 @@ zig = "latest"
 # `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is
 # independent of DOTNET_ROOT. mise does not add it, so put it on PATH here.
 _.path = ["~/.dotnet/tools"]
+
+# Claude Code ships its own background updater. mise owns the binary (aqua:
+# anthropics/claude-code), so the vendor updater is a second owner of the same
+# state — the exact failure ADR 0002 names, and the enforced version of the
+# advisory "Never run `bun upgrade`" above.
+#
+# Left on, it installs into ~/.local/share/claude/versions/ and points
+# ~/.local/bin/claude at it: a binary mise cannot see, is not in mise.lock, and
+# never passed the 7d floor in [settings]. DISABLE_UPDATES is the stricter of
+# the two switches — DISABLE_AUTOUPDATER stops only the background path and
+# leaves `claude update` able to fork the install — and Anthropic documents it
+# for precisely this case: "distributing Claude Code through your own channels
+# [where] users should not self-update".
+#
+# Caveat: plugin auto-updates are a separate mechanism (FORCE_AUTOUPDATE_PLUGINS)
+# and the docs do not say whether DISABLE_UPDATES covers them. Unverified here.
+#
+# The other four self-updaters (codex, gemini-cli, copilot, omp) have config
+# keys rather than env vars, so they are copy-mode dotfiles above. See
+# docs/adr/0004-one-updater-per-binary.md.
+DISABLE_UPDATES = "1"
 
 [settings.python]
 # Activate a project's .venv on cd, so `python`/`pytest` resolve to the venv

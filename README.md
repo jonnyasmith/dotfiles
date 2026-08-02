@@ -375,9 +375,53 @@ manager or a vendor's `curl | bash` — mise owns those, and a second copy will
 shadow it or self-update behind its back. mise sets `DOTNET_ROOT` and
 `DOTNET_MULTILEVEL_LOOKUP` itself; never export them.
 
+`mise upgrade` will not install anything published in the last seven days
+(`minimum_release_age` in `[settings]`), so a brand-new release is held back
+with a warning naming the date it becomes eligible. That is a supply-chain
+quarantine, not a stability preference — most malicious releases are caught
+within hours. Two consequences worth knowing:
+
+- `mise upgrade` holds. `mise lock -g --bump` **rolls versions backwards** to
+  the newest eligible release. Always `--dry-run` that one.
+- A tool that must be current is exempted by name — a per-tool
+  `minimum_release_age = "0s"`, or `minimum_release_age_excludes`. Do not lower
+  the floor for everything.
+
+Tools that ship their own updater have it switched off — claude, codex,
+gemini-cli, copilot and omp — because mise owns the binary and two owners means
+silent drift. VS Code is the deliberate exception: it stays vendor-owned, like
+its extensions. See `docs/adr/0004-one-updater-per-binary.md`.
+
 Per-project versions come from files already in your repos — `global.json`,
 `.nvmrc` / `.node-version`, `.python-version` — because
 `idiomatic_version_file_enable_tools` is set.
+
+### GitHub rate limits
+
+Unauthenticated GitHub allows **60 API requests an hour**, per IP. Everyday mise
+is nowhere near it — `mise upgrade --dry-run` costs 3 calls, because
+`use_versions_host` pulls version lists from `mise-versions.jdx.dev` rather than
+the API.
+
+A real `mise lock -g --bump` is the exception. It resolves every platform entry
+and needs release-asset metadata for each; `mise.lock` holds 242
+`api.github.com/.../releases/assets/N` URLs. That exhausts 60 partway through
+and leaves a lockfile built from partial version lists. So pass a token:
+
+```bash
+GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump --dry-run   # what would move
+GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump             # write it
+GITHUB_TOKEN="$(gh auth token)" mise install                    # install the result
+```
+
+`gh auth token` reads the token `gh auth login` already put in your keyring.
+mise cannot see it on its own — mise reads `GITHUB_TOKEN` or `MISE_GITHUB_TOKEN`
+from the environment, and neither is set. **No scopes are needed**; this is
+public read metadata. The limit becomes 5,000/hour.
+
+It is deliberately not exported from `.zshenv`: `gh auth token` hits the
+keyring, and paying that on every shell start to fix something you meet once a
+month is the wrong trade.
 
 ### Python
 

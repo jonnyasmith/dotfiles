@@ -1,0 +1,13 @@
+modelRoles: 
+  default: anthropic/claude-opus-5:medium
+symbolPreset: nerd
+theme: 
+  dark: titanium
+setupVersion: 1
+defaultThinkingLevel: medium
+stt: 
+  enabled: true
+  submitTrigger: say-submit
+  modelName: parakeet
+startup: 
+  checkUpdate: false

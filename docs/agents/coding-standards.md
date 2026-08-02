@@ -42,6 +42,9 @@
   Waivers are trailing comments, never a separate manifest.
 - A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and sees only
   `config.toml`. Unset it before shelling out to `mise`.
+- A comment explains non-obvious local intent and nothing else. Anything that
+  binds beyond the line it sits on has a home in the table in
+  docs/agents/code-comments.md — read it before writing a comment block.
 
 ## `[dotfiles]` mode
 

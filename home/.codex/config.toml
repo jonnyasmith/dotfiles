@@ -1,0 +1,13 @@
+# Codex CLI. mise owns the binary (`codex = "latest"` in mise.toml), so Codex's
+# own updater must not be a second owner of it — see
+# docs/adr/0004-one-updater-per-binary.md.
+#
+# Codex never installs silently: it checks on startup and prompts. It also
+# happens to be inert under mise today, because its InstallMethod detection
+# classifies mise's install path as `Other` and offers no update action at all.
+# That is an accident of its detection logic, not a promise, so the switch is
+# set explicitly.
+#
+# Undocumented but real: this key is in the source and in Codex's MDM
+# managed_config.toml layer, but not in its published docs.
+check_for_update_on_startup = false
