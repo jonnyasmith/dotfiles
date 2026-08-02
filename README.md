@@ -375,6 +375,23 @@ manager or a vendor's `curl | bash` — mise owns those, and a second copy will
 shadow it or self-update behind its back. mise sets `DOTNET_ROOT` and
 `DOTNET_MULTILEVEL_LOOKUP` itself; never export them.
 
+`mise upgrade` will not install anything published in the last seven days
+(`minimum_release_age` in `[settings]`), so a brand-new release is held back
+with a warning naming the date it becomes eligible. That is a supply-chain
+quarantine, not a stability preference — most malicious releases are caught
+within hours. Two consequences worth knowing:
+
+- `mise upgrade` holds. `mise lock -g --bump` **rolls versions backwards** to
+  the newest eligible release. Always `--dry-run` that one.
+- A tool that must be current is exempted by name — a per-tool
+  `minimum_release_age = "0s"`, or `minimum_release_age_excludes`. Do not lower
+  the floor for everything.
+
+Tools that ship their own updater have it switched off, because mise owns the
+binary and two owners means silent drift: `docs/adr/0004-one-updater-per-binary.md`.
+The evidence behind both rules, including what the rest of the ecosystem does,
+is in `docs/supply-chain-updates.md`.
+
 Per-project versions come from files already in your repos — `global.json`,
 `.nvmrc` / `.node-version`, `.python-version` — because
 `idiomatic_version_file_enable_tools` is set.

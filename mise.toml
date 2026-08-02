@@ -211,6 +211,22 @@ minimum_release_age = "7d"
 # in agent.db and in the provider env vars (ANTHROPIC_API_KEY and friends).
 "~/.omp/agent/config.yml" = { mode = "copy" }
 
+# The three AI CLIs whose auto-update switch is a config key rather than an
+# env var. mise owns all three binaries, so each vendor updater is turned off;
+# see docs/adr/0004-one-updater-per-binary.md. claude is not here because its
+# switch IS an env var — DISABLE_UPDATES in [env] below.
+#
+# `copy`, not symlink: each of these is the file its own tool rewrites when you
+# change a setting from inside the CLI. Same reasoning as gh and btop above.
+#
+# None of them holds credentials, and none of them existed before this entry —
+# checked on 2026-08-02. Codex keeps its state in ~/.codex/*.sqlite, gemini in
+# ~/.gemini/oauth_creds.json, and copilot writes ~/.copilot/config.json, whose
+# own header reads "User settings belong in settings.json. This file is managed
+# automatically." So settings.json is ours and config.json is theirs.
+"~/.codex/config.toml" = { mode = "copy" }
+"~/.gemini/settings.json" = { mode = "copy" }
+"~/.copilot/settings.json" = { mode = "copy" }
 
 # This repo's mise config, as the *global* mise config.
 #
@@ -434,6 +450,27 @@ zig = "latest"
 # independent of DOTNET_ROOT. mise does not add it, so put it on PATH here.
 _.path = ["~/.dotnet/tools"]
 
+# Claude Code ships its own background updater. mise owns the binary (aqua:
+# anthropics/claude-code), so the vendor updater is a second owner of the same
+# state — the exact failure ADR 0002 names, and the enforced version of the
+# advisory "Never run `bun upgrade`" above.
+#
+# Left on, it installs into ~/.local/share/claude/versions/ and points
+# ~/.local/bin/claude at it: a binary mise cannot see, is not in mise.lock, and
+# never passed the 7d floor in [settings]. DISABLE_UPDATES is the stricter of
+# the two switches — DISABLE_AUTOUPDATER stops only the background path and
+# leaves `claude update` able to fork the install — and Anthropic documents it
+# for precisely this case: "distributing Claude Code through your own channels
+# [where] users should not self-update".
+#
+# Caveat: plugin auto-updates are a separate mechanism (FORCE_AUTOUPDATE_PLUGINS)
+# and the docs do not say whether DISABLE_UPDATES covers them. Unverified here.
+#
+# codex, gemini-cli and copilot have the same problem and are NOT fixed by an
+# env var — their switches live in per-tool config files that also hold auth
+# state, so linking them would clobber it. See
+# docs/adr/0004-one-updater-per-binary.md for the exact keys and the reasoning.
+DISABLE_UPDATES = "1"
 
 [settings.python]
 # Activate a project's .venv on cd, so `python`/`pytest` resolve to the venv
