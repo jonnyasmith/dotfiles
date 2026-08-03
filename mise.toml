@@ -202,9 +202,10 @@ uv = "latest"
 zoxide = "latest"
 zig = "latest"
 
-# The npm: backend keeps this outside any single node install, so upgrading
-# node does not orphan it.
+# The npm: backend keeps these outside any single node install, so upgrading
+# node does not orphan them.
 "npm:azure-functions-core-tools" = "latest"
+"npm:ccstatusline" = "latest"
 
 [env]
 # `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is

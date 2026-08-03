@@ -2134,6 +2134,10 @@ url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip"
 version = "4.12.1"
 backend = "npm:azure-functions-core-tools"
 
+[[tools."npm:ccstatusline"]]
+version = "2.2.27"
+backend = "npm:ccstatusline"
+
 [[tools.oh-my-pi]]
 version = "17.1.5"
 backend = "github:can1357/oh-my-pi"
