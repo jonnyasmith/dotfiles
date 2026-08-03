@@ -72,11 +72,12 @@
 [gitsh]
     defaultCommand = s
 [grep]
-    extendRegexp = true
+    patternType = extended
     lineNumber = true
 [merge]
-    keepBackup = false
     tool = smerge
+[mergetool]
+    keepBackup = false
 [init]
 	defaultBranch = main
 
