@@ -30,6 +30,9 @@
   (2026.7.18) — which is what makes a committed lockfile possible.
 - `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is
   a leaf and no config declares it. Uninstall named formulae instead.
+- Undeclaring a tool leaves its install, shims and copied dotfiles behind;
+  convergence never removes them. Uninstall by name — `mise prune` deletes any
+  version no tracked config declares, which is wider than what you dropped.
 - `[dotfiles]` entries take no `os` filter; an `os` key there is ignored
   without warning. Platform-specific targets belong in `mise.<os>.toml`.
 - There is no `mise.wsl.toml` or `mise.arch.toml`: `os()` is `linux` under WSL

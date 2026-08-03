@@ -88,12 +88,10 @@ minimum_release_age = "7d"
 # `copy` because omp rewrites this file from `/settings` and onboarding.
 "~/.omp/agent/config.yml" = { mode = "copy" }
 
-# The three mise-owned AI CLIs whose update switch is a config key rather than
-# an env var; see docs/adr/0004-one-updater-per-binary.md. `copy` because each
-# is the file its own tool rewrites when a setting changes from inside the CLI.
+# codex is the one mise-owned AI CLI whose update switch is a config key rather
+# than an env var; see docs/adr/0004-one-updater-per-binary.md. `copy` because
+# it is the file codex rewrites when a setting changes from inside the CLI.
 "~/.codex/config.toml" = { mode = "copy" }
-"~/.gemini/settings.json" = { mode = "copy" }
-"~/.copilot/settings.json" = { mode = "copy" }
 
 # This repo's mise config, as the *global* mise config — all five files, not
 # just this one. Linking config.toml alone leaves the per-OS files as
@@ -206,18 +204,8 @@ zig = "latest"
 
 # The npm: backend keeps these outside any single node install, so upgrading
 # node does not orphan them.
-"npm:@github/copilot" = "latest"
-"npm:@google/gemini-cli" = "latest"
-"npm:@earendil-works/pi-coding-agent" = "latest"
-"npm:@ollama/pi-web-search" = "latest"
-# Falls under aube's weekly-download threshold, so it needs an explicit opt-in.
-# Scoped to kb itself: its transitive dependencies stay supply-chain gated.
-"npm:@dustinbyrne/kb" = { version = "latest", allow_low_downloads = true }
 "npm:azure-functions-core-tools" = "latest"
 "npm:ccstatusline" = "latest"
-"npm:cline" = "latest"
-"npm:firebase-tools" = "latest"
-"npm:kanban" = "latest"
 
 [env]
 # `dotnet tool install --global` targets DOTNET_CLI_HOME (~/.dotnet), which is

@@ -457,10 +457,10 @@ within hours. Two consequences worth knowing:
   `minimum_release_age = "0s"`, or `minimum_release_age_excludes`. Do not lower
   the floor for everything.
 
-Tools that ship their own updater have it switched off — claude, codex,
-gemini-cli, copilot and omp — because mise owns the binary and two owners means
-silent drift. VS Code is the deliberate exception: it stays vendor-owned, like
-its extensions. See `docs/adr/0004-one-updater-per-binary.md`.
+Tools that ship their own updater have it switched off — claude, codex and omp
+— because mise owns the binary and two owners means silent drift. VS Code is
+the deliberate exception: it stays vendor-owned, like its extensions. See
+`docs/adr/0004-one-updater-per-binary.md`.
 
 Per-project versions come from files already in your repos — `global.json`,
 `.nvmrc` / `.node-version`, `.python-version` — because

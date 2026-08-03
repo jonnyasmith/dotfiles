@@ -183,7 +183,6 @@ Recorded here so nobody re-adds them:
 | `windows/install/fonts.ps1` | it installed from a `fonts\` directory the repo never had |
 | `windows/install/link.ps1` (`New-Item -ItemType SymbolicLink` × 4) | mise `[dotfiles]` links dotfiles on every OS |
 | `nvm install lts` / `nvm use lts`, `CoreyButler.NVMforWindows` | mise `[tools]` owns node |
-| `npm i @githubnext/github-copilot-cli -g`, `github-copilot-cli auth` | the package is retired; `npm:@github/copilot` is in mise `[tools]` |
 | `npm i prettier -g` | a per-project dev dependency, not a machine-global tool |
 | `Microsoft.DotNet.SDK.6`, `.7`, `.8` | mise `[tools]` installs the SDKs side by side (`dotnet = ["10", "8"]`) |
 | `Neovim.Neovim`, `Starship.Starship`, `junegunn.fzf`, `zig.zig` | all in mise's registry — `mise.windows.toml` `[tools]` |

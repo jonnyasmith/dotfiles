@@ -33,10 +33,9 @@ a better cooldown. The choice is per tool, and it gets written down.
 
 ## Consequences
 
-- Five tools are mise-owned and have their vendor updater off: `claude`
-  (`DISABLE_UPDATES=1`), `codex` (`check_for_update_on_startup = false`),
-  `gemini-cli` (`general.enableAutoUpdate` and `enableAutoUpdateNotification`),
-  `copilot` (`autoUpdate`), and `omp` (`startup.checkUpdate`).
+- Three tools are mise-owned and have their vendor updater off: `claude`
+  (`DISABLE_UPDATES=1`), `codex` (`check_for_update_on_startup = false`) and
+  `omp` (`startup.checkUpdate`).
 - Only Claude Code's switch is an environment variable, so it lives in `[env]`.
   `DISABLE_UPDATES` rather than `DISABLE_AUTOUPDATER`: the latter stops only the
   background path and leaves `claude update` able to fork the install. Anthropic
@@ -48,21 +47,15 @@ a better cooldown. The choice is per tool, and it gets written down.
 - Codex's `check_for_update_on_startup` is undocumented but real: it is present
   in the source and in the MDM `managed_config.toml` layer. It is not a typo
   and must not be "corrected" out of `~/.codex/config.toml`.
-- The other four switches are config keys, so `~/.codex/config.toml`,
-  `~/.gemini/settings.json`, `~/.copilot/settings.json` and
+- The other two switches are config keys, so `~/.codex/config.toml` and
   `~/.omp/agent/config.yml` are `copy`-mode dotfiles — copy because each is the
   file its own tool rewrites when a setting is changed from inside the CLI.
 - Those files carry the update switch and nothing sensitive. Credentials live
-  beside them, not in them: `~/.codex/*.sqlite`, `~/.gemini/oauth_creds.json`,
-  `~/.omp/agent/agent.db`, and `~/.copilot/config.json` — whose own header reads
-  "User settings belong in settings.json. This file is managed automatically."
-- `codex` is the least load-bearing of the five: mise installs it to a path its
+  beside them, not in them: `~/.codex/*.sqlite` and `~/.omp/agent/agent.db`.
+- `codex` is the least load-bearing of the three: mise installs it to a path its
   `InstallMethod` detection classifies as `Other`, so it currently offers no
   update action at all, only a version notice. That is an accident of its
   detection logic rather than a guarantee, so the switch is set anyway.
-- `gemini-cli` is the most load-bearing: its install-method detection falls back
-  to "assume global npm", whose remedy is `npm install -g @google/gemini-cli@latest`
-  — a shadowing copy outside mise entirely.
 - VS Code stays vendor-owned, for the application and its extensions both,
   consistent with ADR 0002. Declaring `update.mode` here would make this repo a
   second owner of something Settings Sync already carries.
@@ -75,3 +68,6 @@ a better cooldown. The choice is per tool, and it gets written down.
 - A tool may not be added to `[tools]` while its own updater is live and
   switchable. Either turn the updater off in the same commit, or leave the tool
   undeclared and let the vendor own it.
+- The rule is symmetric. A tool leaving `[tools]` takes its switch file with it,
+  in the same commit. If it stays on the machine it becomes vendor-owned and its
+  updater goes back on.
