@@ -26,7 +26,9 @@ su -c '/usr/sbin/usermod -aG sudo jonny'
 sudo apt update && sudo apt upgrade -y && sudo apt install -y git
 ```
 
-Reboot if that pulled a new kernel.
+Reboot if that pulled a new kernel. `git` is the only prerequisite — a minimal
+Debian has no `curl` either, and `bootstrap.sh` installs it before fetching
+mise.
 
 ## 3. Bootstrap
 
@@ -40,11 +42,8 @@ cd ~/.dotfiles && ./bootstrap.sh
 exec zsh
 ```
 
-Switching the remote to SSH waits until 1Password is signed in — step 4.
-
-```shell
-git remote set-url origin git@github.com:jonnyasmith/dotfiles.git
-```
+Switching the remote to SSH is not a step: `dev:remotes` does it on the next
+run, once 1Password is signed in — step 4.
 
 That run adds the 1Password, Docker, VS Code and Chrome apt repos, enables
 `contrib` and `non-free` (the Microsoft fonts and `unrar` live there), installs
@@ -77,6 +76,10 @@ ssh -T git@ssh.dev.azure.com # azure
 `Permission denied` with the agent running usually means the key set changed:
 `~/.ssh/1password/refresh` rewrites the stubs from whatever the agent now
 returns, and the result is a git diff to commit.
+
+Then re-run `./bootstrap.sh`. With the agent answering, `dev:remotes` switches
+`~/.dotfiles` and both `~/dev` checkouts from HTTPS to SSH; until then it says
+so and changes nothing.
 
 ## 5. GNOME extensions
 

@@ -48,6 +48,20 @@ if command -v mise >/dev/null 2>&1; then
 	ok "mise $(mise --version | awk '{print $1}')"
 else
 	warn "mise not found — installing"
+	# The installer below is fetched with curl, and a minimal Debian ships
+	# neither it nor the CA bundle it needs. Every other platform this repo
+	# targets has curl in the base install.
+	if ! command -v curl >/dev/null 2>&1; then
+		warn "curl not found — installing it first"
+		if command -v apt-get >/dev/null 2>&1; then
+			sudo apt-get update && sudo apt-get install -y ca-certificates curl
+		elif command -v dnf >/dev/null 2>&1; then
+			sudo dnf install -y ca-certificates curl
+		elif command -v pacman >/dev/null 2>&1; then
+			sudo pacman -Sy --needed --noconfirm ca-certificates curl
+		fi
+		command -v curl >/dev/null 2>&1 || die "curl is required to install mise, and no known package manager could supply it"
+	fi
 	curl -fsSL https://mise.run | sh || die "mise install failed"
 	# The installer drops it here; .zshenv puts it on PATH for later shells.
 	export PATH="$HOME/.local/bin:$PATH"

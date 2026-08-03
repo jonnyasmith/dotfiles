@@ -35,11 +35,10 @@ On Windows, `.\bootstrap.ps1` instead.
 
 Clone over **HTTPS**: SSH to GitHub cannot work until the dotfiles are applied,
 because the `IdentityAgent` line pointing ssh at 1Password's socket is *in this
-repo*. Swap the remote afterwards:
-
-```bash
-git remote set-url origin git@github.com:jonnyasmith/dotfiles.git
-```
+repo*. You no longer swap the remote by hand — once 1Password is signed in and
+its SSH agent answers, the next `./bootstrap.sh` points this repo and every
+`~/dev` checkout at SSH (`dev:remotes`). Until then it says so and leaves the
+HTTPS remotes alone.
 
 The repo **must** live at `~/.dotfiles`. `mise.toml`'s `dotfiles.root` is a
 literal path — mise does not template `[settings]` — so `bootstrap.sh` refuses
@@ -189,6 +188,32 @@ at runtime and rewrites them on every GUI change; the repo is the seed for a new
 machine, and a setting changed in Settings is copied back by hand. `@HOME@` in
 `desktop/cosmic/` is expanded at apply time, which is what keeps the `Spawn()`
 paths in the shortcut bindings machine-independent.
+
+## Personal checkouts (`~/dev`)
+
+Two of my own repos are part of a converged machine, so they are declared in
+`[bootstrap.repos]` beside oh-my-zsh and tpm:
+
+| checkout | wired into `$HOME` by |
+|---|---|
+| `~/dev/skills` | `dev:agents` — `~/.agents/AGENTS.md` and `~/.agents/skills` are symlinks into it |
+| `~/dev/worktree-cli` | `dev:worktree-cli` — `pnpm install && pnpm build`, then `wt` and `worktree` linked into `~/.local/bin` |
+
+`~/.agents` cannot be a `[dotfiles]` entry: a dotfiles source has to live
+inside *this* repo, and that content belongs to `skills`. The CLI is linked
+straight at `dist/cli.js` rather than with `pnpm link --global`, which writes a
+self-reference into the checkout and puts that package's `tsc`, `eslint` and
+`prettier` ahead of every project-local toolchain on PATH.
+
+Two more tasks round out the set: `dev:remotes` flips every personal checkout
+from HTTPS to SSH once the 1Password agent answers, and `dev:ssh-keys` keeps
+the committed public-key stubs owner-only — git does not track modes, and a
+clone under Debian's default `umask 002` leaves them group-writable, which is
+enough for ssh to ignore the `IdentityFile` and authenticate with no key.
+
+All four are `dev:*`, not `setup:*`: the `setup:*` fan-out runs on every
+platform and none of these do. `setup:dev` in `mise.linux.toml` and
+`mise.macos.toml` is what pulls them in.
 
 ## Dotfiles
 
