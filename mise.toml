@@ -93,6 +93,15 @@ minimum_release_age = "7d"
 # it is the file codex rewrites when a setting changes from inside the CLI.
 "~/.codex/config.toml" = { mode = "copy" }
 
+# ~/.claude is mostly state — sessions/, projects/, history.jsonl, caches — and
+# herdr installs its own hook script under hooks/, so name the three files we
+# own. settings.json is `copy`: claude rewrites it from inside the TUI (theme,
+# model, effort). The statusline script and keybindings are ours alone, so they
+# link and edits in ~ land back in the repo.
+"~/.claude/settings.json" = { mode = "copy" }
+"~/.claude/statusline-command.sh" = {}
+"~/.claude/keybindings.json" = {}
+
 # This repo's mise config, as the *global* mise config — all five files, not
 # just this one. Linking config.toml alone leaves the per-OS files as
 # project-only, loaded solely while the shell is inside the repo. .miserc.toml

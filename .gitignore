@@ -30,4 +30,11 @@ home/.omp/*
 home/.omp/agent/*
 !home/.omp/agent/config.yml
 
+# ~/.claude is a state directory: sessions, transcripts, caches and a
+# herdr-installed hook all sit beside the three files this repo owns.
+home/.claude/*
+!home/.claude/settings.json
+!home/.claude/statusline-command.sh
+!home/.claude/keybindings.json
+
 .DS_Store
