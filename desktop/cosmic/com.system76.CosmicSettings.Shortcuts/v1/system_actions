@@ -1,5 +1,5 @@
 // Full copy of /usr/share/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions
-// with Terminal switched to ghostty. cosmic-config resolves this key as one whole
+// with Terminal switched to kitty. cosmic-config resolves this key as one whole
 // value (user file wins outright, no per-entry merge), so a file containing only
 // Terminal would silently drop every other system action. Re-sync from the distro
 // default after a COSMIC upgrade adds new actions.
@@ -45,7 +45,7 @@
     /// Toggles the screen reader
     ScreenReader: "busctl --user call com.system76.CosmicSettingsDaemon /com/system76/CosmicSettingsDaemon com.system76.CosmicSettingsDaemon ScreenReader",
     /// Opens the system default terminal
-    Terminal: "ghostty",
+    Terminal: "kitty",
     /// Toggles touchpad on/off
     TouchpadToggle: "cosmic-osd touchpad",
     /// Lowers the volume of the active output device

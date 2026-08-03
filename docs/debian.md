@@ -91,13 +91,14 @@ into a running session.
 `gnome-tweaks` is installed by `setup:gnome`, and the settings it exposes are
 already written from `desktop/gnome.dconf`.
 
-## 6. No ghostty
+## 6. Terminal
 
-Debian has no ghostty package and the project ships official binaries for macOS
-only, so on this machine the terminal is GNOME Console (`kgx`). The ghostty
-config in this repo is still linked, harmlessly, for the machines that have it.
-Do not use the project's `curl … | bash` installer — see the note in
-`docs/fedora.md` on third-party install scripts.
+The terminal is kitty, from Debian's own repositories (`apt:kitty`), same as on
+every other platform in this repo. It is deliberately not ghostty: ghostty pins
+an exact Zig version and Zig breaks compatibility most releases, so Debian will
+not package it and the only Linux builds are distro or community ones. Trixie's
+kitty lags upstream by a few minor versions — that is the trade for having the
+distro own the updates.
 
 ## 7. Things that need a logout or reboot
 

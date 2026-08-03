@@ -95,3 +95,14 @@
 # Rendered by `mise bootstrap`; git ignores the include until it exists.
 [include]
     path = config.os
+# Written by `gh auth login`, then rewritten by hand: gh emits the absolute
+# mise install path, which pins the helper to one gh version and does not exist
+# on the other machines this file is symlinked onto. Resolved off PATH instead,
+# which mise's shims satisfy. The bare `helper =` clears anything inherited
+# from system or global config before this one is appended.
+[credential "https://github.com"]
+    helper =
+    helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+    helper =
+    helper = !gh auth git-credential

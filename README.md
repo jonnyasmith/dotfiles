@@ -115,7 +115,7 @@ apps, fonts, and 1Password.
 **3. Config that really does differ per OS is a template, environment is not.**
 Four files render `{{ os() }}` at apply time; everything else is a plain
 symlink. The whole template divergence is the 1Password agent socket, git's
-mergetool paths, ghostty's mac-only key, and a handful of BSD-vs-GNU aliases.
+mergetool paths, and a handful of BSD-vs-GNU aliases.
 Per-OS *environment* — `SSH_AUTH_SOCK`, `PNPM_HOME` — is `[env]` in
 `mise.linux.toml` / `mise.macos.toml` instead, so it reaches `mise x`, `mise
 en`, tasks and shims rather than interactive zsh alone.

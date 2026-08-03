@@ -132,7 +132,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/officialrajdeepsingh/ner
 Alternatively pick one from the official repos by hand, e.g.
 `sudo pacman -S ttf-jetbrains-mono-nerd`, and skip the installer.
 
-Ghostty and starship both expect a Nerd Font; glyphs render as boxes until one is present.
+kitty and starship both expect a Nerd Font; glyphs render as boxes until one is present.
 
 ---
 
