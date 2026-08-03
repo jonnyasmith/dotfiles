@@ -127,6 +127,15 @@ minimum_release_age = "7d"
 # `prefix + I` inside tmux once to fetch plugins.
 "~/.local/share/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git", ref = "master" }
 
+# Personal checkouts under ~/dev. Declared over HTTPS deliberately, because
+# repos are cloned before [dotfiles] and SSH to GitHub cannot work until
+# ~/.ssh/config exists; `dev:remotes` flips origin to SSH afterwards, and mise
+# compares the two URL forms transport-agnostically, so the flip does not put
+# these entries into conflict. Wiring each checkout into $HOME is the
+# `dev:*` task set below.
+"~/dev/skills" = { url = "https://github.com/jonnyasmith/skills.git", ref = "main" }
+"~/dev/worktree-cli" = { url = "https://github.com/jonnyasmith/worktree-cli.git", ref = "main" }
+
 # ------------------------------------------------------------------- tools --
 #
 # The selectors here are the *range*; mise.lock pins what is installed. Refresh
@@ -336,6 +345,104 @@ run = "echo 'bootstrap tasks complete'"
 
 # VS Code extensions are deliberately NOT managed here — Settings Sync owns
 # them. See docs/adr/0002-vscode-extensions-are-sync-owned.md.
+
+# --- Unix wiring ------------------------------------------------------------
+#
+# Wiring for the ~/dev clones in [bootstrap.repos]. Named `dev:*`, not
+# `setup:*`: the fan-out above runs on every platform and none of these do. `setup:dev` in mise.linux.toml and mise.macos.toml is
+# what pulls them in. Each is idempotent and reports rather than fails — a
+# repo that is not cloned yet, or an agent that is not signed in, must not take
+# the rest of the run down.
+
+[tasks."dev:remotes"]
+description = "Point every personal GitHub checkout at SSH, once the 1Password agent answers"
+shell = "bash -c"
+run = '''
+set -u
+# The clone URLs are HTTPS so a fresh machine needs no key. SSH only starts
+# working after [dotfiles] has written ~/.ssh/config and 1Password is signed
+# in; until the agent answers, leave every origin alone. An SSH remote that
+# cannot authenticate fails far more confusingly than this warning.
+if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
+     | grep -q 'successfully authenticated'; then
+  echo "  ! github over ssh is not answering — sign in to 1Password, enable its SSH agent (docs/debian.md section 4), and re-run"
+  exit 0
+fi
+
+for repo in "$HOME/.dotfiles" "$HOME/dev/skills" "$HOME/dev/worktree-cli"; do
+  name="${repo##*/}"
+  if [ ! -d "$repo/.git" ]; then
+    echo "  . $name not cloned, skipped"
+    continue
+  fi
+  url="$(git -C "$repo" remote get-url origin 2>/dev/null || echo '')"
+  case "$url" in
+    https://github.com/*)
+      if git -C "$repo" remote set-url origin "git@github.com:${url#https://github.com/}"; then
+        echo "  + $name: origin switched to ssh"
+      else
+        echo "  ! $name: could not rewrite origin"
+      fi
+      ;;
+    git@github.com:*) echo "  . $name: origin ssh" ;;
+    *) echo "  . $name: origin ${url:-none}, left alone" ;;
+  esac
+done
+'''
+
+[tasks."dev:agents"]
+description = "Link ~/.agents at the skills checkout"
+shell = "bash -c"
+run = '''
+set -u
+# Not a [dotfiles] entry: the content lives in the skills repo, and a dotfiles
+# source has to be inside this one.
+src="$HOME/dev/skills"
+[ -d "$src" ] || { echo "  . skills not cloned, skipped"; exit 0; }
+
+mkdir -p "$HOME/.agents"
+for rel in AGENTS.md skills; do
+  link="$HOME/.agents/$rel"
+  if [ "$(readlink "$link" 2>/dev/null || echo '')" = "$src/$rel" ]; then
+    echo "  . ~/.agents/$rel"
+  elif [ -e "$link" ] && [ ! -L "$link" ]; then
+    echo "  ! ~/.agents/$rel exists and is not a symlink — move it aside and re-run"
+  elif ln -sfn "$src/$rel" "$link"; then
+    echo "  + ~/.agents/$rel"
+  else
+    echo "  ! could not link ~/.agents/$rel"
+  fi
+done
+'''
+
+[tasks."dev:worktree-cli"]
+description = "Build the worktree CLI and put wt/worktree on PATH"
+shell = "bash -c"
+run = '''
+set -u
+repo="$HOME/dev/worktree-cli"
+[ -d "$repo" ] || { echo "  . worktree-cli not cloned, skipped"; exit 0; }
+command -v pnpm >/dev/null 2>&1 || { echo "  ! pnpm is missing — run 'mise install'"; exit 0; }
+
+if ! (cd "$repo" && pnpm install --frozen-lockfile && pnpm run build); then
+  echo "  ! worktree-cli build failed"
+  exit 0
+fi
+# tsc does not carry the executable bit onto its output, and both names below
+# are run straight off PATH. The zsh wrapper home/.zshrc sources shadows `wt`
+# with a function that calls `command wt`; the wtc/wtr/wtl aliases call
+# `worktree`. Both have to resolve.
+chmod +x "$repo/dist/cli.js"
+
+# Not `pnpm link --global`: it writes a self-reference into the checkout and
+# exposes this package's devDependency bins (tsc, eslint, prettier) in
+# $PNPM_HOME/bin, which precedes every project-local toolchain on PATH.
+mkdir -p "$HOME/.local/bin"
+for name in wt worktree; do
+  ln -sfn "$repo/dist/cli.js" "$HOME/.local/bin/$name"
+done
+echo "  . worktree-cli built; wt and worktree linked into ~/.local/bin"
+'''
 
 # ------------------------------------------------------------------ checks --
 #

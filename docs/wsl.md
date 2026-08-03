@@ -50,8 +50,9 @@ cd ~/.dotfiles
 ./bootstrap.sh
 ```
 
-The clone needs a working SSH agent — see section 6. Clone over HTTPS first and
-switch the remote later if you are setting up the agent after the fact.
+The clone needs a working SSH agent — see section 6. Clone over HTTPS instead
+if you are setting the agent up afterwards; `dev:remotes` switches the remote
+on the next run, once the agent answers.
 
 ## 4. Docker
 

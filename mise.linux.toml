@@ -290,6 +290,12 @@ command -v apt-get >/dev/null 2>&1 || exit 0
 echo "  . debian setup complete"
 '''
 
+# The `dev:*` bodies live in mise.toml, which Windows also loads; this pulls
+# them into the `setup:*` fan-out on the platforms that can run them.
+[tasks."setup:dev"]
+description = "Personal ~/dev checkouts: SSH remotes, ~/.agents links, worktree CLI"
+depends = ["dev:*"]
+
 [tasks."setup:docker"]
 description = "Docker group membership and system service. No-op without docker."
 run = '''

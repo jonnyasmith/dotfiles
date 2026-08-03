@@ -62,4 +62,3 @@ bindkey '^[[27;2;13~' insert-buffer-newline
 [ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
 
 [ -f "$HOME/dev/worktree-cli/examples/wrappers/zsh.sh" ] && source "$HOME/dev/worktree-cli/examples/wrappers/zsh.sh"
-[ -d "$HOME/dev/devops-cli/bin" ] && export PATH="$HOME/dev/devops-cli/bin:$PATH"
