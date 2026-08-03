@@ -26,7 +26,9 @@ su -c '/usr/sbin/usermod -aG sudo jonny'
 sudo apt update && sudo apt upgrade -y && sudo apt install -y git
 ```
 
-Reboot if that pulled a new kernel.
+Reboot if that pulled a new kernel. `git` is the only prerequisite — a minimal
+Debian has no `curl` either, and `bootstrap.sh` installs it before fetching
+mise.
 
 ## 3. Bootstrap
 
