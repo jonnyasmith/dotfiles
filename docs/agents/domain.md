@@ -24,6 +24,12 @@ _Avoid_: using it for the act of converging
 so it can converge. They are not part of convergence.
 _Avoid_: calling these "the bootstrap"
 
+**Residue**:
+State a machine still carries for something the config no longer declares —
+installs, shims, copied files. Convergence never removes it, so clearing it is
+always a human act.
+_Avoid_: orphan, leftover, stale install
+
 ### What gets installed
 
 **Tool**:

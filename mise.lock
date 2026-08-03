@@ -2130,48 +2130,9 @@ url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip"
 checksum = "sha256:0ae68406b42d7725661da979b1403ec9926da205c6770827f33aac9d8f26e821"
 url = "https://nodejs.org/dist/v24.18.0/node-v24.18.0-win-x64.zip"
 
-[[tools."npm:@dustinbyrne/kb"]]
-version = "0.4.1"
-backend = "npm:@dustinbyrne/kb"
-
-[tools."npm:@dustinbyrne/kb".options]
-allow_low_downloads = "true"
-
-[[tools."npm:@earendil-works/pi-coding-agent"]]
-version = "0.82.1"
-backend = "npm:@earendil-works/pi-coding-agent"
-
-[[tools."npm:@github/copilot"]]
-version = "1.0.75"
-backend = "npm:@github/copilot"
-
-[[tools."npm:@google/gemini-cli"]]
-version = "0.52.0"
-backend = "npm:@google/gemini-cli"
-
-[[tools."npm:@ollama/pi-web-search"]]
-version = "0.0.5"
-backend = "npm:@ollama/pi-web-search"
-
 [[tools."npm:azure-functions-core-tools"]]
 version = "4.12.1"
 backend = "npm:azure-functions-core-tools"
-
-[[tools."npm:ccstatusline"]]
-version = "2.2.27"
-backend = "npm:ccstatusline"
-
-[[tools."npm:cline"]]
-version = "3.0.46"
-backend = "npm:cline"
-
-[[tools."npm:firebase-tools"]]
-version = "15.24.0"
-backend = "npm:firebase-tools"
-
-[[tools."npm:kanban"]]
-version = "0.1.70"
-backend = "npm:kanban"
 
 [[tools.oh-my-pi]]
 version = "17.1.5"
