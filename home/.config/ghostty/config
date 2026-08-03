@@ -1,2 +1,0 @@
-# The `?` prefix makes ghostty ignore os-local when it is absent.
-config-file = ?os-local

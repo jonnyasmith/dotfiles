@@ -5,7 +5,7 @@ and there is no per-entry merge. Overriding a single entry therefore means
 committing the **complete** upstream file.
 
 `desktop/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions` exists
-only to point `Terminal` at ghostty. It is a full copy of
+only to point `Terminal` at kitty. It is a full copy of
 `/usr/share/cosmic/com.system76.CosmicSettings.Shortcuts/v1/system_actions`
 because a file containing only `Terminal` would silently drop every other system
 action on the machine — brightness, volume, screenshot, lock, log out.

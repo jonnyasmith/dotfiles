@@ -82,17 +82,10 @@ if command -v dnf >/dev/null 2>&1; then
       | sudo tee /etc/yum.repos.d/google-chrome.repo >/dev/null
   fi
 
-  # Provides `copr` and `config-manager` for the two blocks below. Ensured out
-  # here because each of those is guarded by a repo file an earlier run may
-  # already have written, which would leave the other to fail under `set -e`.
+  # Provides `config-manager` for the Docker repo below. Ensured out here
+  # rather than inside that block, which is guarded by a repo file an earlier
+  # run may already have written.
   rpm -q dnf5-plugins >/dev/null 2>&1 || sudo dnf install -y dnf5-plugins
-
-  # Ghostty is not in Fedora's repositories; scottames/ghostty is the COPR
-  # ghostty.org points Fedora users at. `copr enable` writes the repo file
-  # tested here; -y suppresses the "not part of Fedora" prompt.
-  if [ ! -f /etc/yum.repos.d/_copr:copr.fedorainfracloud.org:scottames:ghostty.repo ]; then
-    sudo dnf -y copr enable scottames/ghostty
-  fi
 
   # Fedora's own moby-engine lags upstream and carries no compose plugin.
   if [ ! -f /etc/yum.repos.d/docker-ce.repo ]; then

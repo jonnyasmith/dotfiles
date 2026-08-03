@@ -66,8 +66,7 @@ minimum_release_age = "7d"
 # the repo — gitignored, deliberately.
 "~/.config/nvim" = {}
 "~/.config/tmux" = {}
-"~/.config/ghostty/config" = {}
-"~/.config/ghostty/os-local" = { source = "home/.config/ghostty/os-local.tmpl", mode = "template" }
+"~/.config/kitty" = {}
 "~/.config/starship.toml" = {}
 
 # Tools that rewrite their own config on exit. copy, not symlink.
@@ -252,6 +251,7 @@ corepack = true
 "apt:git" = "latest"
 "apt:google-chrome-stable" = "latest"      # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "apt:htop" = "latest"
+"apt:kitty" = "latest"
 "apt:libavcodec-extra" = "latest"          # the extra codec set; needs contrib/non-free, enabled in pre-packages
 "apt:nala" = "latest"                      # apt front-end used throughout docs/wsl.md
 "apt:python3-pynvim" = "latest"            # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
@@ -265,9 +265,6 @@ corepack = true
 "apt:xz-utils" = "latest"
 "apt:zip" = "latest"
 "apt:zsh" = "latest"                       # pairs with [bootstrap.user].login_shell in mise.linux.toml
-#
-# ghostty is NOT declared here: no Debian package exists, and the only Linux
-# builds are distro or community ones. Use GNOME Console until that changes.
 
 # --- Fedora ---
 "dnf:1password" = "latest"             # repo imported in pre-packages. registry-skip: registry `1password` is the CLI, not the desktop app. parity-skip: Arch takes it from the AUR
@@ -279,10 +276,10 @@ corepack = true
 "dnf:docker-ce" = "latest"             # engine; repo added in pre-packages. parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
-"dnf:ghostty" = "latest"               # terminal; COPR repo enabled in pre-packages. parity-skip: Debian has no ghostty package
 "dnf:git" = "latest"
 "dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "dnf:htop" = "latest"
+"dnf:kitty" = "latest"
 "dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
 "dnf:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "dnf:unzip" = "latest"
@@ -301,9 +298,9 @@ corepack = true
 "pacman:docker" = "latest"              # parity-skip: Debian and Fedora take the Docker CE package set instead
 "pacman:docker-compose" = "latest"      # registry-skip: the registry ships a standalone binary, not the CLI plugin `docker compose` resolves. parity-skip: Debian and Fedora use docker-compose-plugin
 "pacman:extension-manager" = "latest"   # GUI for GNOME extensions (Space Bar) - in extra, not the AUR
-"pacman:ghostty" = "latest"             # terminal. parity-skip: Debian has no ghostty package
 "pacman:git" = "latest"
 "pacman:htop" = "latest"                # the htoprc this repo links has to have the program it configures
+"pacman:kitty" = "latest"
 "pacman:less" = "latest"
 "pacman:linux-firmware-qcom" = "latest" # Qualcomm wifi firmware for the Dell XPS
 "pacman:nano" = "latest"
