@@ -408,26 +408,29 @@ done
 '''
 
 [tasks."dev:agents"]
-description = "Link ~/.agents at the skills checkout"
+description = "Link ~/.agents and ~/.claude at the skills checkout"
 shell = "bash -c"
 run = '''
 set -u
 # Not a [dotfiles] entry: the content lives in the skills repo, and a dotfiles
-# source has to be inside this one.
+# source has to be inside this one. claude reads the same two things under
+# names of its own, so each pair is link:source rather than one name.
 src="$HOME/dev/skills"
 [ -d "$src" ] || { echo "  . skills not cloned, skipped"; exit 0; }
 
-mkdir -p "$HOME/.agents"
-for rel in AGENTS.md skills; do
-  link="$HOME/.agents/$rel"
-  if [ "$(readlink "$link" 2>/dev/null || echo '')" = "$src/$rel" ]; then
-    echo "  . ~/.agents/$rel"
+mkdir -p "$HOME/.agents" "$HOME/.claude"
+for pair in .agents/AGENTS.md:AGENTS.md .agents/skills:skills \
+            .claude/CLAUDE.md:AGENTS.md .claude/skills:skills; do
+  link="$HOME/${pair%%:*}"
+  target="$src/${pair##*:}"
+  if [ "$(readlink "$link" 2>/dev/null || echo '')" = "$target" ]; then
+    echo "  . ~/${pair%%:*}"
   elif [ -e "$link" ] && [ ! -L "$link" ]; then
-    echo "  ! ~/.agents/$rel exists and is not a symlink — move it aside and re-run"
-  elif ln -sfn "$src/$rel" "$link"; then
-    echo "  + ~/.agents/$rel"
+    echo "  ! ~/${pair%%:*} exists and is not a symlink — move it aside and re-run"
+  elif ln -sfn "$target" "$link"; then
+    echo "  + ~/${pair%%:*}"
   else
-    echo "  ! could not link ~/.agents/$rel"
+    echo "  ! could not link ~/${pair%%:*}"
   fi
 done
 '''
