@@ -348,11 +348,31 @@ run = "echo 'bootstrap tasks complete'"
 
 # --- Unix wiring ------------------------------------------------------------
 #
-# Wiring for the ~/dev clones in [bootstrap.repos]. Named `dev:*`, not
-# `setup:*`: the fan-out above runs on every platform and none of these do. `setup:dev` in mise.linux.toml and mise.macos.toml is
+# The ~/dev clones in [bootstrap.repos], and the key stubs ~/.ssh/config points
+# at. Named `dev:*`, not `setup:*`: the fan-out above runs on every platform
+# and none of these do. `setup:dev` in mise.linux.toml and mise.macos.toml is
 # what pulls them in. Each is idempotent and reports rather than fails — a
 # repo that is not cloned yet, or an agent that is not signed in, must not take
 # the rest of the run down.
+
+[tasks."dev:ssh-keys"]
+description = "Tighten the mode on the 1Password public-key stubs ssh loads by path"
+shell = "bash -c"
+run = '''
+set -u
+# git does not track modes beyond the executable bit, and Debian's default
+# umask is 002, so a fresh clone leaves these 0664. ssh refuses a
+# group-writable IdentityFile — "bad permissions", key ignored — and then
+# authenticates with no key at all.
+dir="$HOME/.dotfiles/home/.ssh/1password"
+[ -d "$dir" ] || { echo "  . no key stubs, skipped"; exit 0; }
+chmod 700 "$dir"
+for pub in "$dir"/*.pub; do
+  [ -e "$pub" ] || continue
+  chmod 600 "$pub"
+done
+echo "  . ssh key stubs are owner-only"
+'''
 
 [tasks."dev:remotes"]
 description = "Point every personal GitHub checkout at SSH, once the 1Password agent answers"

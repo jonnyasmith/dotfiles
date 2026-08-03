@@ -205,10 +205,13 @@ straight at `dist/cli.js` rather than with `pnpm link --global`, which writes a
 self-reference into the checkout and puts that package's `tsc`, `eslint` and
 `prettier` ahead of every project-local toolchain on PATH.
 
-A third task, `dev:remotes`, flips every personal checkout from HTTPS to SSH
-once the 1Password agent answers.
+Two more tasks round out the set: `dev:remotes` flips every personal checkout
+from HTTPS to SSH once the 1Password agent answers, and `dev:ssh-keys` keeps
+the committed public-key stubs owner-only — git does not track modes, and a
+clone under Debian's default `umask 002` leaves them group-writable, which is
+enough for ssh to ignore the `IdentityFile` and authenticate with no key.
 
-All three are `dev:*`, not `setup:*`: the `setup:*` fan-out runs on every
+All four are `dev:*`, not `setup:*`: the `setup:*` fan-out runs on every
 platform and none of these do. `setup:dev` in `mise.linux.toml` and
 `mise.macos.toml` is what pulls them in.
 
