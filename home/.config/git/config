@@ -16,10 +16,10 @@
     cob  = checkout -b
     cp   = cherry-pick -x
     d    = diff --ignore-space-at-eol -b -w --ignore-blank-lines
-    f    = !git fetch --prune
+    f    = fetch
     m    = merge
     mt   = mergetool
-    p    = !git pull
+    p    = pull
     r    = rebase
     i    = init
     rl   = reflog
@@ -51,6 +51,17 @@
     untracked = red
 [color "sh"]
     branch = yellow
+# Rebase is the only way a pull integrates: `pull.rebase` still fast-forwards
+# when it can, because a rebase with nothing to replay is one. `autosetuprebase`
+# alone missed branches not created from a remote-tracking ref, a clone's
+# default branch among them. Pruning is config, not a flag, so it also covers
+# the implicit fetch inside a pull and anything else that fetches.
+[pull]
+    rebase = true
+[fetch]
+    prune = true
+    pruneTags = true
+
 [push]
     default = current
     autoSetupRemote = true
@@ -72,11 +83,12 @@
 [gitsh]
     defaultCommand = s
 [grep]
-    extendRegexp = true
+    patternType = extended
     lineNumber = true
 [merge]
-    keepBackup = false
     tool = smerge
+[mergetool]
+    keepBackup = false
 [init]
 	defaultBranch = main
 
