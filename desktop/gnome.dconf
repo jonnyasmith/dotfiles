@@ -33,18 +33,18 @@ default-folder-viewer='list-view'
 move-to-workspace-left=['<Shift><Super>Left']
 move-to-workspace-right=['<Shift><Super>Right']
 
-# Super+N stays on the GNOME default, switch-to-application. Both keys are
-# written because `dconf load` only merges: an earlier load bound Super+N to
-# switch-to-workspace, and nothing but an explicit write undoes that.
-switch-to-workspace-1=@as []
-switch-to-workspace-2=@as []
-switch-to-workspace-3=@as []
-switch-to-workspace-4=@as []
-switch-to-workspace-5=@as []
-switch-to-workspace-6=@as []
-switch-to-workspace-7=@as []
-switch-to-workspace-8=@as []
-switch-to-workspace-9=@as []
+# Super+N stays on the GNOME default, switch-to-application; workspaces move to
+# Shift+Super+N, which no installed schema claims. switch-to-application is
+# written explicitly because `dconf load` only merges and cannot unset a key.
+switch-to-workspace-1=['<Shift><Super>1']
+switch-to-workspace-2=['<Shift><Super>2']
+switch-to-workspace-3=['<Shift><Super>3']
+switch-to-workspace-4=['<Shift><Super>4']
+switch-to-workspace-5=['<Shift><Super>5']
+switch-to-workspace-6=['<Shift><Super>6']
+switch-to-workspace-7=['<Shift><Super>7']
+switch-to-workspace-8=['<Shift><Super>8']
+switch-to-workspace-9=['<Shift><Super>9']
 
 [org/gnome/shell/keybindings]
 switch-to-application-1=['<Super>1']
