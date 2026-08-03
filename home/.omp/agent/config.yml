@@ -11,3 +11,8 @@ stt:
   modelName: parakeet
 startup: 
   checkUpdate: false
+tui: 
+  textSizing: true
+hideThinkingBlock: true
+github: 
+  enabled: true
