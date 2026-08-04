@@ -196,14 +196,15 @@ Two of my own repos are part of a converged machine, so they are declared in
 
 | checkout | wired into `$HOME` by |
 |---|---|
-| `~/dev/skills` | `dev:agents` — `~/.agents/AGENTS.md` and `~/.agents/skills` are symlinks into it |
+| `~/dev/skills` | `dev:agents` — `~/.agents/{AGENTS.md,skills}` and `~/.claude/{CLAUDE.md,skills}` are symlinks into it |
 | `~/dev/worktree-cli` | `dev:worktree-cli` — `pnpm install && pnpm build`, then `wt` and `worktree` linked into `~/.local/bin` |
 
-`~/.agents` cannot be a `[dotfiles]` entry: a dotfiles source has to live
-inside *this* repo, and that content belongs to `skills`. The CLI is linked
-straight at `dist/cli.js` rather than with `pnpm link --global`, which writes a
-self-reference into the checkout and puts that package's `tsc`, `eslint` and
-`prettier` ahead of every project-local toolchain on PATH.
+`~/.agents` and the two `~/.claude` links cannot be `[dotfiles]` entries: a
+dotfiles source has to live inside *this* repo, and that content belongs to
+`skills`. The CLI is linked straight at `dist/cli.js` rather than with
+`pnpm link --global`, which writes a self-reference into the checkout and puts
+that package's `tsc`, `eslint` and `prettier` ahead of every project-local
+toolchain on PATH.
 
 Two more tasks round out the set: `dev:remotes` flips every personal checkout
 from HTTPS to SSH once the 1Password agent answers, and `dev:ssh-keys` keeps
