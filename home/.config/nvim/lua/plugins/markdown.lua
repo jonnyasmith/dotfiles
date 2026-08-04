@@ -2,14 +2,16 @@ return {
   "iamcco/markdown-preview.nvim",
   cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
   ft = { "markdown" },
-  -- AstroNvim will automatically run the installer post-install/update
-  build = function() vim.fn["mkdp#util#install"]() end,
+  -- Upstream's installer only downloads a pre-built server binary: it publishes
+  -- none for linux-aarch64 (the Pi) and leaves app/ empty whenever the download
+  -- fails, with no second attempt. Installing the four runtime deps instead
+  -- works on every platform — rpc.vim runs `node app/index.js` when app/bin is
+  -- missing, and mise puts node on PATH everywhere.
+  build = "cd app && npm install --omit=dev --no-audit --no-fund",
   init = function()
-    -- Enable Mermaid and diagram rendering engines globally
-    vim.g.mkdp_preview_options = {
-      mermaid = {},
-      seq_diagrams = {},
-      flowchart_diagrams = {},
-    }
+    -- The page is handed to `open` on macOS but to xdg-open on Linux (hence
+    -- xdg-utils in mise.toml). Echoing the URL as well is what makes a headless
+    -- box, or a machine with no browser association, still usable.
+    vim.g.mkdp_echo_preview_url = 1
   end,
 }
