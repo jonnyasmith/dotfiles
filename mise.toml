@@ -243,7 +243,9 @@ corepack = true
 
 [bootstrap.packages]
 # --- Debian / Raspberry Pi / WSL ---
-"apt:1password" = "latest"                 # registry-skip: registry `1password` is the CLI, not the desktop app that serves the SSH agent. parity-skip: Arch takes it from the AUR in setup:arch
+# 1Password's desktop app is deliberately absent: [bootstrap.packages] takes no
+# condition, and under WSL the app that serves the SSH agent is the Windows one
+# (docs/wsl.md section 6). setup:debian installs it behind a WSL probe.
 "apt:build-essential" = "latest"           # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
 "apt:ca-certificates" = "latest"           # Docker-repo prerequisite; also what makes HTTPS apt sources work
 "apt:code" = "latest"                      # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
@@ -383,9 +385,15 @@ set -u
 # working after [dotfiles] has written ~/.ssh/config and 1Password is signed
 # in; until the agent answers, leave every origin alone. An SSH remote that
 # cannot authenticate fails far more confusingly than this warning.
-if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
+# Probed with whatever git will actually use: under WSL that is the Windows
+# ssh.exe config.os points core.sshCommand at, and the native ssh this used to
+# hardcode has no agent there, so no remote would ever be switched.
+git_ssh="$(git config --get core.sshCommand 2>/dev/null || true)"
+# Deliberately unquoted — the value may carry flags.
+# shellcheck disable=SC2086
+if ! ${git_ssh:-ssh} -o BatchMode=yes -o StrictHostKeyChecking=accept-new -T git@github.com 2>&1 \
      | grep -q 'successfully authenticated'; then
-  echo "  ! github over ssh is not answering — sign in to 1Password, enable its SSH agent (docs/debian.md section 4), and re-run"
+  echo "  ! github over ssh is not answering — sign in to 1Password and enable its SSH agent (docs/debian.md section 4; under WSL it is the Windows app, docs/wsl.md section 6), then re-run"
   exit 0
 fi
 

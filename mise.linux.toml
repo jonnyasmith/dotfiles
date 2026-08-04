@@ -4,8 +4,10 @@
 # ------------------------------------------------------------------- env --
 
 [env]
-# Under WSL nothing listens here until the npiperelay/socat bridge is running
-# (docs/wsl.md); exporting it unconditionally is still correct.
+# Nothing listens here under WSL: git reaches the Windows agent through
+# ssh.exe instead, and the socket only appears if you take the optional
+# npiperelay/socat route (docs/wsl.md section 6). Exported unconditionally
+# either way — a stale path and an unset var fail identically.
 SSH_AUTH_SOCK = "{{env.HOME}}/.1password/agent.sock"
 
 # pnpm's own global bin dir, not the pnpm binary. The path is repeated rather
@@ -152,7 +154,12 @@ if command -v apt-get >/dev/null 2>&1; then
 
   # apt, not snap: the snap build cannot use the SSH agent or system
   # authentication, which is the entire reason 1Password is on these machines.
-  if [ ! -f /etc/apt/sources.list.d/1password.list ]; then
+  # Skipped under WSL, where that app runs on the Windows host instead
+  # (docs/wsl.md section 6) and the repo would be a dead apt source. os() is
+  # "linux" under WSL, so a probe is the only thing that tells them apart.
+  if [ -z "${WSL_DISTRO_NAME:-}" ] \
+     && ! grep -qi microsoft /proc/version 2>/dev/null \
+     && [ ! -f /etc/apt/sources.list.d/1password.list ]; then
     curl -sS https://downloads.1password.com/linux/keys/1password.asc \
       | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
     echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' \
@@ -284,9 +291,23 @@ echo "  . fedora setup complete"
 '''
 
 [tasks."setup:debian"]
-description = "Debian post-bootstrap setup. No-op without apt-get."
+description = "Debian: the 1Password desktop app. No-op without apt-get, and under WSL."
 run = '''
+set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
+
+# Imperative rather than a [bootstrap.packages] entry: that table has no
+# condition, and under WSL the agent comes from the Windows app (docs/wsl.md
+# section 6). The repo behind this is added in pre-packages, guarded the same way.
+if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+  echo "  . wsl: 1password serves the agent from the windows host, skipped"
+elif dpkg -s 1password >/dev/null 2>&1; then
+  echo "  . 1password"
+elif sudo apt-get install -y 1password; then
+  echo "  + 1password"
+else
+  echo "  ! could not install 1password"
+fi
 echo "  . debian setup complete"
 '''
 
