@@ -15,6 +15,15 @@
 [difftool "p4merge"]
     cmd = /Applications/p4merge.app/Contents/Resources/launchp4merge "\"$REMOTE\"" "\"$LOCAL\""
 {%- elif os() == "linux" %}
+{%- if get_env(name="WSL_DISTRO_NAME", default="") != "" %}
+[core]
+    # WSL. 1Password runs on the Windows host and its agent is the
+    # \\.\pipe\openssh-ssh-agent named pipe, which no Linux process can open;
+    # Windows' own ssh.exe can, and PATH interop resolves the bare name. This
+    # overrides `core.sshCommand = ssh` because config.os is included last.
+    # git only — see docs/wsl.md section 6 for what that costs.
+    sshCommand = ssh.exe
+{%- endif %}
 [mergetool "smerge"]
     cmd = smerge "\"$BASE\"" "\"$LOCAL\"" "\"$REMOTE\"" -o "\"$MERGED\""
     keepTemporaries = false

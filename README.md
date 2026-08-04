@@ -151,7 +151,7 @@ are two independent sets of sibling `setup:*` tasks, never nested:
 | axis | task | guard |
 |---|---|---|
 | distribution | `setup:fedora` | `dnf` on PATH |
-| | `setup:debian` | `apt-get` on PATH |
+| | `setup:debian` | `apt-get` on PATH; installs the 1Password desktop app unless the machine is WSL |
 | | `setup:arch` | `pacman` on PATH |
 | desktop | `setup:gtk` | `dconf` on PATH |
 | | `setup:gnome` | `gnome-shell` **installed** |
@@ -420,8 +420,9 @@ Two traps worth remembering:
   nothing and fails **silently**; `...azure.com:v3/**` is correct.
 
 The agent socket differs per OS — a Group Container path on macOS,
-`~/.1password/agent.sock` on Linux, and on WSL that same path fed by an
-npiperelay bridge to the Windows agent ([docs/wsl.md](docs/wsl.md)).
+`~/.1password/agent.sock` on Linux. WSL has no local agent at all: git is
+pointed at the Windows `ssh.exe`, which reaches the host's 1Password over a
+named pipe ([docs/wsl.md](docs/wsl.md)).
 
 ```bash
 ssh -T git@github.com          # personal account

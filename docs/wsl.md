@@ -142,16 +142,45 @@ Windows named pipe `\\.\pipe\openssh-ssh-agent`, which a Linux process inside
 WSL cannot open directly. Enable it first: 1Password → Settings → Developer →
 **Use the SSH agent**.
 
-There are two ways across the boundary.
+The Linux desktop app is **not** installed here. `apt:1password` used to sit in
+`[bootstrap.packages]`, which takes no condition, so every Debian-family box
+got it — WSL included. It now lives in `setup:debian`, and both that task and
+the apt-repo block in `[bootstrap.hooks.pre-packages]` skip when
+`$WSL_DISTRO_NAME` is set or `/proc/version` mentions Microsoft. `os()` is
+`linux` under WSL, so a probe is the only thing that can tell the two apart.
 
-### Option A — `core.sshCommand ssh.exe` (what the old branch did)
+There are two ways across the boundary. **The dotfiles do Option A**; Option B
+is here because it is what you reach for the day something other than git
+inside WSL needs a key.
 
-```bash
-git config --global core.sshCommand ssh.exe
+### Option A — `core.sshCommand ssh.exe` (what the dotfiles render)
+
+Nothing to run. `home/.config/git/config.os.tmpl` renders
+
+```ini
+[core]
+    sshCommand = ssh.exe
 ```
 
+into `~/.config/git/config.os` when `$WSL_DISTRO_NAME` is set at bootstrap
+time, and the tracked `~/.config/git/config` includes that file *below* its own
+`core.sshCommand = ssh`, so the WSL value wins. The template is the only place
+this can live: `git config --global` would write into the stowed repo copy and
+follow you to macOS.
+
 Git shells out to the Windows OpenSSH client, which talks to the named pipe
-natively. One line, no dependencies.
+natively. The bare name resolves through WSL's Windows-PATH interop; no
+`/mnt/c/...` path is needed.
+
+Verify after a bootstrap — `ssh -T` would prove nothing, since git is not using
+that binary:
+
+```bash
+ssh.exe -T git@github.com
+git -C ~/.dotfiles ls-remote origin >/dev/null && echo ok
+```
+
+The first use raises a Windows Hello prompt that must be authorised in the GUI.
 
 Limitations, all of them real:
 
@@ -163,7 +192,7 @@ Limitations, all of them real:
 - A Win32 process launch per git operation is noticeably slower than a native
   one.
 
-### Option B — relay the pipe to a UNIX socket (recommended)
+### Option B — relay the pipe to a UNIX socket
 
 Bridge the named pipe to a real UNIX socket with
 [npiperelay](https://github.com/jstarks/npiperelay) plus `socat`, and point
@@ -224,16 +253,11 @@ fi
 Verify with `ssh-add -l`; the first use raises a Windows Hello prompt that must
 be authorised in the GUI.
 
-**Recommendation: Option B.** Option A is a git-only patch that breaks as soon
-as anything else in WSL needs a key, and its path semantics are a standing
-trap. Option B costs one Windows install and one relay, and afterwards WSL
+**When Option A stops being enough**, switch to B: it is the only one that
+gives `ssh`, `scp` and `rsync -e ssh` inside WSL a key, and afterwards WSL
 behaves like every other machine in this repo — one `SSH_AUTH_SOCK` export,
-same as macOS.
-
-If you keep Option A anyway, `core.sshCommand` is a `git config --global`
-write, i.e. it lands in `~/.gitconfig`, which is a stowed dotfile. Do not run
-the command; put the value in the WSL-conditional include instead, or it will
-be written into the repo copy and follow you to macOS.
+same as macOS. Nothing needs undoing first; delete the `sshCommand` stanza
+from `config.os.tmpl`'s WSL branch when you do.
 
 ## 7. Environment differences from macOS
 
