@@ -293,7 +293,7 @@ echo "  . debian setup complete"
 # The `dev:*` bodies live in mise.toml, which Windows also loads; this pulls
 # them into the `setup:*` fan-out on the platforms that can run them.
 [tasks."setup:dev"]
-description = "Personal ~/dev checkouts: SSH remotes, ~/.agents links, worktree CLI"
+description = "Personal ~/dev checkouts: SSH remotes, agent + claude links, worktree CLI"
 depends = ["dev:*"]
 
 [tasks."setup:docker"]
