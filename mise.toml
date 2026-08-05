@@ -186,6 +186,9 @@ codex = "latest"
 fastfetch = "latest"
 fzf = "latest"
 gh = "latest"
+# `go install` targets GOBIN, which mise points at this version's own bin dir —
+# so those binaries are on PATH, and are gone after a go upgrade.
+go = "latest"
 herdr = "latest"
 jq = "latest"
 just = "latest"
