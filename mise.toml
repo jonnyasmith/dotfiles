@@ -179,7 +179,7 @@ python = ["3.13", "3.12"]
 azure-cli = "latest"
 bat = "latest"
 # btop's aqua backend publishes Linux binaries only, and that failure takes the
-# whole tools phase with it. macOS gets brew:btop in mise.macos.toml.
+# whole tools phase with it. macOS gets btop from the Brewfile.
 btop = { version = "latest", os = ["linux"] }
 caddy = "latest"
 claude = "latest"
@@ -245,7 +245,8 @@ corepack = true
 # ---------------------------------------------------------------- packages --
 #
 # The Linux lists live here, not in mise.linux.toml: the manager prefix already
-# scopes them. macOS's brew list is in mise.macos.toml only because it is long.
+# scopes them. macOS declares nothing — Homebrew owns it, from the Brewfile at
+# the repo root (docs/adr/0011-*.md). Everything below is therefore Linux.
 # Placement and parity are enforced by check:packages (docs/adr/0003-*.md), and
 # some entries need a third-party repo that [bootstrap.hooks.pre-packages] in
 # mise.linux.toml adds first.
@@ -776,7 +777,8 @@ WAIVER = "comment-budget-skip:"
 # docs/ is for.
 BY_NAME = {
     ".gitignore": "#", ".zprofile": "#", ".zshenv": "#", ".zshrc": "#",
-    "config": "#", "config.local.example": "#", "ignore": "#",
+    "Brewfile": "#", "config": "#", "config.local.example": "#",
+    "ignore": "#",
 }
 BY_EXT = {
     ".conf": "#", ".dconf": "#", ".ps1": "#", ".sh": "#", ".tmpl": "#",
