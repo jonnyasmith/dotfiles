@@ -259,7 +259,27 @@ behaves like every other machine in this repo — one `SSH_AUTH_SOCK` export,
 same as macOS. Nothing needs undoing first; delete the `sshCommand` stanza
 from `config.os.tmpl`'s WSL branch when you do.
 
-## 7. Environment differences from macOS
+## 7. Google Chrome is not installed
+
+The browser lives on the Windows host. A Linux Chrome inside WSL needs WSLg to
+draw anything, starts slower, keeps a second profile and a second password
+store, and `xdg-open` from WSL already hands URLs to the Windows default
+browser through interop — so the Linux copy is a duplicate nobody opens.
+
+`apt:google-chrome-stable` used to sit in `[bootstrap.packages]`, which takes
+no condition, so every Debian-family box got it — WSL included. It now lives in
+`setup:debian` alongside 1Password, and both that task and the Google apt-repo
+block in `[bootstrap.hooks.pre-packages]` skip when `$WSL_DISTRO_NAME` is set
+or `/proc/version` mentions Microsoft.
+
+Already have it from an earlier bootstrap? Nothing removes it for you:
+
+```bash
+sudo apt-get purge -y google-chrome-stable
+sudo rm -f /etc/apt/sources.list.d/google-chrome.list /usr/share/keyrings/google-chrome.gpg
+```
+
+## 8. Environment differences from macOS
 
 - `PNPM_HOME` is `$HOME/.local/share/pnpm` on Linux, not macOS's
   `$HOME/Library/pnpm`. This is pnpm's own global-bin directory (`pnpm add -g`
@@ -275,7 +295,7 @@ from `config.os.tmpl`'s WSL branch when you do.
   `/opt` entries are dead — mise installs neovim and zig now — and the third
   was a hardcoded home directory; use `$HOME/.local/bin`.
 
-## 8. Dropped from the archived runbook
+## 9. Dropped from the archived runbook
 
 Recorded here so nobody re-adds them:
 

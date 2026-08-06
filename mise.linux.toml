@@ -220,7 +220,11 @@ if command -v apt-get >/dev/null 2>&1; then
 
   # Proprietary, so in no distribution repository. The deb's own postinst
   # writes this exact filename, so reusing the name avoids a duplicate source.
-  if [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
+  # Skipped under WSL, where the browser is the Windows one (docs/wsl.md
+  # section 7) and the repo would be a dead apt source.
+  if [ -z "${WSL_DISTRO_NAME:-}" ] \
+     && ! grep -qi microsoft /proc/version 2>/dev/null \
+     && [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
     chrome_key="$(mktemp)"
     if curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
          | gpg --dearmor > "$chrome_key" && [ -s "$chrome_key" ]; then
@@ -291,22 +295,28 @@ echo "  . fedora setup complete"
 '''
 
 [tasks."setup:debian"]
-description = "Debian: the 1Password desktop app. No-op without apt-get, and under WSL."
+description = "Debian: the 1Password and Chrome desktop apps. No-op without apt-get, and under WSL."
 run = '''
 set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
 
-# Imperative rather than a [bootstrap.packages] entry: that table has no
-# condition, and under WSL the agent comes from the Windows app (docs/wsl.md
-# section 6). The repo behind this is added in pre-packages, guarded the same way.
+# Imperative rather than [bootstrap.packages] entries: that table has no
+# condition, and under WSL the agent comes from the Windows 1Password and the
+# browser is the Windows Chrome (docs/wsl.md sections 6 and 7). The repos
+# behind both are added in pre-packages, guarded the same way.
 if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
   echo "  . wsl: 1password serves the agent from the windows host, skipped"
-elif dpkg -s 1password >/dev/null 2>&1; then
-  echo "  . 1password"
-elif sudo apt-get install -y 1password; then
-  echo "  + 1password"
+  echo "  . wsl: chrome runs on the windows host, skipped"
 else
-  echo "  ! could not install 1password"
+  for pkg in 1password google-chrome-stable; do
+    if dpkg -s "$pkg" >/dev/null 2>&1; then
+      echo "  . $pkg"
+    elif sudo apt-get install -y "$pkg"; then
+      echo "  + $pkg"
+    else
+      echo "  ! could not install $pkg"
+    fi
+  done
 fi
 echo "  . debian setup complete"
 '''

@@ -252,9 +252,10 @@ corepack = true
 
 [bootstrap.packages]
 # --- Debian / Raspberry Pi / WSL ---
-# 1Password's desktop app is deliberately absent: [bootstrap.packages] takes no
-# condition, and under WSL the app that serves the SSH agent is the Windows one
-# (docs/wsl.md section 6). setup:debian installs it behind a WSL probe.
+# The 1Password and Chrome desktop apps are deliberately absent:
+# [bootstrap.packages] takes no condition, and under WSL the SSH agent and the
+# browser both live on the Windows host (docs/wsl.md sections 6 and 7).
+# setup:debian installs the pair behind a WSL probe.
 "apt:build-essential" = "latest"           # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
 "apt:ca-certificates" = "latest"           # Docker-repo prerequisite; also what makes HTTPS apt sources work
 "apt:code" = "latest"                      # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
@@ -266,7 +267,6 @@ corepack = true
 "apt:docker-ce-cli" = "latest"             # parity-skip: Arch ships the whole engine as `docker`
 "apt:docker-compose-plugin" = "latest"     # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
-"apt:google-chrome-stable" = "latest"      # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "apt:htop" = "latest"
 "apt:kitty" = "latest"
 "apt:libavcodec-extra" = "latest"          # the extra codec set; needs contrib/non-free, enabled in pre-packages
@@ -295,7 +295,7 @@ corepack = true
 "dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "dnf:git" = "latest"
-"dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
+"dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome (setup:arch takes it from the AUR); Debian installs it from setup:debian, skipped under WSL
 "dnf:htop" = "latest"
 "dnf:kitty" = "latest"
 "dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
