@@ -19,15 +19,16 @@
   out of `[tasks.*]`. The third one bites in bash, not Tera: an array length
   ends the run body at `${` + `#`, and the error names a comment tag you never
   wrote. Accumulate into a string instead.
-- `mise.lock` pins tools, not `[tools]`. Bump with `mise lock -g --bump` (`-g`
-  required) and commit it. `mise upgrade` holds inside the
-  `minimum_release_age` window, but `--bump` re-resolves against the eligible
-  set and rewrites locked versions *downwards* — 13 rollbacks observed,
-  including `uv 0.12.1 -> 0.11.32` (2026.7.18). Read `--dry-run` first; see
+- `[tools]` is the shared desired state; `mise.lock` is per-machine and
+  untracked. Never re-link it into the repo or commit one — mise rewrites it on
+  every install and upgrade, which is a daily commit on three machines. See
+  docs/adr/0011-the-lockfile-is-per-machine.md.
+- `mise lock -g --bump` is a local operation now, and still needs `-g`.
+  `mise upgrade` holds inside the `minimum_release_age` window, but `--bump`
+  re-resolves against the eligible set and rewrites locked versions *downwards*
+  — 13 rollbacks observed, including `uv 0.12.1 -> 0.11.32` (2026.7.18). Read
+  `--dry-run` first; see
   docs/adr/0006-fuzzy-resolution-is-quarantined-for-seven-days.md.
-- mise names the global lockfile after the config *directory*, not the config
-  file, and writes *through* the `[dotfiles]` symlink rather than replacing it
-  (2026.7.18) — which is what makes a committed lockfile possible.
 - `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is
   a leaf and no config declares it. Uninstall named formulae instead.
 - Undeclaring a tool leaves its install, shims and copied dotfiles behind;

@@ -453,11 +453,25 @@ with a warning naming the date it becomes eligible. That is a supply-chain
 quarantine, not a stability preference — most malicious releases are caught
 within hours. Two consequences worth knowing:
 
-- `mise upgrade` holds. `mise lock -g --bump` **rolls versions backwards** to
-  the newest eligible release. Always `--dry-run` that one.
+- `mise upgrade` holds and nothing is downgraded. `mise lock --bump`
+  re-resolves from scratch instead, and **rolls versions backwards** to the
+  newest eligible release. Always `--dry-run` that one.
 - A tool that must be current is exempted by name — a per-tool
   `minimum_release_age = "0s"`, or `minimum_release_age_excludes`. Do not lower
   the floor for everything.
+
+### The lockfile is per-machine
+
+`~/.config/mise/mise.lock` is **not** in this repo and is not shared. mise
+rewrites it on every install and upgrade, so tracking it turned a daily command
+into a daily commit on three machines
+(`docs/adr/0011-the-lockfile-is-per-machine.md`).
+
+What that means in practice: `[tools]` is the shared desired state, the lockfile
+is one machine's answer to it, and two machines upgraded a week apart will sit on
+different patch versions. That is the design, not drift. Nothing needs
+committing after an upgrade, and a reformat starts from the selectors in
+`mise.toml` rather than from a pinned set.
 
 Tools that ship their own updater have it switched off — claude, codex and omp
 — because mise owns the binary and two owners means silent drift. VS Code is
@@ -476,15 +490,22 @@ is nowhere near it — `mise upgrade --dry-run` costs 3 calls, because
 the API.
 
 A real `mise lock -g --bump` is the exception. It resolves every platform entry
-and needs release-asset metadata for each; `mise.lock` holds 242
-`api.github.com/.../releases/assets/N` URLs. That exhausts 60 partway through
-and leaves a lockfile built from partial version lists. So pass a token:
+and needs release-asset metadata for each — 242
+`api.github.com/.../releases/assets/N` URLs on a full lockfile. That exhausts 60
+partway through and leaves a lockfile built from partial version lists. So pass
+a token:
 
 ```bash
 GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump --dry-run   # what would move
 GITHUB_TOKEN="$(gh auth token)" mise lock -g --bump             # write it
 GITHUB_TOKEN="$(gh auth token)" mise install                    # install the result
 ```
+
+**A reformat is the case you cannot pass a token to.** A fresh machine has no
+lockfile to install from and no `gh` yet — it comes from `[tools]` — so the
+first `mise install` resolves every tool anonymously. That is one platform, not
+eleven, so it lands near the limit rather than far past it. If it stalls, wait
+an hour and re-run; `mise install` is idempotent and keeps what it already got.
 
 `gh auth token` reads the token `gh auth login` already put in your keyring.
 mise cannot see it on its own — mise reads `GITHUB_TOKEN` or `MISE_GITHUB_TOKEN`
@@ -555,17 +576,17 @@ Things that are deliberate, or upstream, and will look like bugs otherwise:
   `{%` and `{#` out of task bodies. The last one is the one you trip over: a
   bash array length starts `${` + `#`, and Tera then fails the task with
   "Closing comment tag `#}` not found".
-- **`--dry-run` invents two warnings and a duplicate hook. A real run has
+- **`--dry-run` invents a warning and a duplicate hook. A real run has
   neither.** To show what the config would look like *after* linking,
   `mise bootstrap --dry-run` simulates the result: for every `[dotfiles]`
   target under `~/.config/mise`, it reads the repo source and parses it as a
   `mise.toml` under the target's name
-  (`config_files_after_dotfiles_dry_run`, `src/cli/bootstrap.rs`). Two of
-  those targets are not `mise.toml`-shaped, so the strict field check fires on
-  keys that are correct where they live:
-  `unknown field in ~/.config/mise/miserc.toml: auto_env` and
-  `unknown field in ~/.config/mise/mise.lock: conda-packages` (the latter is
-  written by the `conda:clang-format` backend). The same simulation keys
+  (`config_files_after_dotfiles_dry_run`, `src/cli/bootstrap.rs`). One of
+  those targets is not `mise.toml`-shaped, so the strict field check fires on
+  a key that is correct where it lives:
+  `unknown field in ~/.config/mise/miserc.toml: auto_env`. (A second warning,
+  `unknown field in ~/.config/mise/mise.lock: conda-packages`, went with the
+  lockfile when it stopped being a `[dotfiles]` target.) The same simulation keys
   `mise.macos.toml` and `~/.config/mise/config.macos.toml` separately —
   they are one file, but the symlink does not exist yet to prove it — so
   `[bootstrap.hooks].post-defaults` is collected twice and `killall Finder

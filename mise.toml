@@ -120,9 +120,10 @@ minimum_release_age = "7d"
 "~/.config/mise/config.windows.toml" = "mise.windows.toml"
 "~/.config/mise/miserc.toml" = ".miserc.toml"
 
-# Without this link the lockfile lands in a real ~/.config/mise and never
-# reaches the repo. Regenerate with `mise lock -g`.
-"~/.config/mise/mise.lock" = "mise.lock"
+# mise.lock is deliberately NOT linked here, so it stays a per-machine file in
+# a real ~/.config/mise. Every `mise install`/`mise upgrade` rewrites it, and
+# linking it into the repo turned a daily command into a daily commit across
+# three machines. See docs/adr/0011-the-lockfile-is-per-machine.md.
 
 # ------------------------------------------------------------------- repos --
 #
@@ -151,9 +152,10 @@ minimum_release_age = "7d"
 
 # ------------------------------------------------------------------- tools --
 #
-# The selectors here are the *range*; mise.lock pins what is installed. Refresh
-# it deliberately — `mise lock -g --bump` can roll versions back, and `-g` is
-# required (docs/agents/coding-standards.md).
+# The selectors here are the *range*, and they are the whole of the shared
+# desired state — each machine's own ~/.config/mise/mise.lock resolves them and
+# is not tracked. So two machines that ran `mise upgrade` on different days are
+# expected to differ by a patch, and that is not drift to fix.
 
 [tools]
 # SDKs install side-by-side into one shared DOTNET_ROOT; the first entry is the
