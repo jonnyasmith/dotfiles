@@ -20,15 +20,33 @@ startup:
   checkUpdate: false
 tui: 
   textSizing: true
-statusLine:
+statusLine: 
   preset: custom
-  leftSegments: [pi, model, mode, collab, path, git, pr, context_pct, quota]
-  rightSegments: [session_name]
+  leftSegments: 
+    - pi
+    - model
+    - mode
+    - collab
+    - path
+    - git
+    - pr
+    - context_pct
+    - quota
+  rightSegments: 
+    - session_name
   separator: powerline-thin
-  segmentOptions:
-    model: { showThinkingLevel: true }
-    path: { abbreviate: true, maxLength: 40, stripWorkPrefix: true }
-    git: { showBranch: true, showStaged: true, showUnstaged: true, showUntracked: true }
+  segmentOptions: 
+    model: 
+      showThinkingLevel: true
+    path: 
+      abbreviate: true
+      maxLength: 40
+      stripWorkPrefix: true
+    git: 
+      showBranch: true
+      showStaged: true
+      showUnstaged: true
+      showUntracked: true
 hideThinkingBlock: true
 github: 
   enabled: true
