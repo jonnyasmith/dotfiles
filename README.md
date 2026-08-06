@@ -482,6 +482,20 @@ Per-project versions come from files already in your repos — `global.json`,
 `.nvmrc` / `.node-version`, `.python-version` — because
 `idiomatic_version_file_enable_tools` is set.
 
+### Which runtime majors are installed
+
+The two newest **supported** majors, newest first, so the newer is the default
+wherever no per-repo file overrides it
+(`docs/adr/0012-runtime-slots-are-the-two-newest-supported-majors.md`). A repo
+that needs something older says so itself, in its version file or its own
+`mise.local.toml`.
+
+Two files mise does **not** read, and they are the ones that bite:
+`engines.node` in `package.json` and `requires-python` in `pyproject.toml`. A
+python project is covered anyway — uv reads `requires-python` and picks the
+interpreter — but a node repo whose only signal is `engines` gets the default
+and finds out at runtime. Give those a `.nvmrc`.
+
 ### GitHub rate limits
 
 Unauthenticated GitHub allows **60 API requests an hour**, per IP. Everyday mise
