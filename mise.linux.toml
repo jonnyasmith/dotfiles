@@ -15,6 +15,13 @@ SSH_AUTH_SOCK = "{{env.HOME}}/.1password/agent.sock"
 PNPM_HOME = "{{env.HOME}}/.local/share/pnpm"
 _.path = ["{{env.HOME}}/.local/share/pnpm/bin"]
 
+# WSL only, empty everywhere else. No local browser is installed there
+# (docs/wsl.md section 7), so xdg-open would find no http scheme handler and
+# fall through to a list of text browsers that are also absent. rundll32 hands
+# the URL to the Windows default browser; xdg-open substitutes the %s itself.
+# An empty value reads as unset to xdg-open, so real Linux keeps its own list.
+BROWSER = "{% if get_env(name='WSL_DISTRO_NAME', default='') != '' %}/mnt/c/Windows/System32/rundll32.exe url.dll,FileProtocolHandler %s{% endif %}"
+
 [bootstrap.user]
 # /usr/bin/zsh, not /bin/zsh: chsh validates against /etc/shells, and Fedora
 # and Debian both list the /usr path there. Still prompts for the account
@@ -104,6 +111,15 @@ if command -v apt-get >/dev/null 2>&1; then
   # /etc/os-release must skip rather than abort.
   if [ -r /etc/os-release ]; then . /etc/os-release; fi
 
+  # os() is "linux" under WSL, so a probe is the only thing that tells the two
+  # apart. The desktop apps below duplicate a Windows one there, so neither
+  # they nor their repos — which would be dead apt sources — are wanted.
+  if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
+    is_wsl=yes
+  else
+    is_wsl=no
+  fi
+
   # The key fetches below need curl and gpg, and a minimal Debian has neither.
   # A failed fetch here is unrepairable — see docs/agents/coding-standards.md.
   if ! command -v curl >/dev/null 2>&1 || ! command -v gpg >/dev/null 2>&1; then
@@ -154,12 +170,7 @@ if command -v apt-get >/dev/null 2>&1; then
 
   # apt, not snap: the snap build cannot use the SSH agent or system
   # authentication, which is the entire reason 1Password is on these machines.
-  # Skipped under WSL, where that app runs on the Windows host instead
-  # (docs/wsl.md section 6) and the repo would be a dead apt source. os() is
-  # "linux" under WSL, so a probe is the only thing that tells them apart.
-  if [ -z "${WSL_DISTRO_NAME:-}" ] \
-     && ! grep -qi microsoft /proc/version 2>/dev/null \
-     && [ ! -f /etc/apt/sources.list.d/1password.list ]; then
+  if [ "$is_wsl" = no ] && [ ! -f /etc/apt/sources.list.d/1password.list ]; then
     curl -sS https://downloads.1password.com/linux/keys/1password.asc \
       | sudo gpg --dearmor --output /usr/share/keyrings/1password-archive-keyring.gpg
     echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/1password-archive-keyring.gpg] https://downloads.1password.com/linux/debian/amd64 stable main' \
@@ -204,7 +215,7 @@ if command -v apt-get >/dev/null 2>&1; then
     fi
   fi
 
-  if [ ! -f /etc/apt/sources.list.d/vscode.sources ]; then
+  if [ "$is_wsl" = no ] && [ ! -f /etc/apt/sources.list.d/vscode.sources ]; then
     sudo apt-get install -y wget gpg
     wget -qO- https://packages.microsoft.com/keys/microsoft.asc \
       | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
@@ -220,11 +231,7 @@ if command -v apt-get >/dev/null 2>&1; then
 
   # Proprietary, so in no distribution repository. The deb's own postinst
   # writes this exact filename, so reusing the name avoids a duplicate source.
-  # Skipped under WSL, where the browser is the Windows one (docs/wsl.md
-  # section 7) and the repo would be a dead apt source.
-  if [ -z "${WSL_DISTRO_NAME:-}" ] \
-     && ! grep -qi microsoft /proc/version 2>/dev/null \
-     && [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
+  if [ "$is_wsl" = no ] && [ ! -f /etc/apt/sources.list.d/google-chrome.list ]; then
     chrome_key="$(mktemp)"
     if curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
          | gpg --dearmor > "$chrome_key" && [ -s "$chrome_key" ]; then
@@ -295,20 +302,20 @@ echo "  . fedora setup complete"
 '''
 
 [tasks."setup:debian"]
-description = "Debian: the 1Password and Chrome desktop apps. No-op without apt-get, and under WSL."
+description = "Debian: the desktop apps not wanted under WSL. No-op without apt-get."
 run = '''
 set -u
 command -v apt-get >/dev/null 2>&1 || exit 0
 
 # Imperative rather than [bootstrap.packages] entries: that table has no
-# condition, and under WSL the agent comes from the Windows 1Password and the
-# browser is the Windows Chrome (docs/wsl.md sections 6 and 7). The repos
-# behind both are added in pre-packages, guarded the same way.
+# condition, and each of these duplicates an app on the Windows host under WSL
+# — the SSH agent, the browser, the editor, the media player (docs/wsl.md
+# sections 6 and 7). The 1Password, Chrome and VS Code repos are added in
+# pre-packages, guarded the same way.
 if [ -n "${WSL_DISTRO_NAME:-}" ] || grep -qi microsoft /proc/version 2>/dev/null; then
-  echo "  . wsl: 1password serves the agent from the windows host, skipped"
-  echo "  . wsl: chrome runs on the windows host, skipped"
+  echo "  . wsl: desktop apps come from the windows host, skipped"
 else
-  for pkg in 1password google-chrome-stable; do
+  for pkg in 1password google-chrome-stable code vlc libavcodec-extra; do
     if dpkg -s "$pkg" >/dev/null 2>&1; then
       echo "  . $pkg"
     elif sudo apt-get install -y "$pkg"; then
