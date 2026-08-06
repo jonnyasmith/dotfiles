@@ -23,12 +23,16 @@ home/.config/herdr/.plugins.lock
 home/.config/herdr/*.log
 home/.config/herdr/*.sock
 
-# agent.db is a credential store in the same directory as the one file we
-# link, so the whole tree is denied except ~/.omp/agent/config.yml.
+# agent.db is a credential store in the same directory as the two files we
+# link, so the whole tree is denied except those. extensions/ also holds a
+# herdr-installed extension and a symlink into ~/dev, hence the second pair.
 home/.omp/*
 !home/.omp/agent/
 home/.omp/agent/*
 !home/.omp/agent/config.yml
+!home/.omp/agent/extensions/
+home/.omp/agent/extensions/*
+!home/.omp/agent/extensions/statusline.ts
 
 # ~/.claude is a state directory: sessions, transcripts, caches and a
 # herdr-installed hook all sit beside the three files this repo owns.

@@ -88,6 +88,11 @@ minimum_release_age = "7d"
 # `copy` because omp rewrites this file from `/settings` and onboarding.
 "~/.omp/agent/config.yml" = { mode = "copy" }
 
+# The status line extension is ours alone, so it links and edits in ~ land back
+# in the repo. Named per-file rather than linking extensions/ whole: that
+# directory also holds a herdr-installed extension and a symlink into ~/dev.
+"~/.omp/agent/extensions/statusline.ts" = {}
+
 # codex is the one mise-owned AI CLI whose update switch is a config key rather
 # than an env var; see docs/adr/0004-one-updater-per-binary.md. `copy` because
 # it is the file codex rewrites when a setting changes from inside the CLI.
@@ -777,7 +782,7 @@ BY_NAME = {
 }
 BY_EXT = {
     ".conf": "#", ".dconf": "#", ".ps1": "#", ".sh": "#", ".tmpl": "#",
-    ".toml": "#", ".txt": "#", ".yml": "#", ".zsh": "#",
+    ".toml": "#", ".txt": "#", ".ts": "//", ".yml": "#", ".zsh": "#",
 }
 
 # Vendored or tool-written, so not ours to measure. desktop/cosmic stays
