@@ -93,10 +93,14 @@
 | yes | no | `symlink` (whole directory) |
 | yes | yes, relocatable | relocate it, then `symlink` |
 | yes | yes, not relocatable | `symlink-each` |
-| — | the tool rewrites the file itself | `copy` |
+| — | the tool replaces the file on write | `copy` |
 
 Whole-directory `symlink` is the default. Nothing currently needs
-`symlink-each`.
+`symlink-each`. A tool rewriting the file is not on its own a reason for
+`copy` — only a write that lands on the link rather than through it is, and
+`copy` then costs one-way drift. mise writes through the link to
+`mise.lock`, and omp realpaths `~/.omp/agent/config.yml` before its tmp-file
+rename; both link. Check before assuming.
 
 ## Do not unify
 

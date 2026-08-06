@@ -1,5 +1,12 @@
 modelRoles: 
   default: anthropic/claude-opus-5:medium
+  smol: anthropic/claude-opus-5:medium
+  slow: anthropic/claude-opus-5:medium
+  designer: anthropic/claude-opus-5:medium
+  tiny: anthropic/claude-haiku-4-5:high
+  advisor: openai-codex/gpt-5.6-sol:medium
+  task: anthropic/claude-opus-5:medium
+  REVIEWER: openai-codex/gpt-5.6-sol:medium
 symbolPreset: nerd
 theme: 
   dark: titanium
@@ -13,6 +20,37 @@ startup:
   checkUpdate: false
 tui: 
   textSizing: true
+statusLine: 
+  preset: custom
+  leftSegments: 
+    - pi
+    - model
+    - mode
+    - collab
+    - path
+    - git
+    - pr
+    - context_pct
+    - quota
+  rightSegments: 
+    - session_name
+  separator: powerline-thin
+  segmentOptions: 
+    model: 
+      showThinkingLevel: true
+    path: 
+      abbreviate: true
+      maxLength: 40
+      stripWorkPrefix: true
+    git: 
+      showBranch: true
+      showStaged: true
+      showUnstaged: true
+      showUntracked: true
 hideThinkingBlock: true
 github: 
   enabled: true
+live: 
+  voice: sol
+dev: 
+  autoqaConsent: granted

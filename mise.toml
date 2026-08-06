@@ -83,10 +83,16 @@ minimum_release_age = "7d"
 # and offers no way to relocate them, so name the single file we own.
 "~/.config/herdr/config.toml" = {}
 
-# One file out of a directory that is otherwise state: ~/.omp/agent also holds
+# Two files out of a directory that is otherwise state: ~/.omp/agent also holds
 # agent.db (the OAuth and API-key store), history.db, sessions/ and blobs/.
-# `copy` because omp rewrites this file from `/settings` and onboarding.
-"~/.omp/agent/config.yml" = { mode = "copy" }
+# Both link despite omp rewriting config.yml from `/settings`: its writer
+# realpaths the path before the tmp-file rename, so the write lands on the
+# target and settings changed in the TUI land back in the repo. It rewrites the
+# whole document from parsed YAML, so a comment in that file would not survive.
+"~/.omp/agent/config.yml" = {}
+# statusline.ts is named per-file rather than linking extensions/ whole: that
+# directory also holds a herdr-installed extension and a symlink into ~/dev.
+"~/.omp/agent/extensions/statusline.ts" = {}
 
 # codex is the one mise-owned AI CLI whose update switch is a config key rather
 # than an env var; see docs/adr/0004-one-updater-per-binary.md. `copy` because
@@ -777,7 +783,7 @@ BY_NAME = {
 }
 BY_EXT = {
     ".conf": "#", ".dconf": "#", ".ps1": "#", ".sh": "#", ".tmpl": "#",
-    ".toml": "#", ".txt": "#", ".yml": "#", ".zsh": "#",
+    ".toml": "#", ".txt": "#", ".ts": "//", ".yml": "#", ".zsh": "#",
 }
 
 # Vendored or tool-written, so not ours to measure. desktop/cosmic stays
