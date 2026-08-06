@@ -252,12 +252,12 @@ corepack = true
 
 [bootstrap.packages]
 # --- Debian / Raspberry Pi / WSL ---
-# 1Password's desktop app is deliberately absent: [bootstrap.packages] takes no
-# condition, and under WSL the app that serves the SSH agent is the Windows one
-# (docs/wsl.md section 6). setup:debian installs it behind a WSL probe.
+# 1Password, Chrome, VS Code and VLC are deliberately absent:
+# [bootstrap.packages] takes no condition, and under WSL all four duplicate an
+# app on the Windows host (docs/wsl.md sections 6 and 7). setup:debian
+# installs them behind a WSL probe.
 "apt:build-essential" = "latest"           # gcc/make/libc headers, matching Arch's base-devel and Fedora's @development-tools
 "apt:ca-certificates" = "latest"           # Docker-repo prerequisite; also what makes HTTPS apt sources work
-"apt:code" = "latest"                      # VS Code; needs the MS apt repo added in pre-packages. registry-skip: registry `code` is an unrelated coding CLI. parity-skip: Arch takes visual-studio-code-bin from the AUR
 "apt:containerd.io" = "latest"             # parity-skip: Arch ships the whole engine as `docker`
 "apt:curl" = "latest"
 "apt:dbus-x11" = "latest"                  # dbus-launch, needed by gnome-tweaks over SSH/X
@@ -266,10 +266,8 @@ corepack = true
 "apt:docker-ce-cli" = "latest"             # parity-skip: Arch ships the whole engine as `docker`
 "apt:docker-compose-plugin" = "latest"     # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "apt:git" = "latest"
-"apt:google-chrome-stable" = "latest"      # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
 "apt:htop" = "latest"
 "apt:kitty" = "latest"
-"apt:libavcodec-extra" = "latest"          # the extra codec set; needs contrib/non-free, enabled in pre-packages
 "apt:nala" = "latest"                      # apt front-end used throughout docs/wsl.md
 "apt:python3-pynvim" = "latest"            # the :checkhealth python3 provider. python3-neovim is a transitional dummy, absent from current Debian
 "apt:socat" = "latest"                     # 1Password SSH-agent relay under WSL (docs/wsl.md section 6)
@@ -277,9 +275,8 @@ corepack = true
 "apt:tree" = "latest"                      # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "apt:unrar" = "latest"                     # non-free, enabled in pre-packages
 "apt:unzip" = "latest"
-"apt:vlc" = "latest"
 "apt:wget" = "latest"
-"apt:xdg-utils" = "latest"                 # xdg-open, the only way nvim's markdown preview reaches a browser on Linux
+"apt:xdg-utils" = "latest"                 # xdg-open, the only way nvim's markdown preview reaches a browser on Linux. Under WSL it has no local browser to find and follows $BROWSER instead — set in mise.linux.toml
 "apt:xz-utils" = "latest"
 "apt:zip" = "latest"
 "apt:zsh" = "latest"                       # pairs with [bootstrap.user].login_shell in mise.linux.toml
@@ -295,13 +292,13 @@ corepack = true
 "dnf:docker-ce-cli" = "latest"         # parity-skip: Arch ships the whole engine as `docker`
 "dnf:docker-compose-plugin" = "latest" # `docker compose`. parity-skip: Arch ships this as `docker-compose`
 "dnf:git" = "latest"
-"dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome; setup:arch takes google-chrome from the AUR
+"dnf:google-chrome-stable" = "latest"  # repo added in pre-packages. parity-skip: Arch has no official Chrome (setup:arch takes it from the AUR); Debian installs it from setup:debian, skipped under WSL
 "dnf:htop" = "latest"
 "dnf:kitty" = "latest"
 "dnf:python3-neovim" = "latest"        # the :checkhealth python3 provider; Fedora keeps the old source name
 "dnf:tree" = "latest"                  # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "dnf:unzip" = "latest"
-"dnf:vlc" = "latest"
+"dnf:vlc" = "latest"                   # parity-skip: Debian installs it from setup:debian, skipped under WSL
 "dnf:wget" = "latest"
 "dnf:xdg-utils" = "latest"             # xdg-open; see the apt entry
 "dnf:xz" = "latest"                    # parity-skip: Debian calls it xz-utils
@@ -335,7 +332,7 @@ corepack = true
 "pacman:tlp-rdw" = "latest"
 "pacman:tree" = "latest"                # registry-skip: registry `tree` is a Rust reimplementation with different flags
 "pacman:unzip" = "latest"
-"pacman:vlc" = "latest"
+"pacman:vlc" = "latest"                 # parity-skip: Debian installs it from setup:debian, skipped under WSL
 "pacman:wget" = "latest"
 "pacman:xdg-utils" = "latest"           # xdg-open; see the apt entry
 "pacman:xz" = "latest"                  # parity-skip: Debian calls it xz-utils

@@ -48,7 +48,9 @@ run, once 1Password is signed in — step 4.
 That run adds the 1Password, Docker, VS Code and Chrome apt repos, enables
 `contrib` and `non-free` (the Microsoft fonts and `unrar` live there), installs
 every `apt:` package, the `[tools]`, the dotfiles and the GNOME dconf, sets zsh
-as the login shell, and puts you in the `docker` group.
+as the login shell, and puts you in the `docker` group. The desktop apps —
+1Password, Chrome, VS Code, VLC — come from `setup:debian` rather than the
+`apt:` list, so WSL can skip the lot (docs/wsl.md section 7).
 
 `./bootstrap.sh --dry-run` first if you want to see it before it runs;
 `--status` shows what is out of sync. It is idempotent — re-run it any time.

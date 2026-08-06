@@ -259,14 +259,74 @@ behaves like every other machine in this repo — one `SSH_AUTH_SOCK` export,
 same as macOS. Nothing needs undoing first; delete the `sshCommand` stanza
 from `config.os.tmpl`'s WSL branch when you do.
 
-## 7. Environment differences from macOS
+## 7. Desktop apps the Windows host already provides
+
+WSLg is enabled on current WSL builds, so these *would* run — the reason they
+are excluded is duplication, not capability. Each keeps a second profile, a
+second update channel and a second few hundred megabytes beside the copy you
+already reach on the Windows side, three of them installed there by
+`bootstrap.ps1` from `packages/winget.txt`:
+
+| Not installed under WSL | Use instead |
+| --- | --- |
+| `google-chrome-stable` | the Windows Chrome (`Google.Chrome`) |
+| `code` | the Windows VS Code (`Microsoft.VisualStudioCode`) over Remote-WSL, which drops its own `code` shim in the distro on first connect |
+| `vlc`, `libavcodec-extra` | the Windows player |
+| `1password` | the Windows app — section 6 |
+
+`kitty` **is** installed: Windows Terminal is what you actually use here, but
+kitty is cheap and its config is linked on every OS anyway.
+
+They all used to sit in `[bootstrap.packages]`, which takes no condition, so
+every Debian-family box got them — WSL included. They now live in
+`setup:debian`, and that task plus the 1Password, Chrome and VS Code apt-repo
+blocks in `[bootstrap.hooks.pre-packages]` all skip when `$WSL_DISTRO_NAME` is
+set or `/proc/version` mentions Microsoft.
+
+### `xdg-open` needs `$BROWSER` once Chrome is gone
+
+Interop does **not** route URLs to Windows on its own — that needs `wslview`,
+and `wslu` is not in Debian 12's repos. With no local browser, `xdg-open` finds
+no `x-scheme-handler/http` handler and falls through to a list of text browsers
+that are also absent, so nvim's markdown preview goes nowhere.
+
+`[env]` in `mise.linux.toml` therefore exports, on WSL only:
+
+```sh
+BROWSER='/mnt/c/Windows/System32/rundll32.exe url.dll,FileProtocolHandler %s'
+```
+
+`xdg-open` checks `$BROWSER` before its built-in list and substitutes the `%s`
+itself. The value renders empty off WSL, which reads as unset, so a real Linux
+desktop keeps its own handler lookup.
+
+### Removing them from a box bootstrapped earlier
+
+Nothing purges them for you:
+
+```bash
+sudo apt-get purge -y google-chrome-stable code vlc libavcodec-extra
+sudo apt-get autoremove --purge -y
+sudo rm -f /etc/apt/sources.list.d/google-chrome.list /usr/share/keyrings/google-chrome.gpg
+sudo rm -f /etc/apt/sources.list.d/vscode.sources
+```
+
+Verify the browser hand-off afterwards — it should raise a tab on Windows:
+
+```bash
+xdg-open https://example.com
+```
+
+## 8. Environment differences from macOS
 
 - `PNPM_HOME` is `$HOME/.local/share/pnpm` on Linux, not macOS's
   `$HOME/Library/pnpm`. This is pnpm's own global-bin directory (`pnpm add -g`
   shims: `wt`, `pn`, `pnpx`), unrelated to the pnpm binary, which mise owns.
 - `SSH_AUTH_SOCK` is `$HOME/.1password/agent.sock` (section 6), not the macOS
   group-container path.
-- Both come from `[env]` in `mise.linux.toml`, not from a shell file, so a
+- `BROWSER` points at the Windows `rundll32` URL handler (section 7) and is
+  empty on every other Linux.
+- All three come from `[env]` in `mise.linux.toml`, not from a shell file, so a
   shell that never runs `mise activate` does not see them — same as before,
   when they were exported from `~/.config/zsh/os.zsh`, which only `.zshrc`
   sourced.
@@ -275,7 +335,7 @@ from `config.os.tmpl`'s WSL branch when you do.
   `/opt` entries are dead — mise installs neovim and zig now — and the third
   was a hardcoded home directory; use `$HOME/.local/bin`.
 
-## 8. Dropped from the archived runbook
+## 9. Dropped from the archived runbook
 
 Recorded here so nobody re-adds them:
 
