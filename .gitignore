@@ -41,4 +41,10 @@ home/.claude/*
 !home/.claude/statusline-command.sh
 !home/.claude/keybindings.json
 
+# Per-machine, by design — see docs/adr/0011-the-lockfile-is-per-machine.md.
+# mise writes one next to any config it loads, and this repo IS the global
+# config, so a lockfile appears here whenever a shell is inside the repo.
+mise.lock
+mise.*.lock
+
 .DS_Store

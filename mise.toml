@@ -120,9 +120,10 @@ minimum_release_age = "7d"
 "~/.config/mise/config.windows.toml" = "mise.windows.toml"
 "~/.config/mise/miserc.toml" = ".miserc.toml"
 
-# Without this link the lockfile lands in a real ~/.config/mise and never
-# reaches the repo. Regenerate with `mise lock -g`.
-"~/.config/mise/mise.lock" = "mise.lock"
+# mise.lock is deliberately NOT linked here, so it stays a per-machine file in
+# a real ~/.config/mise. Every `mise install`/`mise upgrade` rewrites it, and
+# linking it into the repo turned a daily command into a daily commit across
+# three machines. See docs/adr/0011-the-lockfile-is-per-machine.md.
 
 # ------------------------------------------------------------------- repos --
 #
@@ -151,30 +152,38 @@ minimum_release_age = "7d"
 
 # ------------------------------------------------------------------- tools --
 #
-# The selectors here are the *range*; mise.lock pins what is installed. Refresh
-# it deliberately — `mise lock -g --bump` can roll versions back, and `-g` is
-# required (docs/agents/coding-standards.md).
+# The selectors here are the *range*, and they are the whole of the shared
+# desired state — each machine's own ~/.config/mise/mise.lock resolves them and
+# is not tracked. So two machines that ran `mise upgrade` on different days are
+# expected to differ by a patch, and that is not drift to fix.
 
 [tools]
-# SDKs install side-by-side into one shared DOTNET_ROOT; the first entry is the
-# default when no global.json applies.
+# The two LTS majors per ADR 0012 — even majors are LTS. SDKs install
+# side-by-side into one shared DOTNET_ROOT; the first entry is the default when
+# no global.json applies. 8 goes when its support does, and the repos still
+# pinned to it are the ones that move.
 dotnet = ["10", "8"]
 
 # ~/.bun stays as BUN_INSTALL, bun's *global package* dir, so `bun install -g`
 # bins keep working. mise owns only the binary.
 bun = "1"
 
-# First entry is the default `node`; the second stays installed so a project
-# .nvmrc / .node-version can select it.
+# The two LTS majors per ADR 0012 — even majors are LTS. Spelled as numbers,
+# not `lts`: that alias tracks the *current* LTS only and there is no `lts-1`,
+# so the second slot is hand-bumped regardless and two literals read better
+# than one of each.
 node = ["24", "22"]
 
-# Majors, not `latest`. mise does not read package.json's `packageManager`.
+# Majors, not `latest`. mise does not read package.json's `packageManager`, so
+# unlike node there is no per-repo escape hatch — a project that needs the older
+# major needs it declared here or in its own mise.local.toml.
 pnpm = ["11", "10"]
 
-# 3.13 is the default because it satisfies the most `requires-python` in ~/dev;
-# several cap below 3.14. 3.12 stays for the projects pinned to it.
+# CPython has no LTS track, so ADR 0012 reads as the two newest minors. A repo
+# capped below 3.13 declares it — `.python-version` is enough, mise reads it —
+# and uv covers the rest: it honours `requires-python`, which mise never sees.
 # Interpreters only — uv owns per-project venvs and `uv tool` installs.
-python = ["3.13", "3.12"]
+python = ["3.14", "3.13"]
 
 azure-cli = "latest"
 bat = "latest"
