@@ -28,8 +28,13 @@
 - mise names the global lockfile after the config *directory*, not the config
   file, and writes *through* the `[dotfiles]` symlink rather than replacing it
   (2026.7.18) — which is what makes a committed lockfile possible.
-- `mise bootstrap packages prune --manager brew` removes `brew:mise` — mise is
-  a leaf and no config declares it. Uninstall named formulae instead.
+- Never run `mise bootstrap packages prune --manager brew`. It removes every
+  leaf no config declares, and since ADR 0011 no config declares any formula
+  at all. Uninstall named formulae instead.
+- mise cannot uninstall a cask: there is no `packages remove`, and `prune` is
+  formulae-only. Take one back with `brew install --cask --force <token>`,
+  which writes the `.metadata/` that marks it Homebrew's; mise's
+  `.mise-cask.toml` stays behind as residue.
 - Undeclaring a tool leaves its install, shims and copied dotfiles behind;
   convergence never removes them. Uninstall by name — `mise prune` deletes any
   version no tracked config declares, which is wider than what you dropped.
@@ -67,9 +72,13 @@
 - A nested `mise` inside a task inherits `MISE_CONFIG_ROOT=$HOME` and sees only
   `config.toml`. Unset it before shelling out to `mise`.
 - Never pipe a third-party install script into a shell. Add the vendor's
-  repository and install the package instead. The single exception is mise's
-  own installer in `bootstrap.sh`: a fresh machine has no package manager that
-  can be relied on to carry mise, which is the whole reason that script exists.
+  repository and install the package instead. The two exceptions are both in
+  `bootstrap.sh`, and both for the same reason — a fresh machine has no package
+  manager that can be relied on to carry them: mise's own installer, and
+  Homebrew's on macOS (docs/adr/0011-homebrew-owns-macos-packages.md).
+- macOS packages go in the `Brewfile`, never in `[bootstrap.packages]`. mise's
+  `brew:`/`brew-cask:` backends reimplement Homebrew rather than call it, and
+  two writers to `/opt/homebrew` is the ADR 0004 defect.
 - A `[bootstrap.repos]` entry under `~/.oh-my-zsh/custom/plugins` and the
   `plugins=()` list in `home/.zshrc` are one declaration in two places; change
   both. Exactly one ZLE syntax highlighter — two fight over the same hooks.
