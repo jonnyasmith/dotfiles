@@ -1,5 +1,6 @@
-# macOS-only, loaded beside mise.toml by auto_env. The casks live here rather
-# than in the shared file only because the list is long.
+# macOS-only, loaded beside mise.toml by auto_env. It declares no
+# [bootstrap.packages]: Homebrew owns every macOS package and the list is the
+# Brewfile at the repo root (docs/adr/0011-homebrew-owns-macos-packages.md).
 
 # ------------------------------------------------------------------- env --
 
@@ -31,41 +32,9 @@ login_shell = "/bin/zsh"
 # `defaults write` does not notify the running apps; they re-read on launch.
 post-defaults = "killall Finder Dock 2>/dev/null || true"
 
-# --------------------------------------------------------------- packages --
-#
-# Formulae that are NOT in mise's registry, are build dependencies, or are
-# machine-global services. mise installs these with its own built-in Homebrew
-# support; real Homebrew is not required.
-
-[bootstrap.packages]
-
-"brew:avrdude" = "latest"
-"brew:btop" = "latest"       # registry-skip: the registry entry has no darwin build; see [tools] in mise.toml
-"brew:git" = "latest"
-"brew:htop" = "latest"
-"brew:mosquitto" = "latest"
-"brew:platformio" = "latest"
-"brew:rustup" = "latest"     # registry-skip: the registry entry is rustup-init, which manages its own toolchain dir outside mise
-"brew:tree" = "latest"       # registry-skip: registry `tree` is a Rust reimplementation with different flags
-"brew:wget" = "latest"
-"brew:zsh" = "latest"
-
-"brew-cask:1password" = "latest"
-"brew-cask:alfred" = "latest"
-"brew-cask:chatgpt" = "latest"
-"brew-cask:claude" = "latest"
-"brew-cask:codex" = "latest"
-"brew-cask:fluidvoice" = "latest"
-"brew-cask:font-fira-mono-nerd-font" = "latest"
-"brew-cask:google-chrome" = "latest"
-"brew-cask:karabiner-elements" = "latest"
-"brew-cask:kitty" = "latest"
-"brew-cask:miro" = "latest"
-"brew-cask:obsidian" = "latest"
-"brew-cask:orbstack" = "latest"
-"brew-cask:rectangle" = "latest"
-"brew-cask:todoist-app" = "latest"
-"brew-cask:visual-studio-code" = "latest"
+# The macOS package phase in full — mise declares nothing for this OS. brew is
+# put on PATH by bootstrap.sh's Preflight, which also installs it if missing.
+pre-packages = 'brew bundle --file="$HOME/.dotfiles/Brewfile"'
 
 # ------------------------------------------------------------ macOS extras --
 

@@ -42,8 +42,9 @@ if [[ "$DOTFILES" != "$HOME/.dotfiles" ]]; then
 fi
 ok "repo at ~/.dotfiles"
 
-# mise's own installer. The one place this repo pipes a script into a shell:
-# a fresh machine has no package manager we can rely on to carry mise.
+# mise's own installer. One of the two places this repo runs a fetched script
+# (Homebrew below is the other): a fresh machine has no package manager we can
+# rely on to carry mise.
 if command -v mise >/dev/null 2>&1; then
 	ok "mise $(mise --version | awk '{print $1}')"
 else
@@ -67,6 +68,23 @@ else
 	export PATH="$HOME/.local/bin:$PATH"
 	command -v mise >/dev/null 2>&1 || die "mise still not on PATH after install"
 	ok "mise $(mise --version | awk '{print $1}') installed"
+fi
+
+# Homebrew owns every macOS package (docs/adr/0011-*.md) and the pre-packages
+# hook shells out to it, so it has to exist before `mise bootstrap` runs.
+if [[ "$(uname -s)" == Darwin ]]; then
+	if ! command -v brew >/dev/null 2>&1; then
+		warn "Homebrew not found — installing"
+		# NONINTERACTIVE=1 keeps it unattended; it still prompts for sudo to
+		# create /opt/homebrew.
+		NONINTERACTIVE=1 /bin/bash -c \
+			"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+			|| die "Homebrew install failed"
+		# The installer does not touch PATH, and the hook inherits this one.
+		eval "$(/opt/homebrew/bin/brew shellenv)" || die "brew shellenv failed"
+	fi
+	command -v brew >/dev/null 2>&1 || die "Homebrew still not on PATH after install"
+	ok "homebrew $(brew --version | head -1 | awk '{print $2}')"
 fi
 
 # mise refuses to read a config it has not been told to trust. Idempotent.
